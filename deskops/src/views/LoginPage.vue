@@ -46,7 +46,7 @@ export default {
       // Aqui você pode chamar sua API de autenticação
     },
     goToRegister() {
-      this.$router.push('/register') // Certifique-se de que essa rota exista
+      this.$router.push('/register') 
     }
   }
 }
