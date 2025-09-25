@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
     });
 
     // Timer para navegar para a tela de login após 3 segundos
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 4), () {
       Navigator.pushReplacementNamed(context, '/login');
     });
   }
