@@ -16,14 +16,14 @@ class MainLayout extends StatelessWidget {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor:
-          Colors.black, // fundo do Scaffold para destacar as bordas
-      drawer: const CustomDrawer(),
+          Colors.black, // Fundo do Scaffold para destacar as bordas
+      drawer: CustomDrawer(), // <-- Retirado const
       body: Column(
         children: [
           // AppBar preta
           CustomAppBar(
             onDrawerTap: () {
-              _scaffoldKey.currentState?.openDrawer();
+              _scaffoldKey.currentState?.openDrawer(); // Abre o drawer
             },
             onNotificationTap: onNotificationTap ?? () {},
           ),
