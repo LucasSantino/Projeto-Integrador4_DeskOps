@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
 // Importando telas de login
-import 'ui/widgets/login/splashscreen.dart';
-import 'ui/widgets/login/login.dart';
-import 'ui/widgets/login/cadastro.dart';
+import 'ui/login/splashscreen.dart';
+import 'ui/login/login.dart';
+import 'ui/login/cadastro.dart';
 
 // Importando telas do cliente
-import 'ui/widgets/cliente/meus_chamados.dart' as clienteChamados;
-import 'ui/widgets/cliente/novo_chamado.dart';
-import 'ui/widgets/cliente/chamado_detalhado.dart';
-import 'ui/widgets/cliente/perfil.dart' as clientePerfil;
+import 'ui/cliente/meus_chamados.dart' as clienteChamados;
+import 'ui/cliente/novo_chamado.dart';
+import 'ui/cliente/chamado_detalhado.dart';
+import 'ui/cliente/perfil.dart' as clientePerfil;
 
 // Importando telas do técnico
-import 'ui/widgets/tecnico/dashboard.dart';
-import 'ui/widgets/tecnico/detalhes_ativos.dart';
-import 'ui/widgets/tecnico/meus_chamados.dart' as tecnicoChamados;
-import 'ui/widgets/tecnico/perfil.dart' as tecnicoPerfil;
-import 'ui/widgets/tecnico/qrcode.dart';
+import 'ui/tecnico/dashboard.dart';
+import 'ui/tecnico/detalhes_ativos.dart';
+import 'ui/tecnico/meus_chamados.dart' as tecnicoChamados;
+import 'ui/tecnico/perfil.dart' as tecnicoPerfil;
+import 'ui/tecnico/qrcode.dart';
 
 void main() {
   runApp(const MyApp());
