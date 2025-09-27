@@ -17,7 +17,7 @@ class MainLayout extends StatelessWidget {
       key: _scaffoldKey,
       backgroundColor:
           Colors.black, // Fundo do Scaffold para destacar as bordas
-      drawer: CustomDrawer(), // <-- Retirado const
+      drawer: CustomDrawer(),
       body: Column(
         children: [
           // AppBar preta
