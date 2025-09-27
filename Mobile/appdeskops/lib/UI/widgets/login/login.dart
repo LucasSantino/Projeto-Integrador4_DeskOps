@@ -14,13 +14,16 @@ class Login extends StatelessWidget {
           // Parte superior preta com imagem
           Container(
             width: size.width,
-            height: size.height * 0.20, // 20% da tela
+            height: size.height * 0.25, // % da tela
             color: Colors.black,
             child: Center(
-              child: Image.asset(
-                'assets/images/logodeskops.png',
-                width: size.width * 0.99,
-                fit: BoxFit.contain,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 30), // espaçamento superior
+                child: Image.asset(
+                  'assets/images/logodeskops.png',
+                  width: size.width * 0.99,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -83,7 +86,7 @@ class Login extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: Color.fromARGB(255, 78, 78, 78),
                             ),
                           ),
                           const SizedBox(height: 5),
@@ -108,7 +111,7 @@ class Login extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: Color.fromARGB(255, 78, 78, 78),
                             ),
                           ),
                           const SizedBox(height: 5),
@@ -192,7 +195,9 @@ class Login extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/cadastro');
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey.shade300,
                                 padding: const EdgeInsets.symmetric(
