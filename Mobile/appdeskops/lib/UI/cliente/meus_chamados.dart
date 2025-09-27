@@ -7,6 +7,7 @@ class MeusChamados extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MainLayout(
+      // Apenas passamos o child, os callbacks já têm padrão no MainLayout
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [

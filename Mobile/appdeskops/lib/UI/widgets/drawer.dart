@@ -6,23 +6,39 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: const [
+      child: Column(
+        children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Colors.black),
-            child: Text(
-              'Menu',
-              style: TextStyle(color: Colors.white, fontSize: 20),
+            decoration: const BoxDecoration(color: Colors.black),
+            child: Center(
+              child: Image.asset(
+                'assets/images/logodeskops.png',
+                width: 120,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
           ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Início'),
+            leading: const Icon(Icons.home),
+            title: const Text('Meus Chamados'),
+            onTap: () {
+              Navigator.pushNamed(context, '/meus_chamados');
+            },
           ),
           ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Configurações'),
+            leading: const Icon(Icons.person),
+            title: const Text('Perfil'),
+            onTap: () {
+              Navigator.pushNamed(context, '/perfil_cliente');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Sair'),
+            onTap: () {
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/login', (route) => false);
+            },
           ),
         ],
       ),

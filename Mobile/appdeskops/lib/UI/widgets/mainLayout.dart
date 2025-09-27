@@ -1,41 +1,47 @@
 import 'package:flutter/material.dart';
-import 'appBar.dart';
+import 'appbar.dart';
 import 'drawer.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
+  final VoidCallback? onNotificationTap;
 
-  const MainLayout({super.key, required this.child});
+  // GlobalKey para controlar o Scaffold
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  MainLayout({super.key, required this.child, this.onNotificationTap});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: CustomAppBar(
-        onDrawerTap: () => Scaffold.of(context).openEndDrawer(),
-        onNotificationTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Notificações em breve!")),
-          );
-        },
-      ),
-      endDrawer: const CustomDrawer(),
+      key: _scaffoldKey,
+      backgroundColor:
+          Colors.black, // fundo do Scaffold para destacar as bordas
+      drawer: const CustomDrawer(),
       body: Column(
         children: [
-          // Container branco com borda arredondada
+          // AppBar preta
+          CustomAppBar(
+            onDrawerTap: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
+            onNotificationTap: onNotificationTap ?? () {},
+          ),
+
+          // Container branco com bordas arredondadas e clip
           Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(30),
+                topRight: Radius.circular(30),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: child,
+              child: Container(
+                width: double.infinity,
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: child,
+                ),
               ),
             ),
           ),
