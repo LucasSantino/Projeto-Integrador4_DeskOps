@@ -94,7 +94,9 @@ class Login extends StatelessWidget {
                               hintText: 'Digite seu email',
                               border: UnderlineInputBorder(), // linha inferior
                               focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: Color.fromARGB(255, 224, 223, 223)),
+                                borderSide: BorderSide(
+                                  color: Color.fromARGB(255, 224, 223, 223),
+                                ),
                               ),
                             ),
                           ),
@@ -131,7 +133,9 @@ class Login extends StatelessWidget {
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -191,7 +195,9 @@ class Login extends StatelessWidget {
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey.shade300,
-                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
