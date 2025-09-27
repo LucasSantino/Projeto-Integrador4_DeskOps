@@ -36,34 +36,36 @@ class CustomDrawer extends StatelessWidget {
             const SizedBox(height: 10),
 
             // Lista de itens com efeito visual
-            _drawerItem(
-              context,
+            _AnimatedDrawerItem(
               icon: Icons.list,
               label: 'Meus Chamados',
-              routeName: '/meus_chamados',
+              onTap:
+                  (context) => Navigator.pushNamed(context, '/meus_chamados'),
             ),
-            _drawerItem(
-              context,
+            _AnimatedDrawerItem(
               icon: Icons.add,
               label: 'Novo Chamado',
-              routeName: '/novo_chamado',
+              onTap: (context) => Navigator.pushNamed(context, '/novo_chamado'),
             ),
-            _drawerItem(
-              context,
+            _AnimatedDrawerItem(
               icon: Icons.person,
               label: 'Perfil',
-              routeName: '/perfil_cliente',
+              onTap:
+                  (context) => Navigator.pushNamed(context, '/perfil_cliente'),
             ),
 
             const Spacer(),
 
             // Item Sair
-            _drawerItem(
-              context,
+            _AnimatedDrawerItem(
               icon: Icons.logout,
               label: 'Sair',
-              routeName: '/login',
-              isLogout: true,
+              onTap:
+                  (context) => Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  ),
             ),
 
             // Rodapé
@@ -79,41 +81,58 @@ class CustomDrawer extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _drawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String routeName,
-    bool isLogout = false,
-  }) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-        if (isLogout) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            routeName,
-            (route) => false,
-          );
-        } else {
-          Navigator.pushNamed(context, routeName);
-        }
-      },
-      splashColor: Colors.white24, // efeito ao tocar
-      highlightColor: Colors.white10, // efeito ao manter pressionado
-      hoverColor: Colors.white12, // efeito ao passar mouse (web/desktop)
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+// Widget animado para os itens do Drawer
+class _AnimatedDrawerItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final void Function(BuildContext) onTap;
+
+  const _AnimatedDrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_AnimatedDrawerItem> createState() => _AnimatedDrawerItemState();
+}
+
+class _AnimatedDrawerItemState extends State<_AnimatedDrawerItem> {
+  bool _isPressed = false;
+
+  void _handleTapDown(_) => setState(() => _isPressed = true);
+  void _handleTapUp(_) => setState(() => _isPressed = false);
+  void _handleTapCancel() => setState(() => _isPressed = false);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => widget.onTap(context),
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+            child: Row(
+              children: [
+                Icon(widget.icon, color: Colors.white),
+                const SizedBox(width: 16),
+                Text(
+                  widget.label,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
