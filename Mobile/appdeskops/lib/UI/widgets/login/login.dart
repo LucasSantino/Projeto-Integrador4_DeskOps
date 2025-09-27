@@ -1,7 +1,42 @@
 import 'package:flutter/material.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
   const Login({super.key});
+
+  @override
+  State<Login> createState() => _LoginState();
+}
+// Método temporário para login de cliente e técnico
+class _LoginState extends State<Login> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+
+  void _login() {
+    String email = _emailController.text.trim();
+    String senha = _senhaController.text.trim();
+
+    if (email == 'cliente@teste.com' && senha == 'cliente1234') {
+      Navigator.pushReplacementNamed(context, '/meus_chamados');
+    } else if (email == 'tecnico@teste.com' && senha == 'tecnico1234') {
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } else {
+      // Caso credenciais inválidas
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Erro'),
+              content: const Text('Email ou senha incorretos.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,11 +49,11 @@ class Login extends StatelessWidget {
           // Parte superior preta com imagem
           Container(
             width: size.width,
-            height: size.height * 0.25, // % da tela
+            height: size.height * 0.25,
             color: Colors.black,
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.only(top: 30), // espaçamento superior
+                padding: const EdgeInsets.only(top: 30),
                 child: Image.asset(
                   'assets/images/logodeskops.png',
                   width: size.width * 0.99,
@@ -80,7 +115,7 @@ class Login extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
 
-                          // Título do campo Email
+                          // Campo Email
                           const Text(
                             'Email',
                             style: TextStyle(
@@ -90,12 +125,11 @@ class Login extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 5),
-
-                          // Campo de Email
-                          const TextField(
-                            decoration: InputDecoration(
+                          TextField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(
                               hintText: 'Digite seu email',
-                              border: UnderlineInputBorder(), // linha inferior
+                              border: UnderlineInputBorder(),
                               focusedBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Color.fromARGB(255, 224, 223, 223),
@@ -105,7 +139,7 @@ class Login extends StatelessWidget {
                           ),
                           const SizedBox(height: 15),
 
-                          // Título do campo Senha
+                          // Campo Senha
                           const Text(
                             'Senha',
                             style: TextStyle(
@@ -115,13 +149,12 @@ class Login extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 5),
-
-                          // Campo de Senha
-                          const TextField(
+                          TextField(
+                            controller: _senhaController,
                             obscureText: true,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'Digite sua senha',
-                              border: UnderlineInputBorder(), // linha inferior
+                              border: UnderlineInputBorder(),
                               focusedBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(color: Colors.black),
                               ),
@@ -133,7 +166,7 @@ class Login extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: _login,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
                                 padding: const EdgeInsets.symmetric(
@@ -155,6 +188,7 @@ class Login extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 20),
 
                     // 2º Container - Criar Conta
