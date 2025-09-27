@@ -142,7 +142,7 @@ class Cadastro extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // 2º Container 
+                    // 2º Container
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
