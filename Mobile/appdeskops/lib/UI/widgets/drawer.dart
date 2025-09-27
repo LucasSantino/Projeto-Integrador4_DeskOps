@@ -24,7 +24,7 @@ class CustomDrawer extends StatelessWidget {
                 ),
               ),
             ),
-
+            /*
             // Linha branca separadora
             Container(
               width: double.infinity,
@@ -32,7 +32,7 @@ class CustomDrawer extends StatelessWidget {
               color: Colors.white,
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             ),
-
+            */
             const SizedBox(height: 10),
 
             // Lista de itens com efeito visual
