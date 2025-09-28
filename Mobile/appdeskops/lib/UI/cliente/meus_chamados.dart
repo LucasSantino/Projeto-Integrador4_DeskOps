@@ -26,14 +26,12 @@ class _MeusChamadosState extends State<MeusChamados> {
       'titulo': 'Falha no Sistema',
       'status': 'Em Andamento',
     },
-
     {
       'atualizadoData': '22/09/2025',
       'atualizadoHora': '09:20',
       'titulo': 'Erro de Login',
       'status': 'Aguardando',
     },
-
     {
       'atualizadoData': '20/09/2025',
       'atualizadoHora': '15:10',
@@ -54,11 +52,12 @@ class _MeusChamadosState extends State<MeusChamados> {
     },
   ];
 
-  // Função para limitar caracteres com "..."
   String truncate(String text, [int maxLength = 25]) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength - 3)}...';
   }
+
+  int? hoveredRowIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +84,11 @@ class _MeusChamadosState extends State<MeusChamados> {
         children: [
           const Text(
             'Meus Chamados',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 46, 61, 163),
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -103,6 +106,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                     value: statusFilter,
                     isExpanded: true,
                     underline: const SizedBox(),
+                    dropdownColor: Colors.white,
                     items:
                         const [
                           'Todos',
@@ -155,6 +159,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DataTable(
+                  showCheckboxColumn: false,
                   columnSpacing: 20,
                   headingRowHeight: 40,
                   dataRowHeight: 80,
@@ -165,92 +170,101 @@ class _MeusChamadosState extends State<MeusChamados> {
                     DataColumn(label: Text('Título')),
                     DataColumn(label: Text('Status')),
                   ],
-                  rows:
-                      filteredChamados.map((chamado) {
-                        Color statusColor = Colors.grey;
-                        IconData statusIcon = Icons.help_outline;
+                  rows: List.generate(filteredChamados.length, (index) {
+                    final chamado = filteredChamados[index];
 
-                        switch ((chamado['status'] ?? '').toLowerCase()) {
-                          case 'aberto':
-                            statusColor = Colors.red;
-                            statusIcon = Icons.error_outline;
-                            break;
-                          case 'aguardando':
-                            statusColor = Colors.orange;
-                            statusIcon = Icons.hourglass_empty;
-                            break;
-                          case 'em andamento':
-                            statusColor = Colors.blue;
-                            statusIcon = Icons.autorenew;
-                            break;
-                          case 'concluido':
-                            statusColor = Colors.green;
-                            statusIcon = Icons.check_circle_outline;
-                            break;
-                          case 'cancelado':
-                            statusColor = Colors.grey;
-                            statusIcon = Icons.cancel_outlined;
-                            break;
+                    Color statusColor = Colors.grey;
+                    IconData statusIcon = Icons.help_outline;
+
+                    switch ((chamado['status'] ?? '').toLowerCase()) {
+                      case 'aberto':
+                        statusColor = Colors.red;
+                        statusIcon = Icons.error_outline;
+                        break;
+                      case 'aguardando':
+                        statusColor = Colors.orange;
+                        statusIcon = Icons.hourglass_empty;
+                        break;
+                      case 'em andamento':
+                        statusColor = Colors.blue;
+                        statusIcon = Icons.autorenew;
+                        break;
+                      case 'concluido':
+                        statusColor = Colors.green;
+                        statusIcon = Icons.check_circle_outline;
+                        break;
+                      case 'cancelado':
+                        statusColor = Colors.grey;
+                        statusIcon = Icons.cancel_outlined;
+                        break;
+                    }
+
+                    return DataRow(
+                      color: MaterialStateProperty.resolveWith<Color?>((
+                        states,
+                      ) {
+                        if (hoveredRowIndex == index)
+                          return Colors.grey.shade200;
+                        return null;
+                      }),
+                      onSelectChanged: (selected) {
+                        if (selected != null && selected) {
+                          Navigator.pushNamed(context, '/chamado_detalhado');
                         }
-
-                        return DataRow(
-                          cells: [
-                            // Coluna Atualizado
-                            DataCell(
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    chamado['atualizadoData'] ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    chamado['atualizadoHora'] ?? '',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Coluna Título
-                            DataCell(
+                      },
+                      cells: [
+                        // Coluna Atualizado
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
                               Text(
-                                truncate(chamado['titulo'] ?? ''),
+                                chamado['atualizadoData'] ?? '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
-                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-
-                            // Coluna Status
-                            DataCell(
-                              Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(statusIcon, color: statusColor),
-                                    const SizedBox(height: 4),
-                                    Flexible(
-                                      child: Text(
-                                        chamado['status'] ?? '',
-                                        style: TextStyle(color: statusColor),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              Text(
+                                chamado['atualizadoHora'] ?? '',
+                                overflow: TextOverflow.ellipsis,
                               ),
+                            ],
+                          ),
+                        ),
+                        // Coluna Título
+                        DataCell(
+                          Text(
+                            truncate(chamado['titulo'] ?? ''),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Coluna Status
+                        DataCell(
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(statusIcon, color: statusColor),
+                                const SizedBox(height: 4),
+                                Flexible(
+                                  child: Text(
+                                    chamado['status'] ?? '',
+                                    style: TextStyle(color: statusColor),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        );
-                      }).toList(),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ),
             ),
