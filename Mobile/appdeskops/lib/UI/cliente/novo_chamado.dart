@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import '../widgets/mainlayout.dart';
 
 class NovoChamado extends StatelessWidget {
   const NovoChamado({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Novo Chamado')),
-      body: const Center(child: Text('Novo Chamado')),
+    return MainLayout(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            'Novo Chamado',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 }
