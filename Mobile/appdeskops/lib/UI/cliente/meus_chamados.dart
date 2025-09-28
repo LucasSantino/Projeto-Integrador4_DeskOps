@@ -17,7 +17,7 @@ class _MeusChamadosState extends State<MeusChamados> {
       'atualizadoData': '25/09/2025',
       'atualizadoHora': '14:30',
       'titulo':
-          'Problema na Impressora muito grande que precisa de truncamento...',
+          'Problema na Impressora muito grande que precisa de truncamento',
       'status': 'Aberto',
     },
     {
@@ -26,11 +26,31 @@ class _MeusChamadosState extends State<MeusChamados> {
       'titulo': 'Falha no Sistema',
       'status': 'Em Andamento',
     },
+
     {
-      'atualizadoData': '23/09/2025',
-      'atualizadoHora': '16:50',
-      'titulo': 'Manutenção de Rede',
+      'atualizadoData': '22/09/2025',
+      'atualizadoHora': '09:20',
+      'titulo': 'Erro de Login',
+      'status': 'Aguardando',
+    },
+
+    {
+      'atualizadoData': '20/09/2025',
+      'atualizadoHora': '15:10',
+      'titulo': 'Instalação de Software',
       'status': 'Concluido',
+    },
+    {
+      'atualizadoData': '19/09/2025',
+      'atualizadoHora': '11:05',
+      'titulo': 'Configuração de Rede',
+      'status': 'Cancelado',
+    },
+    {
+      'atualizadoData': '18/09/2025',
+      'atualizadoHora': '08:30',
+      'titulo': 'Problema com Impressora',
+      'status': 'Em Andamento',
     },
   ];
 
@@ -140,7 +160,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                   dataRowHeight: 80,
                   columns: const [
                     DataColumn(
-                      label: SizedBox(width: 80, child: Text('Atualizado')),
+                      label: SizedBox(width: 70, child: Text('Atualizado')),
                     ),
                     DataColumn(label: Text('Título')),
                     DataColumn(label: Text('Status')),
@@ -152,12 +172,7 @@ class _MeusChamadosState extends State<MeusChamados> {
 
                         switch ((chamado['status'] ?? '').toLowerCase()) {
                           case 'aberto':
-                            statusColor = const Color.fromARGB(
-                              255,
-                              218,
-                              217,
-                              217,
-                            );
+                            statusColor = Colors.red;
                             statusIcon = Icons.error_outline;
                             break;
                           case 'aguardando':
@@ -173,7 +188,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                             statusIcon = Icons.check_circle_outline;
                             break;
                           case 'cancelado':
-                            statusColor = const Color.fromARGB(255, 255, 1, 1);
+                            statusColor = Colors.grey;
                             statusIcon = Icons.cancel_outlined;
                             break;
                         }
