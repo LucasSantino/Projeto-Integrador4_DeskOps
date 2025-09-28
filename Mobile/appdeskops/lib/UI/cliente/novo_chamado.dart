@@ -13,6 +13,7 @@ class _NovoChamadoState extends State<NovoChamado> {
   final TextEditingController descricaoController = TextEditingController();
 
   String? categoriaSelecionada;
+  String? imagemSelecionada; // Nome do arquivo (simulação)
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +114,46 @@ class _NovoChamadoState extends State<NovoChamado> {
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
+
+                  const SizedBox(height: 12),
+
+                  // Campo Anexar Imagem
+                  const Text("Anexar Imagem"),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {
+                      // Aqui no futuro pode abrir FilePicker
+                      setState(() {
+                        imagemSelecionada = "screenshot.png"; // simulação
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.upload_file, color: Colors.black54),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "Selecionar imagem",
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    imagemSelecionada ?? "Nenhuma imagem selecionada",
+                    style: const TextStyle(color: Colors.black54, fontSize: 13),
+                  ),
+                  Divider(color: Colors.grey.shade300),
                 ],
               ),
             ),
@@ -149,6 +190,13 @@ class _NovoChamadoState extends State<NovoChamado> {
                   const Text("Categoria de Serviço"),
                   Text(
                     categoriaSelecionada ?? "Nenhuma selecionada",
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 12),
+
+                  const Text("Imagem"),
+                  Text(
+                    imagemSelecionada ?? "Nenhuma imagem anexada",
                     style: const TextStyle(color: Colors.black54),
                   ),
                 ],
