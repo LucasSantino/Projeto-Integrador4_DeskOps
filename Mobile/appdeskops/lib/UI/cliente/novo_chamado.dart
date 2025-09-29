@@ -19,13 +19,45 @@ class _NovoChamadoState extends State<NovoChamado> {
 
   final ImagePicker _picker = ImagePicker();
 
-  Future<void> selecionarImagem() async {
-    final XFile? imagem = await _picker.pickImage(source: ImageSource.gallery);
+  Future<void> selecionarImagem({required bool daCamera}) async {
+    final XFile? imagem = await _picker.pickImage(
+      source: daCamera ? ImageSource.camera : ImageSource.gallery,
+    );
     if (imagem != null) {
       setState(() {
         imagemSelecionada = File(imagem.path);
       });
     }
+  }
+
+  void mostrarOpcoesImagem() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Selecionar da galeria'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  selecionarImagem(daCamera: false);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tirar foto'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  selecionarImagem(daCamera: true);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -40,12 +72,12 @@ class _NovoChamadoState extends State<NovoChamado> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.indigo, // dark/blue
+                color: Colors.indigo,
               ),
             ),
             const SizedBox(height: 20),
 
-            // Card de Informações
+            // Card Informações
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -68,7 +100,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Campo Título
+                  // Título
                   const Text("Título"),
                   TextField(
                     controller: tituloController,
@@ -79,10 +111,9 @@ class _NovoChamadoState extends State<NovoChamado> {
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
-
                   const SizedBox(height: 12),
 
-                  // Campo Descrição
+                  // Descrição
                   const Text("Descrição"),
                   TextField(
                     controller: descricaoController,
@@ -94,10 +125,9 @@ class _NovoChamadoState extends State<NovoChamado> {
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
-
                   const SizedBox(height: 12),
 
-                  // Campo Categoria
+                  // Categoria
                   const Text("Categoria de Serviço"),
                   DropdownButtonFormField<String>(
                     value: categoriaSelecionada,
@@ -123,13 +153,12 @@ class _NovoChamadoState extends State<NovoChamado> {
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
-
                   const SizedBox(height: 12),
 
-                  // Campo Anexo de Imagem
+                  // Anexo de imagem
                   const Text("Anexar Imagem"),
                   InkWell(
-                    onTap: selecionarImagem,
+                    onTap: mostrarOpcoesImagem,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       width: double.infinity,
@@ -161,7 +190,7 @@ class _NovoChamadoState extends State<NovoChamado> {
 
             const SizedBox(height: 20),
 
-            // Card de Resumo
+            // Card Resumo
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -225,11 +254,9 @@ class _NovoChamadoState extends State<NovoChamado> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Ação de criar chamado
-                },
+                onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade600,
+                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
