@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../widgets/mainlayout.dart';
 
 class NovoChamado extends StatefulWidget {
@@ -13,7 +15,18 @@ class _NovoChamadoState extends State<NovoChamado> {
   final TextEditingController descricaoController = TextEditingController();
 
   String? categoriaSelecionada;
-  String? imagemSelecionada; // Nome do arquivo (simulação)
+  File? imagemSelecionada;
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> selecionarImagem() async {
+    final XFile? imagem = await _picker.pickImage(source: ImageSource.gallery);
+    if (imagem != null) {
+      setState(() {
+        imagemSelecionada = File(imagem.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,17 +103,13 @@ class _NovoChamadoState extends State<NovoChamado> {
                     value: categoriaSelecionada,
                     items: const [
                       DropdownMenuItem(
-                        value: "Erro de Rede",
-                        child: Text("Erro de Rede"),
-                      ),
+                          value: "Erro de Rede", child: Text("Erro de Rede")),
                       DropdownMenuItem(
-                        value: "Problema em Impressora",
-                        child: Text("Problema em Impressora"),
-                      ),
+                          value: "Problema em Impressora",
+                          child: Text("Problema em Impressora")),
                       DropdownMenuItem(
-                        value: "Falha de Sistema",
-                        child: Text("Falha de Sistema"),
-                      ),
+                          value: "Falha de Sistema",
+                          child: Text("Falha de Sistema")),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -117,41 +126,33 @@ class _NovoChamadoState extends State<NovoChamado> {
 
                   const SizedBox(height: 12),
 
-                  // Campo Anexar Imagem
+                  // Campo Anexo de Imagem
                   const Text("Anexar Imagem"),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {
-                      // Aqui no futuro pode abrir FilePicker
-                      setState(() {
-                        imagemSelecionada = "screenshot.png"; // simulação
-                      });
-                    },
+                  InkWell(
+                    onTap: selecionarImagem,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      width: double.infinity,
                       child: Row(
                         children: [
-                          const Icon(Icons.upload_file, color: Colors.black54),
+                          const Icon(Icons.attach_file, color: Colors.grey),
                           const SizedBox(width: 8),
-                          const Text(
-                            "Selecionar imagem",
-                            style: TextStyle(color: Colors.black54),
+                          Expanded(
+                            child: Text(
+                              imagemSelecionada != null
+                                  ? imagemSelecionada!.path.split('/').last
+                                  : "Selecionar imagem",
+                              style: TextStyle(
+                                color: imagemSelecionada != null
+                                    ? Colors.black
+                                    : Colors.grey.shade400,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    imagemSelecionada ?? "Nenhuma imagem selecionada",
-                    style: const TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                   Divider(color: Colors.grey.shade300),
                 ],
@@ -195,10 +196,25 @@ class _NovoChamadoState extends State<NovoChamado> {
                   const SizedBox(height: 12),
 
                   const Text("Imagem"),
-                  Text(
-                    imagemSelecionada ?? "Nenhuma imagem anexada",
-                    style: const TextStyle(color: Colors.black54),
-                  ),
+                  if (imagemSelecionada != null) ...[
+                    Text(
+                      imagemSelecionada!.path.split('/').last,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        imagemSelecionada!,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ] else
+                    const Text(
+                      "Nenhuma imagem selecionada",
+                      style: TextStyle(color: Colors.black54),
+                    ),
                 ],
               ),
             ),
@@ -213,11 +229,10 @@ class _NovoChamadoState extends State<NovoChamado> {
                   // Ação de criar chamado
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                  backgroundColor: Colors.grey.shade600,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text(
                   "Criar Chamado",
