@@ -134,7 +134,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                 child: TextField(
                   controller: searchController,
                   decoration: InputDecoration(
-                    hintText: 'Pesquisar pelo título',
+                    hintText: 'Pesquisar...',
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),

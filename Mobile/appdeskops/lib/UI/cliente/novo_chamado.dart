@@ -213,7 +213,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   // Ação de criar chamado
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade600,
+                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
