@@ -109,6 +109,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                       hintText: "Digite o título do chamado",
                       hintStyle: TextStyle(color: Colors.grey.shade400),
                     ),
+                    onChanged: (value) => setState(() {}),
                   ),
                   Divider(color: Colors.grey.shade300),
                   const SizedBox(height: 12),
@@ -123,6 +124,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                       hintText: "Digite a descrição do chamado",
                       hintStyle: TextStyle(color: Colors.grey.shade400),
                     ),
+                    onChanged: (value) => setState(() {}),
                   ),
                   Divider(color: Colors.grey.shade300),
                   const SizedBox(height: 12),
@@ -208,6 +210,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Título
                   const Text("Detalhes"),
                   Text(
                     tituloController.text.isEmpty
@@ -217,6 +220,17 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Descrição
+                  const Text("Descrição"),
+                  Text(
+                    descricaoController.text.isEmpty
+                        ? "Descrição do chamado"
+                        : descricaoController.text,
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Categoria
                   const Text("Categoria de Serviço"),
                   Text(
                     categoriaSelecionada ?? "Nenhuma selecionada",
@@ -224,6 +238,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Imagem
                   const Text("Imagem"),
                   if (imagemSelecionada != null) ...[
                     Text(
