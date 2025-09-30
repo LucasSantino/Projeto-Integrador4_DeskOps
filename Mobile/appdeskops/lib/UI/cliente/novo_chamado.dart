@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../widgets/mainlayout.dart';
 
 class NovoChamado extends StatefulWidget {
@@ -13,7 +15,50 @@ class _NovoChamadoState extends State<NovoChamado> {
   final TextEditingController descricaoController = TextEditingController();
 
   String? categoriaSelecionada;
-  String? imagemSelecionada; // Nome do arquivo (simulação)
+  File? imagemSelecionada;
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> selecionarImagem({required bool daCamera}) async {
+    final XFile? imagem = await _picker.pickImage(
+      source: daCamera ? ImageSource.camera : ImageSource.gallery,
+    );
+    if (imagem != null) {
+      setState(() {
+        imagemSelecionada = File(imagem.path);
+      });
+    }
+  }
+
+  void mostrarOpcoesImagem() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Selecionar da galeria'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  selecionarImagem(daCamera: false);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tirar foto'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  selecionarImagem(daCamera: true);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +72,12 @@ class _NovoChamadoState extends State<NovoChamado> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.indigo, // dark/blue
+                color: Colors.indigo,
               ),
             ),
             const SizedBox(height: 20),
 
-            // Card de Informações
+            // Card Informações
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -55,7 +100,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Campo Título
+                  // Título
                   const Text("Título"),
                   TextField(
                     controller: tituloController,
@@ -64,12 +109,12 @@ class _NovoChamadoState extends State<NovoChamado> {
                       hintText: "Digite o título do chamado",
                       hintStyle: TextStyle(color: Colors.grey.shade400),
                     ),
+                    onChanged: (value) => setState(() {}),
                   ),
                   Divider(color: Colors.grey.shade300),
-
                   const SizedBox(height: 12),
 
-                  // Campo Descrição
+                  // Descrição
                   const Text("Descrição"),
                   TextField(
                     controller: descricaoController,
@@ -79,28 +124,24 @@ class _NovoChamadoState extends State<NovoChamado> {
                       hintText: "Digite a descrição do chamado",
                       hintStyle: TextStyle(color: Colors.grey.shade400),
                     ),
+                    onChanged: (value) => setState(() {}),
                   ),
                   Divider(color: Colors.grey.shade300),
-
                   const SizedBox(height: 12),
 
-                  // Campo Categoria
+                  // Categoria
                   const Text("Categoria de Serviço"),
                   DropdownButtonFormField<String>(
                     value: categoriaSelecionada,
                     items: const [
                       DropdownMenuItem(
-                        value: "Erro de Rede",
-                        child: Text("Erro de Rede"),
-                      ),
+                          value: "Erro de Rede", child: Text("Erro de Rede")),
                       DropdownMenuItem(
-                        value: "Problema em Impressora",
-                        child: Text("Problema em Impressora"),
-                      ),
+                          value: "Problema em Impressora",
+                          child: Text("Problema em Impressora")),
                       DropdownMenuItem(
-                        value: "Falha de Sistema",
-                        child: Text("Falha de Sistema"),
-                      ),
+                          value: "Falha de Sistema",
+                          child: Text("Falha de Sistema")),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -114,44 +155,35 @@ class _NovoChamadoState extends State<NovoChamado> {
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
-
                   const SizedBox(height: 12),
 
-                  // Campo Anexar Imagem
+                  // Anexo de imagem
                   const Text("Anexar Imagem"),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {
-                      // Aqui no futuro pode abrir FilePicker
-                      setState(() {
-                        imagemSelecionada = "screenshot.png"; // simulação
-                      });
-                    },
+                  InkWell(
+                    onTap: mostrarOpcoesImagem,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      width: double.infinity,
                       child: Row(
                         children: [
-                          const Icon(Icons.upload_file, color: Colors.black54),
+                          const Icon(Icons.attach_file, color: Colors.grey),
                           const SizedBox(width: 8),
-                          const Text(
-                            "Selecionar imagem",
-                            style: TextStyle(color: Colors.black54),
+                          Expanded(
+                            child: Text(
+                              imagemSelecionada != null
+                                  ? imagemSelecionada!.path.split('/').last
+                                  : "Selecionar imagem",
+                              style: TextStyle(
+                                color: imagemSelecionada != null
+                                    ? Colors.black
+                                    : Colors.grey.shade400,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    imagemSelecionada ?? "Nenhuma imagem selecionada",
-                    style: const TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                   Divider(color: Colors.grey.shade300),
                 ],
@@ -160,7 +192,7 @@ class _NovoChamadoState extends State<NovoChamado> {
 
             const SizedBox(height: 20),
 
-            // Card de Resumo
+            // Card Resumo
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -178,6 +210,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Título
                   const Text("Detalhes"),
                   Text(
                     tituloController.text.isEmpty
@@ -187,6 +220,17 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Descrição
+                  const Text("Descrição"),
+                  Text(
+                    descricaoController.text.isEmpty
+                        ? "Descrição do chamado"
+                        : descricaoController.text,
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Categoria
                   const Text("Categoria de Serviço"),
                   Text(
                     categoriaSelecionada ?? "Nenhuma selecionada",
@@ -194,11 +238,27 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Imagem
                   const Text("Imagem"),
-                  Text(
-                    imagemSelecionada ?? "Nenhuma imagem anexada",
-                    style: const TextStyle(color: Colors.black54),
-                  ),
+                  if (imagemSelecionada != null) ...[
+                    Text(
+                      imagemSelecionada!.path.split('/').last,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        imagemSelecionada!,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ] else
+                    const Text(
+                      "Nenhuma imagem selecionada",
+                      style: TextStyle(color: Colors.black54),
+                    ),
                 ],
               ),
             ),
@@ -209,15 +269,12 @@ class _NovoChamadoState extends State<NovoChamado> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Ação de criar chamado
-                },
+                onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade600,
+                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text(
                   "Criar Chamado",
