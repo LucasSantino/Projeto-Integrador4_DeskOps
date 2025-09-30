@@ -1,0 +1,13 @@
+- py -m venv venv -> criar a venv
+- 'v-tab, s-tab, a-tab' -> ativar a venv
+- pip install django -> instala o django
+- pip install djangorestframework django-cors-headers django-filter -> instalação das principais bibliotecas para o django funcionar como API
+- django-admin startproject NOME_DO_PROJETO . -> (dê espaço e digite o ponto p/ criar na raiz do diretório) -> Criação do projeto
+- django-admin startapp NOME_DO_APP -> (sem ponto) -> Criação do app do seu projeto
+- rest_framework -> biblioteca API REST
+- cors-headers -> biblioteca que permite a comunicação entre front e back
+- py .\manage.py makemigrations -> identifica se há migrações para serem feitas no banco de dados local sqlite, mas ainda não as executa, apenas prepara
+- py .\manage.py migrate -> faz as migrações que foram preparadas anteriormente para o banco de dados
+- py .\manage.py createsuperuser -> criação do usuário admin do projeto, em seguida preenche o username, o email e a senha.
+- py .\manage.py runserver -> executa o servidor web
+- pip install -r requirements.txt -> instala as bibliotecas presentes no requirements.txt
