@@ -18,6 +18,8 @@ class ChamadoDetalhado extends StatelessWidget {
     final String cliente = "Lucas Santino";
     final String tecnicoNome = "Carlos Silva";
     final String tecnicoEmail = "carlos.silva@email.com";
+    final String? imagemChamado =
+        null; // coloque o caminho ou URL da imagem aqui se existir
 
     // Definir cor e ícone do status dinamicamente
     Color statusColor = Colors.grey;
@@ -61,16 +63,17 @@ class ChamadoDetalhado extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Botão Encerrar
+            // Botão Encerrar 
             SizedBox(
-              width: 120,
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text(
                   "Encerrar",
@@ -99,7 +102,9 @@ class ChamadoDetalhado extends StatelessWidget {
                       Text(
                         "ID: $id",
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Row(
                         children: [
@@ -108,7 +113,9 @@ class ChamadoDetalhado extends StatelessWidget {
                           Text(
                             status,
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, color: statusColor),
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
                           ),
                         ],
                       ),
@@ -138,6 +145,25 @@ class ChamadoDetalhado extends StatelessWidget {
                     style: TextStyle(color: Colors.black54),
                   ),
                   Text(categoria),
+                  const SizedBox(height: 12),
+
+                  // Imagem (se existir)
+                  const Text("Imagem", style: TextStyle(color: Colors.black54)),
+                  if (imagemChamado != null) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        imagemChamado,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ] else
+                    const Text(
+                      "Nenhuma imagem anexada",
+                      style: TextStyle(color: Colors.black54),
+                    ),
                   const SizedBox(height: 12),
 
                   // Criado e Atualizado
@@ -194,7 +220,7 @@ class ChamadoDetalhado extends StatelessWidget {
                   const Text(
                     "Técnico Responsável",
                     style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(tecnicoNome),
