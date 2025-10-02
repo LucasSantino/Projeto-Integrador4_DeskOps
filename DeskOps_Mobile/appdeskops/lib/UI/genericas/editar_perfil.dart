@@ -52,6 +52,7 @@ class _EditarPerfilState extends State<EditarPerfil> {
 
             // Card com campos editáveis
             Container(
+              margin: const EdgeInsets.symmetric(horizontal: 0),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
