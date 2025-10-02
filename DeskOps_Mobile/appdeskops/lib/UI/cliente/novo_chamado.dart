@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/mainlayout.dart';
+import 'meus_chamados.dart';
 
 class NovoChamado extends StatefulWidget {
   const NovoChamado({super.key});
@@ -67,6 +68,34 @@ class _NovoChamadoState extends State<NovoChamado> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Botão Voltar
+            InkWell(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MeusChamados(),
+                  ),
+                );
+              },
+              child: Row(
+                children: const [
+                  Icon(Icons.arrow_back, color: Color.fromARGB(255, 8, 8, 8)),
+                  SizedBox(width: 6),
+                  Text(
+                    "Voltar",
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 0, 0, 0),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Título
             const Text(
               'Novo Chamado',
               style: TextStyle(
