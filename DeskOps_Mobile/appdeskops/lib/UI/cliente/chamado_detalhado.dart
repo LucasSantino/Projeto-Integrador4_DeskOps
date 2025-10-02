@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/mainLayout.dart';
+import 'meus_chamados.dart'; // importa a tela de origem
 
 class ChamadoDetalhado extends StatefulWidget {
   const ChamadoDetalhado({super.key});
@@ -9,28 +10,24 @@ class ChamadoDetalhado extends StatefulWidget {
 }
 
 class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
-  // Variável para controle da visualização fullscreen da imagem
   bool mostrarImagemFullscreen = false;
-
-  // URL ou caminho da imagem (exemplo: receber do backend depois)
   String? imagemChamado;
 
   @override
   Widget build(BuildContext context) {
-    // Dados de exemplo do chamado
     final int id = 123;
     final String titulo = "Problema na Impressora";
     final String descricao =
         "A impressora não está imprimindo corretamente e apresenta falha de hardware.";
     final String categoria = "Problema em Impressora";
-    final String status = "Aberto"; // Pode ser "Em Andamento", "Concluido", etc.
+    final String status = "Aberto";
     final String criadoEm = "25/09/2025 14:30";
     final String atualizadoEm = "26/09/2025 10:15";
     final String cliente = "Lucas Santino";
+    final String clienteEmail = "lucas.santino@email.com";
     final String tecnicoNome = "Carlos Silva";
     final String tecnicoEmail = "carlos.silva@email.com";
 
-    // Definir cor e ícone do status dinamicamente
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.help_outline;
 
@@ -64,6 +61,31 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Botão voltar
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const MeusChamados()),
+                    );
+                  },
+                  child: Row(
+                    children: const [
+                      Icon(Icons.arrow_back, color: Colors.black),
+                      SizedBox(width: 4),
+                      Text(
+                        "Voltar",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 const Text(
                   'Chamado detalhado',
                   style: TextStyle(
@@ -134,17 +156,13 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Título do chamado
                       Text(
                         titulo,
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
 
-                      // Descrição
                       const Text(
                         "Descrição",
                         style: TextStyle(color: Colors.black54),
@@ -152,7 +170,6 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       Text(descricao),
                       const SizedBox(height: 12),
 
-                      // Categoria
                       const Text(
                         "Categoria",
                         style: TextStyle(color: Colors.black54),
@@ -160,11 +177,8 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       Text(categoria),
                       const SizedBox(height: 12),
 
-                      // Imagem (se existir)
-                      const Text(
-                        "Imagem",
-                        style: TextStyle(color: Colors.black54),
-                      ),
+                      const Text("Imagem",
+                          style: TextStyle(color: Colors.black54)),
                       if (imagemChamado != null) ...[
                         const SizedBox(height: 8),
                         GestureDetector(
@@ -189,7 +203,6 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                         ),
                       const SizedBox(height: 12),
 
-                      // Criado e Atualizado
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -217,18 +230,18 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Cliente
                       const Text(
                         "Cliente",
                         style: TextStyle(color: Colors.black54),
                       ),
                       Text(cliente),
+                      Text(clienteEmail),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // Card Técnico Responsável
+                // Card Técnico
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -243,9 +256,7 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       const Text(
                         "Técnico Responsável",
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(tecnicoNome),
@@ -257,7 +268,7 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
             ),
           ),
 
-          // Overlay da imagem fullscreen
+          // Overlay imagem fullscreen
           if (mostrarImagemFullscreen && imagemChamado != null)
             Positioned.fill(
               child: Container(
@@ -265,17 +276,17 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                 child: Stack(
                   children: [
                     Center(
-                      child: Image.network(imagemChamado!, fit: BoxFit.contain),
+                      child: Image.network(
+                        imagemChamado!,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     Positioned(
                       top: 40,
                       right: 20,
                       child: IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 32,
-                        ),
+                        icon: const Icon(Icons.close,
+                            color: Colors.white, size: 32),
                         onPressed: () {
                           setState(() {
                             mostrarImagemFullscreen = false;
