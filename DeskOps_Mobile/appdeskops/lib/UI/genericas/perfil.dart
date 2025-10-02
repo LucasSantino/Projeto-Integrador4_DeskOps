@@ -75,50 +75,32 @@ class Perfil extends StatelessWidget {
                   const SizedBox(height: 28),
 
                   // Informações
-                  const Text(
-                    "Email",
-                    style: TextStyle(color: Colors.black54),
-                  ),
+                  const Text("Email", style: TextStyle(color: Colors.black54)),
                   const SizedBox(height: 4),
                   const Text("usuario@email.com"),
                   const SizedBox(height: 14),
 
-                  const Text(
-                    "Data de Nascimento",
-                    style: TextStyle(color: Colors.black54),
-                  ),
+                  const Text("Data de Nascimento", style: TextStyle(color: Colors.black54)),
                   const SizedBox(height: 4),
                   const Text("01/01/2000"),
                   const SizedBox(height: 14),
 
-                  const Text(
-                    "CPF",
-                    style: TextStyle(color: Colors.black54),
-                  ),
+                  const Text("CPF", style: TextStyle(color: Colors.black54)),
                   const SizedBox(height: 4),
                   const Text("000.000.000-00"),
                   const SizedBox(height: 14),
 
-                  const Text(
-                    "Telefone",
-                    style: TextStyle(color: Colors.black54),
-                  ),
+                  const Text("Telefone", style: TextStyle(color: Colors.black54)),
                   const SizedBox(height: 4),
                   const Text("(00) 00000-0000"),
                   const SizedBox(height: 14),
 
-                  const Text(
-                    "Endereço",
-                    style: TextStyle(color: Colors.black54),
-                  ),
+                  const Text("Endereço", style: TextStyle(color: Colors.black54)),
                   const SizedBox(height: 4),
                   const Text("Rua Exemplo, 123"),
                   const SizedBox(height: 14),
 
-                  const Text(
-                    "Senha",
-                    style: TextStyle(color: Colors.black54),
-                  ),
+                  const Text("Senha", style: TextStyle(color: Colors.black54)),
                   const SizedBox(height: 4),
                   const Text("********"),
 
@@ -136,7 +118,7 @@ class Perfil extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        // ação editar
+                        Navigator.pushNamed(context, '/editar_perfil');
                       },
                       icon: const Icon(Icons.edit, color: Colors.white),
                       label: const Text(

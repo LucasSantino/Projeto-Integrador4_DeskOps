@@ -18,6 +18,7 @@ import 'ui/tecnico/qrcode.dart';
 
 // Importando telas genéricas (comuns a todos os usuários)
 import 'ui/genericas/perfil.dart' as perfilGenerico;
+import 'ui/genericas/editar_perfil.dart' as editarPerfilGenerico;
 
 void main() {
   runApp(const MyApp());
@@ -53,6 +54,9 @@ class MyApp extends StatelessWidget {
         '/meus_chamados_tecnico': (context) => const tecnicoChamados.MeusChamados(),
         '/perfil_tecnico': (context) => const perfilGenerico.Perfil(),
         '/qrcode': (context) => const QRCode(),
+
+        // Rota genérica para edição de perfil (todos os usuários)
+        '/editar_perfil': (context) => const editarPerfilGenerico.EditarPerfil(),
       },
     );
   }
