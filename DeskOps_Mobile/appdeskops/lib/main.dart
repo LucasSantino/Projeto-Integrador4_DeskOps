@@ -19,6 +19,7 @@ import 'ui/tecnico/qrcode.dart';
 // Importando telas genéricas (comuns a todos os usuários)
 import 'ui/genericas/perfil.dart' as perfilGenerico;
 import 'ui/genericas/editar_perfil.dart' as editarPerfilGenerico;
+import 'ui/genericas/notificacao.dart' as notificacaoGenerica;
 
 void main() {
   runApp(const MyApp());
@@ -31,9 +32,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DeskOps',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
@@ -51,12 +50,15 @@ class MyApp extends StatelessWidget {
         // Rotas do técnico
         '/dashboard': (context) => const Dashboard(),
         '/detalhes_ativos': (context) => const DetalhesAtivos(),
-        '/meus_chamados_tecnico': (context) => const tecnicoChamados.MeusChamados(),
+        '/meus_chamados_tecnico':
+            (context) => const tecnicoChamados.MeusChamados(),
         '/perfil_tecnico': (context) => const perfilGenerico.Perfil(),
         '/qrcode': (context) => const QRCode(),
 
-        // Rota genérica para edição de perfil (todos os usuários)
-        '/editar_perfil': (context) => const editarPerfilGenerico.EditarPerfil(),
+        // Rotas genéricas (comuns a todos os usuários)
+        '/editar_perfil':
+            (context) => const editarPerfilGenerico.EditarPerfil(),
+        '/notificacoes': (context) => const notificacaoGenerica.Notificacao(),
       },
     );
   }
