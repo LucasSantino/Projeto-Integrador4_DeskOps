@@ -29,9 +29,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     builder: (context, constraints) {
                       return Image.asset(
                         'assets/images/logodeskops.png',
-                        width:
-                            constraints.maxWidth *
-                            0.99, // ocupação do espaço disponível
+                        width: constraints.maxWidth * 0.99,
                         fit: BoxFit.contain,
                       );
                     },
@@ -42,7 +40,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               // Ícone de notificações à direita
               IconButton(
                 icon: const Icon(Icons.notifications, color: Colors.white),
-                onPressed: onNotificationTap ?? () {},
+                onPressed: () {
+                  // Executa callback extra (se houver)
+                  try {
+                    onNotificationTap?.call();
+                  } catch (_) {
+                    // silencia qualquer erro do callback (opcional)
+                  }
+                  // Navega para a tela de notificações (rota deve existir em main.dart)
+                  Navigator.pushNamed(context, '/notificacoes');
+                },
               ),
             ],
           ),
