@@ -84,19 +84,35 @@ class Notificacao extends StatelessWidget {
               ),
               child: ListView.separated(
                 itemCount: notificacoes.length,
-                separatorBuilder:
-                    (context, index) => Divider(
-                      color: Colors.grey.shade300,
-                      thickness: 1,
-                      height: 20,
-                    ),
+                separatorBuilder: (context, index) => Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  height: 20,
+                ),
                 itemBuilder: (context, index) {
                   final notif = notificacoes[index];
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                    leading: const Icon(
-                      Icons.notifications,
-                      color: Colors.indigo,
+                    leading: Stack(
+                      children: [
+                        const Icon(
+                          Icons.notifications,
+                          color: Colors.indigo,
+                        ),
+                        // Bolinha de notificação não lida
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     title: Text(
                       notif['titulo']!,

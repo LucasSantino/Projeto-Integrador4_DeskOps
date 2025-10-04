@@ -9,6 +9,7 @@ import 'ui/login/cadastro.dart';
 import 'ui/cliente/meus_chamados.dart' as clienteChamados;
 import 'ui/cliente/novo_chamado.dart';
 import 'ui/cliente/chamado_detalhado.dart';
+import 'ui/cliente/editar_chamado.dart';
 
 // Importando telas do técnico
 import 'ui/tecnico/dashboard.dart';
@@ -46,6 +47,10 @@ class MyApp extends StatelessWidget {
         '/novo_chamado': (context) => const NovoChamado(),
         '/chamado_detalhado': (context) => const ChamadoDetalhado(),
         '/perfil_cliente': (context) => const perfilGenerico.Perfil(),
+        '/editar_chamado': (context) => const EditarChamado(
+        tituloInicial: '',
+        descricaoInicial: '',
+      ),
 
         // Rotas do técnico
         '/dashboard': (context) => const Dashboard(),

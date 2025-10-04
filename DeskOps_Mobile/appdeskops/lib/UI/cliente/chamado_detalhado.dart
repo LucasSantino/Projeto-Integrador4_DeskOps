@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../widgets/mainLayout.dart';
-import 'meus_chamados.dart'; // importa a tela de origem
+import 'meus_chamados.dart'; // tela de origem
+import 'editar_chamado.dart'; // tela de edição
 
 class ChamadoDetalhado extends StatefulWidget {
   const ChamadoDetalhado({super.key});
@@ -67,7 +69,8 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const MeusChamados()),
+                        builder: (context) => const MeusChamados(),
+                      ),
                     );
                   },
                   child: Row(
@@ -76,23 +79,50 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       SizedBox(width: 4),
                       Text(
                         "Voltar",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                const Text(
-                  'Chamado detalhado',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
-                  ),
+                // Título com botão editar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Chamado detalhado',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => EditarChamado(
+                                  tituloInicial: titulo,
+                                  descricaoInicial: descricao,
+                                  categoriaInicial: categoria,
+                                  imagemInicial:
+                                      imagemChamado != null
+                                          ? File(imagemChamado!)
+                                          : null,
+                                ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit, color: Colors.indigo),
+                      label: const Text(
+                        'Editar',
+                        style: TextStyle(color: Colors.indigo),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
@@ -159,7 +189,9 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       Text(
                         titulo,
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -177,8 +209,10 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       Text(categoria),
                       const SizedBox(height: 12),
 
-                      const Text("Imagem",
-                          style: TextStyle(color: Colors.black54)),
+                      const Text(
+                        "Imagem",
+                        style: TextStyle(color: Colors.black54),
+                      ),
                       if (imagemChamado != null) ...[
                         const SizedBox(height: 8),
                         GestureDetector(
@@ -189,8 +223,8 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                           },
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              imagemChamado!,
+                            child: Image.file(
+                              File(imagemChamado!),
                               height: 120,
                               fit: BoxFit.cover,
                             ),
@@ -256,7 +290,9 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       const Text(
                         "Técnico Responsável",
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(tecnicoNome),
@@ -276,8 +312,8 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                 child: Stack(
                   children: [
                     Center(
-                      child: Image.network(
-                        imagemChamado!,
+                      child: Image.file(
+                        File(imagemChamado!),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -285,8 +321,11 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       top: 40,
                       right: 20,
                       child: IconButton(
-                        icon: const Icon(Icons.close,
-                            color: Colors.white, size: 32),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                         onPressed: () {
                           setState(() {
                             mostrarImagemFullscreen = false;
