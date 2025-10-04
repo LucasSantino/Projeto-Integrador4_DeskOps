@@ -15,7 +15,7 @@ status_chamado = [
     'Cancelado'
 ]
 
-class Users(AbstractBaseUser, PermissionsMixin)
+class Users(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=150, null=False)
     email = models.EmailField(max_length=255, unique=True)
     cargo = models.CharField(max_length=50, null=False)
@@ -42,8 +42,15 @@ class Users(AbstractBaseUser, PermissionsMixin)
     def __str__(self):
         return self.name
 
+class Environment(models.Model):
+    name = models.CharField(max_length=250, null=False)
+    description = models.CharField(max_length=400)
+    employee = models.ForeignKey(Users, related_name='environment_funcionario_FK', on_delete=models.SET_NULL)
 
-class Ativo(models.Model)
+    def __str__(self):
+        return self.name
+
+class Ativo(models.Model):
     name = models.CharField(max_length=250, null=False)
     description = models.CharField(max_length=400)
     status = models.CharField(
@@ -51,17 +58,50 @@ class Ativo(models.Model)
         choices=status_ativos,
         default='Ativo'
     )
+    environment_FK = models.ForeignKey(Environment, related_name='ativo_ambiente_FK', on_delete=models.CASCADE)
+    qr_code = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 
-class Chamado(models.Model)
+class Chamado(models.Model):
     title = models.CharField(max_length=250, null=False)
     description = models.CharField(max_length=250, null=False)
+    dt_criacao = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=60,
         choices=status_chamado,
         default='Aguardando atendimento'
     )
-    user_FK = models.ForeingKey(Users, related_name='chamado_usuario_FK', on_delete=models.CASCADE)
+    creator = models.ForeignKey(Users, related_name='chamado_usuario_FK', on_delete=models.CASCADE)
+    employee = models.ManyToManyField(Users, related_name='chamado_funcionario_FK', on_delete=models.SET_NULL)
+    asset = models.ForeignKey(Ativo, related_name='chamado_ativo_FK', on_delete=models.CASCADE)
+    photo = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+    
+class Comentario(models.Model):
+    title = models.CharField(max_length=50, null=False)
+    description = models.CharField(max_length=500, null=False)
+    dt_criacao = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(Users, related_name='comentario_usuario_FK', on_delete=models.CASCADE)
+    chamado_FK = models.ForeignKey(Chamado, related_name='comentario_chamado_FK', on_delete=models.CASCADE)
+    horario = models.TimeField(auto_now_add=True)
+    data = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
+
+class Notificate(models.Model):
+    title = models.CharField(max_length=50, null=False)
+    description = models.CharField(max_length=500, null=False)
+    dt_criacao = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(Users, related_name='notificate_usuario_FK', on_delete=models.CASCADE)
+    chamado_FK = models.ForeignKey(Chamado, related_name='notificate_chamado_FK', on_delete=models.CASCADE)
+    
+
+    def __str__(self):
+        return self.title
