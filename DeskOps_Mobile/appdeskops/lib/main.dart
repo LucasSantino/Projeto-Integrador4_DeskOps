@@ -14,7 +14,7 @@ import 'ui/cliente/editar_chamado.dart';
 // Importando telas do técnico
 import 'ui/tecnico/dashboard.dart';
 import 'ui/tecnico/detalhes_ativos.dart';
-import 'ui/tecnico/meus_chamados.dart' as tecnicoChamados;
+import 'ui/tecnico/chamadosTecnico.dart';
 import 'ui/tecnico/qrcode.dart';
 
 // Importando telas genéricas (comuns a todos os usuários)
@@ -47,16 +47,14 @@ class MyApp extends StatelessWidget {
         '/novo_chamado': (context) => const NovoChamado(),
         '/chamado_detalhado': (context) => const ChamadoDetalhado(),
         '/perfil_cliente': (context) => const perfilGenerico.Perfil(),
-        '/editar_chamado': (context) => const EditarChamado(
-        tituloInicial: '',
-        descricaoInicial: '',
-      ),
+        '/editar_chamado':
+            (context) =>
+                const EditarChamado(tituloInicial: '', descricaoInicial: ''),
 
         // Rotas do técnico
         '/dashboard': (context) => const Dashboard(),
         '/detalhes_ativos': (context) => const DetalhesAtivos(),
-        '/meus_chamados_tecnico':
-            (context) => const tecnicoChamados.MeusChamados(),
+        '/chamados_tecnico': (context) => const MeusChamadosTecnico(),
         '/perfil_tecnico': (context) => const perfilGenerico.Perfil(),
         '/qrcode': (context) => const QRCode(),
 

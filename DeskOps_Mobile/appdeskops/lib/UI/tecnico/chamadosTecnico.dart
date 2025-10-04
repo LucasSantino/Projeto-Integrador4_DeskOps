@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import '../widgets/mainLayout.dart';
-import '../widgets/drawer_tecnico.dart'; // Importa o drawer técnico
+import '../widgets/drawer_tecnico.dart';
 
-class Dashboard extends StatelessWidget {
-  const Dashboard({super.key});
+class MeusChamadosTecnico extends StatelessWidget {
+  const MeusChamadosTecnico({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MainLayout(
-      drawer: DrawerTecnico(), // Define o drawer técnico
+      drawer: const DrawerTecnico(),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
             Text(
-              'Dashboard Técnico',
+              'Meus Chamados Técnico',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
-            Text('Conteúdo da dashboard aqui'),
+            Text('Lista de chamados do técnico aqui'),
           ],
         ),
       ),
