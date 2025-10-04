@@ -25,7 +25,7 @@ class MainLayout extends StatelessWidget {
             onDrawerTap: () {
               _scaffoldKey.currentState?.openDrawer(); // Abre o drawer
             },
-            onNotificationTap: onNotificationTap ?? () {},
+            onNotificationTap: onNotificationTap,
           ),
 
           // Container branco com bordas arredondadas e clip
