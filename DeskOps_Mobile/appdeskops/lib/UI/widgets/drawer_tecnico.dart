@@ -43,7 +43,7 @@ class DrawerTecnico extends StatelessWidget {
             _AnimatedDrawerItem(
               icon: Icons.qr_code,
               label: 'QR Code',
-              onTap: (context) => Navigator.pushNamed(context, '/qrcode'),
+              onTap: (context) => Navigator.pushNamed(context, '/leitor_qrcode'),
             ),
 
             _AnimatedDrawerItem(
