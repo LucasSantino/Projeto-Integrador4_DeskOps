@@ -1,19 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from .custom_user_manager import UserCustomManager
+from .custom_user_manager import CustomUserManager
 
-status_ativos = [
-    'Ativo',
-    'Em manutenção',
-    'Desativado'
-]
+class status_ativos(models.TextChoices):
+    ATIVO='ATIVO',
+    EM_MANUTENCAO='EM_MANUTENCAO',
+    DESATIVADO='DESATIVADO'
 
-status_chamado = [
-    'Aguardando atendimento',
-    'Em andamento',
-    'Concluído',
-    'Cancelado'
-]
+
+class status_chamado(models.TextChoices):
+    AGUARDANDO_ATENDIMENTO='AGUARDANDO_ATENDIMENTO',
+    EM_ANDAMENTO='EM_ANDAMENTO',
+    CONCLUIDO='CONCLUIDO'
+    CANCELADO='CANCELADO'
+
 
 class Users(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=150, null=False)
@@ -24,9 +24,9 @@ class Users(AbstractBaseUser, PermissionsMixin):
     pais = models.CharField(max_length=150)
     estado = models.CharField(max_length=150)
     cidade = models.CharField(max_length=150)
-    rua = models.CharField(max_length=100, null=False, blank=False)
     bairro = models.CharField(max_length=100, null=False, blank=False)
     cep = models.CharField(max_length=100, null=False, blank=False)
+    rua = models.CharField(max_length=100, null=False, blank=False)
     numero = models.CharField(max_length=100, null=False, blank=False)
     foto_user = models.TextField(null=True, blank=True)
 
@@ -35,9 +35,9 @@ class Users(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name', 'cargo', 'ativo']
+    REQUIRED_FIELDS = ['name', 'cargo', 'cpf', 'dt_nascimento', 'pais', 'estado', 'cidade', 'rua', 'bairro', 'cep', 'numero', 'foto_user']
 
-    objects = UserCustomManager()
+    objects = CustomUserManager()
 
     def __str__(self):
         return self.name
@@ -45,7 +45,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
 class Environment(models.Model):
     name = models.CharField(max_length=250, null=False)
     description = models.CharField(max_length=400)
-    employee = models.ForeignKey(Users, related_name='environment_funcionario_FK', on_delete=models.SET_NULL)
+    employee = models.ForeignKey(Users, related_name='environment_funcionario_FK', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -55,8 +55,8 @@ class Ativo(models.Model):
     description = models.CharField(max_length=400)
     status = models.CharField(
         max_length=60,
-        choices=status_ativos,
-        default='Ativo'
+        choices=status_ativos.choices,
+        default=status_ativos.ATIVO,
     )
     environment_FK = models.ForeignKey(Environment, related_name='ativo_ambiente_FK', on_delete=models.CASCADE)
     qr_code = models.CharField(max_length=250, null=True, blank=True)
@@ -71,11 +71,11 @@ class Chamado(models.Model):
     dt_criacao = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=60,
-        choices=status_chamado,
-        default='Aguardando atendimento'
+        choices=status_chamado.choices,
+        default=status_chamado.AGUARDANDO_ATENDIMENTO,
     )
     creator = models.ForeignKey(Users, related_name='chamado_usuario_FK', on_delete=models.CASCADE)
-    employee = models.ManyToManyField(Users, related_name='chamado_funcionario_FK', on_delete=models.SET_NULL)
+    employee = models.ManyToManyField(Users, related_name='chamado_funcionario_FK')
     asset = models.ForeignKey(Ativo, related_name='chamado_ativo_FK', on_delete=models.CASCADE)
     photo = models.TextField(null=True, blank=True)
 

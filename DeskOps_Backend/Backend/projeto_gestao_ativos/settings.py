@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders', #comunicação back-front (segurança)
+    'rest_framework', #back como api
+    'rest_framework.authtoken', #autenticação via api
+    'app' #meu app da mangetech
 ]
 
 MIDDLEWARE = [
@@ -97,6 +101,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+#define que o usuário padrão do django será o criado no app
+AUTH_USER_MODEL = 'app.Users'
 
 
 # Internationalization
