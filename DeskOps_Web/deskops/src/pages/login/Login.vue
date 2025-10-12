@@ -47,19 +47,34 @@ export default {
 </script>
 
 <style scoped>
-/* Garantir que paddings não quebrem a tela */
+/* RESET COMPLETO E FULLSCREEN - IGUAL AO PERFIL.VUE */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Container principal */
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* CONTAINER PRINCIPAL - FULLSCREEN */
 .login-page {
   display: flex;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; 
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   animation: fade-in 1s ease-out;
 }
 
@@ -70,6 +85,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 100vh;
 }
 
 .logo-image {
@@ -86,14 +102,15 @@ export default {
   justify-content: center;
   align-items: center;
   padding: 0 20px;
-  overflow: hidden; 
+  overflow: hidden;
+  height: 100vh;
 }
 
 /* Scroll interno do lado direito */
 .right-scroll {
   width: 100%;
   max-height: 100vh;
-  overflow-y: auto; /* scroll apenas quando necessário nos containers */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -284,6 +301,19 @@ export default {
 
   .cadastro-container {
     padding: 15px 20px;
+  }
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1600px) {
+  .logo-image {
+    max-width: 70%;
+    max-height: 70%;
+  }
+  
+  .login-container,
+  .cadastro-container {
+    max-width: 450px;
   }
 }
 </style>

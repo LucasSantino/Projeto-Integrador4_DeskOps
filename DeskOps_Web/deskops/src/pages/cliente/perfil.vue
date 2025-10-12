@@ -1,5 +1,5 @@
 <template>
-  <div class="perfil-page">
+  <div class="perfil-page" @click="closeProfileMenu">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
@@ -18,7 +18,7 @@
       </nav>
 
       <!-- Perfil -->
-      <div class="profile-container" ref="profileContainer">
+      <div class="profile-container" ref="profileContainer" @click.stop>
         <div class="sidebar-profile" @click="toggleProfileMenu">
           <div class="profile-image">👤</div>
           <div class="profile-info">
@@ -27,64 +27,69 @@
           </div>
         </div>
 
-        <div v-if="profileMenuOpen" class="profile-dropdown-right">
-          <div class="dropdown-item" @click="$router.push('/cliente/perfil')">
-            <span class="material-icons">person</span> Perfil
+        <!-- Dropdown corrigido -->
+        <transition name="slide-right">
+          <div v-if="profileMenuOpen" class="profile-dropdown-right">
+            <div class="dropdown-item" @click="goToPerfil">
+              <span class="material-icons">person</span> Perfil
+            </div>
+            <div class="dropdown-item" @click="goToLogin">
+              <span class="material-icons">logout</span> Sair
+            </div>
           </div>
-          <div class="dropdown-item" @click="$router.push('/')">
-            <span class="material-icons">logout</span> Sair
-          </div>
-        </div>
+        </transition>
       </div>
     </aside>
 
     <!-- Conteúdo principal -->
     <main class="main-content">
-      <!-- Botão Voltar -->
-      <div class="back-container" @click="$router.push('/cliente/meus-chamados')">
-        <span class="material-icons back-icon">arrow_back</span>
-        <span class="back-text">Voltar</span>
-      </div>
+      <div class="content-area">
+        <!-- Botão Voltar -->
+        <div class="back-container" @click="$router.push('/cliente/meus-chamados')">
+          <span class="material-icons back-icon">arrow_back</span>
+          <span class="back-text">Voltar</span>
+        </div>
 
-      <!-- Título -->
-      <h1 class="page-title">Perfil do Usuário</h1>
+        <!-- Título -->
+        <h1 class="page-title">Perfil do Usuário</h1>
 
-      <div class="cards-container">
-        <!-- Card do Perfil -->
-        <div class="card-form">
-          <div class="perfil-header">
-            <img :src="usuario.foto || defaultFoto" alt="Foto do usuário" class="perfil-foto" />
-            <h2 class="perfil-nome">{{ usuario.nome }}</h2>
-          </div>
+        <div class="cards-container">
+          <!-- Card do Perfil -->
+          <div class="card-form">
+            <div class="perfil-header">
+              <img :src="usuario.foto || defaultFoto" alt="Foto do usuário" class="perfil-foto" />
+              <h2 class="perfil-nome">{{ usuario.nome }}</h2>
+            </div>
 
-          <div class="info-section">
-            <h3>Email</h3>
-            <p class="info-text">{{ usuario.email }}</p>
-          </div>
+            <div class="info-section">
+              <h3>Email</h3>
+              <p class="info-text">{{ usuario.email }}</p>
+            </div>
 
-          <div class="info-section">
-            <h3>Data de Nascimento</h3>
-            <p class="info-text">{{ usuario.dataNascimento }}</p>
-          </div>
+            <div class="info-section">
+              <h3>Data de Nascimento</h3>
+              <p class="info-text">{{ usuario.dataNascimento }}</p>
+            </div>
 
-          <div class="info-section">
-            <h3>CPF</h3>
-            <p class="info-text">{{ usuario.cpf }}</p>
-          </div>
+            <div class="info-section">
+              <h3>CPF</h3>
+              <p class="info-text">{{ usuario.cpf }}</p>
+            </div>
 
-          <div class="info-section">
-            <h3>Endereço</h3>
-            <p class="info-text">{{ usuario.endereco }}</p>
-          </div>
+            <div class="info-section">
+              <h3>Endereço</h3>
+              <p class="info-text">{{ usuario.endereco }}</p>
+            </div>
 
-          <div class="info-section">
-            <h3>Tipo de Usuário</h3>
-            <p class="info-text">{{ usuario.tipoUsuario }}</p>
-          </div>
+            <div class="info-section">
+              <h3>Tipo de Usuário</h3>
+              <p class="info-text">{{ usuario.tipoUsuario }}</p>
+            </div>
 
-          <div class="info-section">
-            <h3>Senha</h3>
-            <p class="info-text">********</p>
+            <div class="info-section">
+              <h3>Senha</h3>
+              <p class="info-text">********</p>
+            </div>
           </div>
         </div>
       </div>
@@ -93,14 +98,32 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+import { defineComponent, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'Perfil',
   setup() {
+    const router = useRouter()
     const profileMenuOpen = ref(false)
-    const toggleProfileMenu = () => (profileMenuOpen.value = !profileMenuOpen.value)
-    const profileContainer = ref<HTMLElement | null>(null)
+
+    const toggleProfileMenu = () => {
+      profileMenuOpen.value = !profileMenuOpen.value
+    }
+
+    const closeProfileMenu = () => {
+      profileMenuOpen.value = false
+    }
+
+    const goToPerfil = () => {
+      router.push('/cliente/perfil')
+      closeProfileMenu()
+    }
+
+    const goToLogin = () => {
+      router.push('/')
+      closeProfileMenu()
+    }
 
     const usuario = ref({
       nome: 'Lucas Santino da Silva',
@@ -108,26 +131,20 @@ export default defineComponent({
       dataNascimento: '01/01/1990',
       cpf: '123.456.789-00',
       endereco: 'Rua Exemplo, 123, São Paulo, SP',
-      tipoUsuario: 'Cliente', // novo campo
+      tipoUsuario: 'Cliente',
       foto: '', 
     })
 
     const defaultFoto = new URL('../../assets/images/default-avatar.png', import.meta.url).href
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileContainer.value && !profileContainer.value.contains(event.target as Node)) {
-        profileMenuOpen.value = false
-      }
-    }
-
-    onMounted(() => document.addEventListener('click', handleClickOutside))
 
     return {
       usuario,
       defaultFoto,
       profileMenuOpen,
       toggleProfileMenu,
-      profileContainer,
+      closeProfileMenu,
+      goToPerfil,
+      goToLogin,
     }
   },
 })
@@ -136,6 +153,7 @@ export default defineComponent({
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
+/* RESET COMPLETO E FULLSCREEN */
 * {
   margin: 0;
   padding: 0;
@@ -143,40 +161,66 @@ export default defineComponent({
   font-family: 'Segoe UI', sans-serif;
 }
 
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* CONTAINER PRINCIPAL - FULLSCREEN */
 .perfil-page {
   display: flex;
   height: 100vh;
   width: 100vw;
+  min-height: 100vh;
+  min-width: 100vw;
   overflow: hidden;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-/* Sidebar */
+/* SIDEBAR - FIXA E FULL HEIGHT */
 .sidebar {
   width: 250px;
   background-color: #000;
   color: #fff;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   padding: 20px 10px;
+  flex-shrink: 0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow-y: auto;
 }
 
+/* Logo - DIMENSÕES AUMENTADAS */
 .sidebar-logo {
   text-align: left;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
+  padding: 0 10px;
 }
 
 .logo-image {
-  width: 250px;
-  height: 120px;
+  width: 100%;
+  max-width: 280px;
+  height: 150px;
   object-fit: contain;
-  margin-bottom: 16px;
 }
 
+/* Navegação */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
 }
 
 .nav-link {
@@ -186,8 +230,9 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
 }
 
 .nav-link:hover,
@@ -200,9 +245,12 @@ export default defineComponent({
   color: #fff;
 }
 
+/* Perfil */
 .profile-container {
   position: relative;
-  margin-top: 520px;
+  margin-top: auto;
+  padding: 20px 10px 0 10px;
+  overflow: visible;
 }
 
 .sidebar-profile {
@@ -210,6 +258,13 @@ export default defineComponent({
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  padding: 12px 15px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-profile:hover {
+  background-color: #1a1a1a;
 }
 
 .profile-image {
@@ -222,101 +277,166 @@ export default defineComponent({
   justify-content: center;
   color: #fff;
   font-size: 18px;
+  flex-shrink: 0;
 }
 
 .profile-info {
   display: flex;
   flex-direction: column;
   font-size: 14px;
+  min-width: 0;
 }
 
 .profile-name {
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-email {
   color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO */
 .profile-dropdown-right {
   position: absolute;
-  top: 0;
-  left: 260px;
+  bottom: 100%;
+  left: 0;
+  right: 0;
   background-color: #1a1a1a;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 1001;
+  margin-bottom: 10px;
+  border: 1px solid #333;
+  min-width: 200px;
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 12px 16px;
   color: #fff;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
 }
 
 .dropdown-item:hover {
   background-color: #333;
 }
 
-/* Conteúdo principal */
+.dropdown-item .material-icons {
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Transição do dropdown - CORRIGIDA */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN */
 .main-content {
   flex: 1;
   background-color: #fff;
-  padding: 32px;
-  overflow-y: auto;
+  margin-left: 250px;
+  width: calc(100vw - 250px);
+  height: 100vh;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
+  justify-content: center;
 }
 
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  height: auto;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 0 40px;
+}
+
+/* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
 .back-container {
   display: flex;
   align-items: center;
   cursor: pointer;
   color: #000;
-  padding-left: 90px;
-  margin-top: 12px;
+  padding: 50px 0 0 0;
+  margin-bottom: 10px;
+  width: 100%;
 }
 
 .back-icon {
   font-size: 22px;
-  margin-right: 4px;
+  margin-right: 8px;
   color: #000;
 }
 
+.back-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.back-container:hover {
+  color: #555;
+}
+
+.back-container:hover .back-icon {
+  color: #555;
+}
+
+/* Título da página */
 .page-title {
   color: indigo;
   font-size: 28px;
   font-weight: bold;
-  padding-left: 90px;
-  margin-bottom: 24px;
+  margin: 0 0 30px 0;
+  width: 100%;
+  text-align: left;
 }
 
+/* Container dos Cards - CENTRALIZADO */
 .cards-container {
   display: flex;
-  justify-content: center; /* centraliza apenas o card */
+  justify-content: center;
   width: 100%;
-  padding-left: 0;
+  margin-bottom: 40px;
 }
 
-/* Card do Perfil */
+/* Card do Perfil - ESTILO CONSISTENTE */
 .card-form {
-  width: 480px; /* largura igual ao chamadoDetalhado */
+  width: 480px;
   background-color: #fff;
-  padding: 24px;
+  padding: 30px;
+  border: 1px solid #d0d0d0;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  text-align: left;
+  gap: 20px;
 }
 
 /* Perfil Header */
@@ -324,8 +444,10 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   text-align: left;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .perfil-foto {
@@ -333,7 +455,7 @@ export default defineComponent({
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid indigo;
+  border: 3px solid indigo;
 }
 
 .perfil-nome {
@@ -351,15 +473,112 @@ export default defineComponent({
 .info-section h3 {
   color: #000;
   font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 8px;
   text-align: left;
 }
 
 .info-text {
   color: #555;
   font-size: 14px;
-  margin-bottom: 12px;
+  line-height: 1.5;
   text-align: left;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .main-content {
+    margin-left: 220px;
+    width: calc(100vw - 220px);
+  }
+  
+  .content-area {
+    padding: 0 30px;
+  }
+  
+  .logo-image {
+    max-width: 240px;
+    height: 130px;
+  }
+  
+  .card-form {
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
+@media (max-width: 768px) {
+  .perfil-page {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    height: auto;
+    min-height: calc(100vh - 200px);
+  }
+  
+  .content-area {
+    height: auto;
+    padding: 0 20px;
+    min-height: auto;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .logo-image {
+    max-width: 220px;
+    height: 110px;
+  }
+  
+  .perfil-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .perfil-nome {
+    text-align: center;
+  }
+  
+  .card-form {
+    padding: 20px;
+    width: 100%;
+  }
+  
+  /* Ajuste do dropdown para mobile */
+  .profile-dropdown-right {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0;
+    min-width: 200px;
+  }
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1600px) {
+  .content-area {
+    max-width: 1400px;
+  }
+  
+  .logo-image {
+    max-width: 300px;
+    height: 160px;
+  }
 }
 </style>

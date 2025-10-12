@@ -1,5 +1,5 @@
 <template>
-  <div class="chamado-detalhado-page">
+  <div class="chamado-detalhado-page" @click="closeProfileMenu">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
@@ -18,7 +18,7 @@
       </nav>
 
       <!-- Perfil -->
-      <div class="profile-container" ref="profileContainer">
+      <div class="profile-container" ref="profileContainer" @click.stop>
         <div class="sidebar-profile" @click="toggleProfileMenu">
           <div class="profile-image">👤</div>
           <div class="profile-info">
@@ -27,91 +27,96 @@
           </div>
         </div>
 
-        <div v-if="profileMenuOpen" class="profile-dropdown-right">
-          <div class="dropdown-item" @click="$router.push('/cliente/perfil')">
-            <span class="material-icons">person</span> Perfil
+        <!-- Dropdown corrigido -->
+        <transition name="slide-right">
+          <div v-if="profileMenuOpen" class="profile-dropdown-right">
+            <div class="dropdown-item" @click="goToPerfil">
+              <span class="material-icons">person</span> Perfil
+            </div>
+            <div class="dropdown-item" @click="goToLogin">
+              <span class="material-icons">logout</span> Sair
+            </div>
           </div>
-          <div class="dropdown-item" @click="$router.push('/')">
-            <span class="material-icons">logout</span> Sair
-          </div>
-        </div>
+        </transition>
       </div>
     </aside>
 
     <!-- Conteúdo principal -->
     <main class="main-content">
-      <!-- Botão Voltar -->
-      <div class="back-container" @click="$router.push('/cliente/meus-chamados')">
-        <span class="material-icons back-icon">arrow_back</span>
-        <span class="back-text">Voltar</span>
-      </div>
-
-      <!-- Título com botão Editar -->
-      <div class="title-edit-container">
-        <h1 class="page-title">Chamado Detalhado</h1>
-        <button class="btn-editar" @click="$router.push('/cliente/editar-chamado')">
-          <span class="material-icons">edit</span>
-          Editar
-        </button>
-      </div>
-
-      <div class="cards-container">
-        <!-- Card do chamado -->
-        <div class="card-form">
-          <div class="header-info">
-            <p class="chamado-id">#{{ chamado.id }}</p>
-            <span :class="['status-badge', statusClass(chamado.status)]">
-              <span class="material-icons status-icon">{{ statusIcon(chamado.status) }}</span>
-              {{ chamado.status }}
-            </span>
-          </div>
-
-          <h2 class="chamado-titulo">{{ chamado.titulo }}</h2>
-
-          <div class="info-section">
-            <h3>Descrição</h3>
-            <p class="info-text">{{ chamado.descricao }}</p>
-          </div>
-
-          <div class="info-section">
-            <h3>Categoria</h3>
-            <p class="info-text">{{ chamado.categoria }}</p>
-          </div>
-
-          <div class="info-section">
-            <h3>Imagem</h3>
-            <div v-if="chamado.imagem">
-              <img :src="chamado.imagem" alt="Imagem do chamado" class="chamado-imagem" />
-            </div>
-            <p v-else class="info-text">Nenhuma imagem adicionada</p>
-          </div>
-
-          <div class="date-info">
-            <div class="date-container left">
-              <h3 class="date-title">Criado em</h3>
-              <p class="info-text date-text">{{ chamado.criadoEm }}</p>
-            </div>
-            <div class="date-container right">
-              <h3 class="date-title">Atualizado em</h3>
-              <p class="info-text date-text">{{ chamado.atualizadoEm }}</p>
-            </div>
-          </div>
-
-          <div class="info-section">
-            <h3>Criado por</h3>
-            <p class="info-text">{{ chamado.criadoPor.nome }}</p>
-            <p class="info-text">{{ chamado.criadoPor.email }}</p>
-          </div>
+      <div class="content-area">
+        <!-- Botão Voltar -->
+        <div class="back-container" @click="$router.push('/cliente/meus-chamados')">
+          <span class="material-icons back-icon">arrow_back</span>
+          <span class="back-text">Voltar</span>
         </div>
 
-        <!-- Card do técnico -->
-        <div class="card-summary">
-          <h2 class="card-title">Técnico Responsável</h2>
-          <p class="summary-item">Nome<br /><span class="summary-text tecnico-text">{{ tecnico.nome }}</span></p>
-          <p class="summary-item">E-mail<br /><span class="summary-text tecnico-text">{{ tecnico.email }}</span></p>
+        <!-- Título com botão Editar -->
+        <div class="title-edit-container">
+          <h1 class="page-title">Chamado Detalhado</h1>
+          <button class="btn-editar" @click="$router.push('/cliente/editar-chamado')">
+            <span class="material-icons">edit</span>
+            Editar
+          </button>
+        </div>
 
-          <!-- Botão Encerrar Chamado -->
-          <button class="btn-encerrar" @click="encerrarChamado">Encerrar Chamado</button>
+        <div class="cards-container">
+          <!-- Card do chamado -->
+          <div class="card-form">
+            <div class="header-info">
+              <p class="chamado-id">#{{ chamado.id }}</p>
+              <span :class="['status-badge', statusClass(chamado.status)]">
+                <span class="material-icons status-icon">{{ statusIcon(chamado.status) }}</span>
+                {{ chamado.status }}
+              </span>
+            </div>
+
+            <h2 class="chamado-titulo">{{ chamado.titulo }}</h2>
+
+            <div class="info-section">
+              <h3>Descrição</h3>
+              <p class="info-text">{{ chamado.descricao }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Categoria</h3>
+              <p class="info-text">{{ chamado.categoria }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Imagem</h3>
+              <div v-if="chamado.imagem">
+                <img :src="chamado.imagem" alt="Imagem do chamado" class="chamado-imagem" />
+              </div>
+              <p v-else class="info-text">Nenhuma imagem adicionada</p>
+            </div>
+
+            <div class="date-info">
+              <div class="date-container left">
+                <h3 class="date-title">Criado em</h3>
+                <p class="info-text date-text">{{ chamado.criadoEm }}</p>
+              </div>
+              <div class="date-container right">
+                <h3 class="date-title">Atualizado em</h3>
+                <p class="info-text date-text">{{ chamado.atualizadoEm }}</p>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h3>Criado por</h3>
+              <p class="info-text">{{ chamado.criadoPor.nome }}</p>
+              <p class="info-text">{{ chamado.criadoPor.email }}</p>
+            </div>
+          </div>
+
+          <!-- Card do técnico -->
+          <div class="card-summary">
+            <h2 class="card-title">Técnico Responsável</h2>
+            <p class="summary-item">Nome<br /><span class="summary-text tecnico-text">{{ tecnico.nome }}</span></p>
+            <p class="summary-item">E-mail<br /><span class="summary-text tecnico-text">{{ tecnico.email }}</span></p>
+
+            <!-- Botão Encerrar Chamado -->
+            <button class="btn-encerrar" @click="encerrarChamado">Encerrar Chamado</button>
+          </div>
         </div>
       </div>
     </main>
@@ -120,13 +125,31 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'ChamadoDetalhado',
   setup() {
+    const router = useRouter()
     const profileMenuOpen = ref(false)
-    const toggleProfileMenu = () => (profileMenuOpen.value = !profileMenuOpen.value)
-    const profileContainer = ref<HTMLElement | null>(null)
+
+    const toggleProfileMenu = () => {
+      profileMenuOpen.value = !profileMenuOpen.value
+    }
+
+    const closeProfileMenu = () => {
+      profileMenuOpen.value = false
+    }
+
+    const goToPerfil = () => {
+      router.push('/cliente/perfil')
+      closeProfileMenu()
+    }
+
+    const goToLogin = () => {
+      router.push('/')
+      closeProfileMenu()
+    }
 
     const chamado = ref({
       id: 1024,
@@ -166,19 +189,22 @@ export default defineComponent({
       return 'info'
     }
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileContainer.value && !profileContainer.value.contains(event.target as Node)) {
-        profileMenuOpen.value = false
-      }
-    }
-
-    onMounted(() => document.addEventListener('click', handleClickOutside))
-
     const encerrarChamado = () => {
       alert('Chamado encerrado com sucesso!')
     }
 
-    return { chamado, tecnico, profileMenuOpen, toggleProfileMenu, profileContainer, statusClass, statusIcon, encerrarChamado }
+    return { 
+      chamado, 
+      tecnico, 
+      profileMenuOpen, 
+      toggleProfileMenu, 
+      closeProfileMenu,
+      goToPerfil,
+      goToLogin,
+      statusClass, 
+      statusIcon, 
+      encerrarChamado 
+    }
   },
 })
 </script>
@@ -186,6 +212,7 @@ export default defineComponent({
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
+/* RESET COMPLETO E FULLSCREEN */
 * {
   margin: 0;
   padding: 0;
@@ -193,40 +220,66 @@ export default defineComponent({
   font-family: 'Segoe UI', sans-serif;
 }
 
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* CONTAINER PRINCIPAL - FULLSCREEN */
 .chamado-detalhado-page {
   display: flex;
   height: 100vh;
   width: 100vw;
+  min-height: 100vh;
+  min-width: 100vw;
   overflow: hidden;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-/* Sidebar */
+/* SIDEBAR - FIXA E FULL HEIGHT */
 .sidebar {
   width: 250px;
   background-color: #000;
   color: #fff;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   padding: 20px 10px;
+  flex-shrink: 0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow-y: auto;
 }
 
+/* Logo - DIMENSÕES AUMENTADAS */
 .sidebar-logo {
   text-align: left;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
+  padding: 0 10px;
 }
 
 .logo-image {
-  width: 250px;
-  height: 120px;
+  width: 100%;
+  max-width: 280px;
+  height: 150px;
   object-fit: contain;
-  margin-bottom: 16px;
 }
 
+/* Navegação */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
 }
 
 .nav-link {
@@ -236,8 +289,9 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
 }
 
 .nav-link:hover,
@@ -250,9 +304,12 @@ export default defineComponent({
   color: #fff;
 }
 
+/* Perfil */
 .profile-container {
   position: relative;
-  margin-top: 520px;
+  margin-top: auto;
+  padding: 20px 10px 0 10px;
+  overflow: visible;
 }
 
 .sidebar-profile {
@@ -260,6 +317,13 @@ export default defineComponent({
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  padding: 12px 15px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-profile:hover {
+  background-color: #1a1a1a;
 }
 
 .profile-image {
@@ -272,167 +336,279 @@ export default defineComponent({
   justify-content: center;
   color: #fff;
   font-size: 18px;
+  flex-shrink: 0;
 }
 
 .profile-info {
   display: flex;
   flex-direction: column;
   font-size: 14px;
+  min-width: 0;
 }
 
 .profile-name {
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-email {
   color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO */
 .profile-dropdown-right {
   position: absolute;
-  top: 0;
-  left: 260px;
+  bottom: 100%;
+  left: 0;
+  right: 0;
   background-color: #1a1a1a;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 1001;
+  margin-bottom: 10px;
+  border: 1px solid #333;
+  min-width: 200px;
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 12px 16px;
   color: #fff;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
 }
 
 .dropdown-item:hover {
   background-color: #333;
 }
 
-/* Conteúdo principal */
+.dropdown-item .material-icons {
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Transição do dropdown - CORRIGIDA */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN */
 .main-content {
   flex: 1;
   background-color: #fff;
-  padding: 32px;
-  overflow-y: auto;
+  margin-left: 250px;
+  width: calc(100vw - 250px);
+  height: 100vh;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
+  justify-content: center;
 }
 
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  height: auto;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 0 40px;
+}
+
+/* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
 .back-container {
   display: flex;
   align-items: center;
   cursor: pointer;
   color: #000;
-  padding-left: 90px;
-  margin-top: 12px;
+  padding: 50px 0 0 0;
+  margin-bottom: 10px;
+  width: 100%;
 }
 
 .back-icon {
   font-size: 22px;
-  margin-right: 4px;
+  margin-right: 8px;
   color: #000;
+}
+
+.back-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.back-container:hover {
+  color: #555;
+}
+
+.back-container:hover .back-icon {
+  color: #555;
 }
 
 /* Título + botão Editar */
 .title-edit-container {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-left: 90px;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 30px;
 }
 
 .page-title {
   color: indigo;
   font-size: 28px;
   font-weight: bold;
+  margin: 0;
 }
 
 .btn-editar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: none;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid indigo;
   background-color: transparent;
   color: indigo;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 16px;
-}
-
-.btn-editar .material-icons {
-  font-size: 20px;
-  vertical-align: middle;
-  color: indigo;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
 .btn-editar:hover {
-  color: indigo;
+  background-color: indigo;
+  color: white;
 }
 
+.btn-editar .material-icons {
+  font-size: 18px;
+  color: inherit;
+}
+
+/* Container dos Cards */
 .cards-container {
   display: flex;
-  gap: 24px;
-  width: calc(100% - 250px - 180px);
-  padding-left: 90px;
-  align-items: flex-start;
+  gap: 30px;
+  width: 100%;
+  margin-bottom: 40px;
 }
 
 .card-form {
   flex: 2;
   background-color: #fff;
-  padding: 24px;
+  padding: 30px;
+  border: 1px solid #d0d0d0;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
+.card-summary {
+  flex: 1;
+  background-color: #fff;
+  padding: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 16px;
+  height: fit-content;
+}
+
+/* Header do Card */
 .header-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 .chamado-id {
   font-weight: bold;
   color: #000;
+  font-size: 16px;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.status-badge.status-concluido { background-color: #d1fae5; color: #065f46; }
-.status-badge.status-aberto { background-color: #d1e7dd; color: #0f5132; }
-.status-badge.status-aguardando { background-color: #fff3cd; color: #856404; }
-.status-badge.status-andamento { background-color: #cfe2ff; color: #084298; }
-.status-badge.status-cancelado { background-color: #f8d7da; color: #842029; }
+.status-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
 
-.status-icon { font-size: 18px; }
+/* CORES DOS STATUS - IGUAL À PÁGINA ANTERIOR */
+.status-concluido {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-aberto {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-aguardando {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-andamento {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.status-cancelado {
+  background-color: #f8d7da;
+  color: #842029;
+}
 
 .chamado-titulo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   color: #000;
+  margin-bottom: 10px;
   text-align: left;
 }
 
+/* Seções de Informação */
 .info-section {
   text-align: left;
 }
@@ -441,20 +617,26 @@ export default defineComponent({
 .date-title {
   color: #000;
   font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .info-text,
 .date-text {
   color: #555;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .date-info {
   display: flex;
   justify-content: space-between;
   width: 100%;
+  gap: 20px;
+}
+
+.date-container {
+  flex: 1;
 }
 
 .date-container.left {
@@ -471,21 +653,10 @@ export default defineComponent({
   max-height: 320px;
   object-fit: contain;
   border-radius: 6px;
+  border: 1px solid #e0e0e0;
 }
 
-.card-summary {
-  flex: 1;
-  background-color: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 12px;
-}
-
+/* Card Summary */
 .card-title {
   color: #000;
   font-weight: bold;
@@ -496,6 +667,7 @@ export default defineComponent({
 .summary-item {
   color: #888;
   font-size: 14px;
+  width: 100%;
 }
 
 .summary-text {
@@ -503,6 +675,7 @@ export default defineComponent({
   color: #000;
   margin-top: 4px;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .tecnico-text {
@@ -518,10 +691,114 @@ export default defineComponent({
   color: #fff;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
 .btn-encerrar:hover {
   background-color: #333;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .main-content {
+    margin-left: 220px;
+    width: calc(100vw - 220px);
+  }
+  
+  .content-area {
+    padding: 0 30px;
+  }
+  
+  .logo-image {
+    max-width: 240px;
+    height: 130px;
+  }
+  
+  .cards-container {
+    flex-direction: column;
+  }
+  
+  .card-form,
+  .card-summary {
+    flex: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .chamado-detalhado-page {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    height: auto;
+    min-height: calc(100vh - 200px);
+  }
+  
+  .content-area {
+    height: auto;
+    padding: 0 20px;
+    min-height: auto;
+  }
+  
+  .title-edit-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .logo-image {
+    max-width: 220px;
+    height: 110px;
+  }
+  
+  .date-info {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .date-container.right {
+    text-align: left;
+  }
+  
+  /* Ajuste do dropdown para mobile */
+  .profile-dropdown-right {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0;
+    min-width: 200px;
+  }
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1600px) {
+  .content-area {
+    max-width: 1400px;
+  }
+  
+  .logo-image {
+    max-width: 300px;
+    height: 160px;
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="login-page">
+  <div class="cadastro-page">
     <!-- Container principal dividindo tela -->
     <div class="left-side">
       <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
@@ -8,9 +8,9 @@
     <div class="right-side">
       <div class="right-scroll">
         <!-- Container de cadastro com scroll -->
-        <div class="login-container fade-in">
-          <h1 class="login-title">Crie a sua conta!</h1>
-          <p class="login-subtitle">Preencha os campos abaixo para criar sua conta</p>
+        <div class="cadastro-form-container fade-in">
+          <h1 class="cadastro-title">Crie a sua conta!</h1>
+          <p class="cadastro-subtitle">Preencha os campos abaixo para criar sua conta</p>
 
           <div class="form-scroll">
             <!-- Campo Nome -->
@@ -56,15 +56,15 @@
             </div>
           </div>
 
-          <button class="btn-login">Cadastrar</button>
+          <button class="btn-cadastrar">Cadastrar</button>
         </div>
 
         <!-- Container para entrar -->
-        <div class="cadastro-container fade-in">
+        <div class="login-container fade-in">
           <h2>Já tem uma conta?</h2>
           <p>Entre agora mesmo</p>
           <router-link to="/">
-            <button class="btn-cadastro">Entrar</button>
+            <button class="btn-entrar">Entrar</button>
           </router-link>
         </div>
       </div>
@@ -79,19 +79,34 @@ export default {
 </script>
 
 <style scoped>
-/* Box-sizing global */
+/* RESET COMPLETO E FULLSCREEN - IGUAL AO PERFIL.VUE */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Container principal */
-.login-page {
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* CONTAINER PRINCIPAL - FULLSCREEN */
+.cadastro-page {
   display: flex;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* remove scroll externo */
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   animation: fade-in 1s ease-out;
 }
 
@@ -102,6 +117,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 100vh;
 }
 
 .logo-image {
@@ -117,15 +133,16 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden; /* remove scroll externo */
+  overflow: hidden;
   padding: 0 20px;
+  height: 100vh;
 }
 
 /* Scroll interno do lado direito */
 .right-scroll {
   width: 100%;
   max-height: 100vh;
-  overflow-y: auto; /* scroll apenas interno */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -134,7 +151,7 @@ export default {
 }
 
 /* Container de cadastro */
-.login-container {
+.cadastro-form-container {
   background-color: #fff;
   border: 1px solid #ccc;
   padding: 40px;
@@ -146,7 +163,7 @@ export default {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.login-container:hover {
+.cadastro-form-container:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
@@ -169,14 +186,14 @@ export default {
   border-radius: 3px;
 }
 
-.login-title {
+.cadastro-title {
   color: #000;
   margin-bottom: 8px;
   font-size: 24px;
   text-align: left;
 }
 
-.login-subtitle {
+.cadastro-subtitle {
   color: #888;
   margin-bottom: 24px;
   font-size: 14px;
@@ -215,7 +232,7 @@ export default {
 }
 
 /* Botão cadastrar */
-.btn-login {
+.btn-cadastrar {
   background-color: #000;
   color: #fff;
   border: none;
@@ -227,13 +244,13 @@ export default {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.btn-login:hover {
+.btn-cadastrar:hover {
   background-color: #222;
   transform: translateY(-2px);
 }
 
 /* Container para entrar */
-.cadastro-container {
+.login-container {
   background-color: #fff;
   border: 1px solid #ccc;
   padding: 20px 30px;
@@ -244,24 +261,24 @@ export default {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.cadastro-container:hover {
+.login-container:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.cadastro-container h2 {
+.login-container h2 {
   color: #000;
   font-size: 18px;
   margin-bottom: 4px;
 }
 
-.cadastro-container p {
+.login-container p {
   color: #888;
   font-size: 14px;
   margin-bottom: 12px;
 }
 
-.btn-cadastro {
+.btn-entrar {
   background-color: #ccc;
   color: #000;
   border: none;
@@ -273,7 +290,7 @@ export default {
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.btn-cadastro:hover {
+.btn-entrar:hover {
   background-color: #aaa;
   transform: translateY(-2px);
 }
@@ -291,7 +308,7 @@ export default {
 
 /* RESPONSIVIDADE */
 @media (max-width: 900px) {
-  .login-page {
+  .cadastro-page {
     flex-direction: column;
   }
 
@@ -307,8 +324,8 @@ export default {
     max-height: 60%;
   }
 
-  .login-container,
-  .cadastro-container {
+  .cadastro-form-container,
+  .login-container {
     max-width: 90%;
   }
 
@@ -318,30 +335,47 @@ export default {
 }
 
 @media (max-width: 500px) {
-  .login-container {
+  .cadastro-form-container {
     padding: 30px 20px;
   }
 
-  .login-title {
+  .cadastro-title {
     font-size: 20px;
   }
 
-  .login-subtitle {
+  .cadastro-subtitle {
     font-size: 12px;
   }
 
-  .btn-login,
-  .btn-cadastro {
+  .btn-cadastrar,
+  .btn-entrar {
     font-size: 14px;
     padding: 10px 0;
   }
 
-  .cadastro-container {
+  .login-container {
     padding: 15px 20px;
   }
 
   .form-scroll {
     max-height: 250px;
+  }
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1600px) {
+  .logo-image {
+    max-width: 70%;
+    max-height: 70%;
+  }
+  
+  .cadastro-form-container,
+  .login-container {
+    max-width: 450px;
+  }
+  
+  .form-scroll {
+    max-height: 450px;
   }
 }
 </style>
