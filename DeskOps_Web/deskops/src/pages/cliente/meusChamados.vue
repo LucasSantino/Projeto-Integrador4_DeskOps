@@ -1,13 +1,505 @@
 <template>
-  <div>
-    <h1>Meus Chamados</h1>
+  <div class="meus-chamados-page" @click="closeProfileMenu">
+    <!-- Sidebar do Cliente -->
+    <aside class="sidebar">
+      <!-- Logo -->
+      <div class="sidebar-logo">
+        <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
+      </div>
+
+      <!-- Links de navegação -->
+      <nav class="sidebar-nav">
+        <router-link to="/cliente/meus-chamados" class="nav-link" active-class="active">
+          <span class="material-icons">list</span>
+          Meus Chamados
+        </router-link>
+        <router-link to="/cliente/novo-chamado" class="nav-link" active-class="active">
+          <span class="material-icons">add</span>
+          Novo Chamado
+        </router-link>
+      </nav>
+
+      <!-- Perfil com dropdown lateral -->
+      <div class="profile-container" ref="profileContainer" @click.stop>
+        <div class="sidebar-profile" @click="toggleProfileMenu">
+          <div class="profile-image">👤</div>
+          <div class="profile-info">
+            <p class="profile-name">Lucas Santino</p>
+            <p class="profile-email">lucas@email.com</p>
+          </div>
+        </div>
+
+        <!-- Dropdown à direita com transição -->
+        <transition name="slide-right">
+          <div v-if="profileMenuOpen" class="profile-dropdown-right">
+            <div class="dropdown-item" @click="goToPerfil">
+              <span class="material-icons">person</span>
+              Perfil
+            </div>
+            <div class="dropdown-item" @click="goToLogin">
+              <span class="material-icons">logout</span>
+              Sair
+            </div>
+          </div>
+        </transition>
+      </div>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+      <h1 class="page-title">Meus Chamados</h1>
+
+      <!-- Filtros -->
+      <div class="filters">
+        <select v-model="filtroStatus" class="filter-select">
+          <option value="todos">Todos</option>
+          <option value="concluido">Concluído</option>
+          <option value="aberto">Aberto</option>
+          <option value="aguardando">Aguardando</option>
+          <option value="andamento">Em Andamento</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+
+        <input
+          type="text"
+          v-model="pesquisa"
+          placeholder="Pesquisar por título ou técnico"
+          class="filter-search"
+        />
+      </div>
+
+      <!-- Tabela de chamados -->
+      <div class="table-container">
+        <table class="chamados-table">
+          <thead>
+            <tr>
+              <th>Atualizado</th>
+              <th>ID</th>
+              <th>Título e Serviço</th>
+              <th>Técnico</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="chamado in filtrados"
+              :key="chamado.id"
+              @click="goToChamadoDetalhado(chamado.id)"
+              class="clickable-row"
+            >
+              <td>{{ chamado.atualizado }}</td>
+              <td>{{ chamado.id }}</td>
+              <td>{{ chamado.titulo }}</td>
+              <td>
+                <div class="tecnico-info">
+                  <p>{{ chamado.tecnico }}</p>
+                  <p class="tecnico-email">{{ chamado.email || chamado.tecnico.toLowerCase() + '@email.com' }}</p>
+                </div>
+              </td>
+              <td>
+                <span :class="['status', statusClass(chamado.status)]">
+                  <span class="material-icons status-icon" :style="{ color: statusIconColor(chamado.status) }">
+                    {{ statusIcon(chamado.status) }}
+                  </span>
+                  {{ chamado.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
   </div>
 </template>
 
 <script lang="ts">
-export default {
-  name: 'MeusChamados',
+import { defineComponent, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+interface Chamado {
+  id: number
+  atualizado: string
+  titulo: string
+  tecnico: string
+  email?: string
+  status: string
 }
+
+export default defineComponent({
+  name: 'MeusChamados',
+  setup() {
+    const router = useRouter()
+    const filtroStatus = ref('todos')
+    const pesquisa = ref('')
+    const profileMenuOpen = ref(false)
+
+    const toggleProfileMenu = () => {
+      profileMenuOpen.value = !profileMenuOpen.value
+    }
+
+    const closeProfileMenu = () => {
+      profileMenuOpen.value = false
+    }
+
+    const goToPerfil = () => {
+      router.push('/cliente/perfil')
+      closeProfileMenu()
+    }
+
+    const goToLogin = () => {
+      router.push('/')
+      closeProfileMenu()
+    }
+
+    const goToChamadoDetalhado = (id: number) => {
+      router.push({ path: '/cliente/chamado-detalhado', query: { id: id.toString() } })
+    }
+
+    const chamados = ref<Chamado[]>([
+      { id: 101, atualizado: '11/10/2025 10:30', titulo: 'Troca de cabo', tecnico: 'João', email:'joao@email.com', status: 'Aberto' },
+      { id: 102, atualizado: '10/10/2025 14:20', titulo: 'Atualização sistema', tecnico: 'Maria', email:'maria@email.com', status: 'Concluído' },
+      { id: 103, atualizado: '09/10/2025 09:50', titulo: 'Manutenção impressora', tecnico: 'Pedro', email:'pedro@email.com', status: 'Em Andamento' },
+      { id: 104, atualizado: '08/10/2025 11:10', titulo: 'Configuração rede', tecnico: 'Ana', email:'ana@email.com', status: 'Aguardando' },
+      { id: 105, atualizado: '07/10/2025 16:00', titulo: 'Backup servidor', tecnico: 'Lucas', email:'lucas@email.com', status: 'Cancelado' },
+    ])
+
+    const filtrados = computed(() => {
+      return chamados.value.filter((c) => {
+        const matchStatus = filtroStatus.value === 'todos' || c.status.toLowerCase() === filtroStatus.value.toLowerCase()
+        const matchPesquisa =
+          c.titulo.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
+          c.tecnico.toLowerCase().includes(pesquisa.value.toLowerCase())
+        return matchStatus && matchPesquisa
+      })
+    })
+
+    const statusClass = (status: string) => {
+      switch (status.toLowerCase()) {
+        case 'concluído': return 'status-concluido'
+        case 'aberto': return 'status-aberto'
+        case 'aguardando': return 'status-aguardando'
+        case 'em andamento': return 'status-andamento'
+        case 'cancelado': return 'status-cancelado'
+        default: return ''
+      }
+    }
+
+    const statusIcon = (status: string) => {
+      switch (status.toLowerCase()) {
+        case 'concluído': return 'check_circle'
+        case 'aberto': return 'circle'
+        case 'aguardando': return 'hourglass_top'
+        case 'em andamento': return 'autorenew'
+        case 'cancelado': return 'cancel'
+        default: return ''
+      }
+    }
+
+    const statusIconColor = (status: string) => {
+      switch (status.toLowerCase()) {
+        case 'concluído': return '#065f46'
+        case 'aberto': return '#0f5132'
+        case 'aguardando': return '#856404'
+        case 'em andamento': return '#084298'
+        case 'cancelado': return '#842029'
+        default: return '#000'
+      }
+    }
+
+    return { filtroStatus, pesquisa, filtrados, statusClass, statusIcon, statusIconColor, profileMenuOpen, toggleProfileMenu, closeProfileMenu, goToPerfil, goToLogin, goToChamadoDetalhado }
+  },
+})
 </script>
 
-<style scoped></style>
+<style scoped>
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Container principal */
+.meus-chamados-page {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 20px 10px;
+}
+
+/* Logo */
+.sidebar-logo {
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.logo-image {
+  width: 250px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+
+/* Navegação */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background-color: #1a1a1a;
+}
+
+.material-icons {
+  font-size: 20px;
+  color: #fff;
+}
+
+/* Perfil */
+.profile-container {
+  position: relative;
+  margin-top: 520px;
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.profile-image {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.profile-name {
+  font-weight: bold;
+}
+
+.profile-email {
+  color: #ccc;
+}
+
+/* Dropdown lateral com animação */
+.profile-dropdown-right {
+  position: absolute;
+  top: 0;
+  left: 260px;
+  background-color: #1a1a1a;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #333;
+}
+
+/* Transição do dropdown */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.slide-right-enter-to,
+.slide-right-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Conteúdo principal */
+.main-content {
+  flex: 1;
+  background-color: #fff;
+  padding: 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Página título e filtros */
+.page-title {
+  color: indigo;
+  font-size: 28px;
+  font-weight: bold;
+  margin: 32px 0 24px 0;
+  align-self: flex-start;
+  padding-left: 90px;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 90%;
+  background-color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+  border: 1px solid #ccc;
+}
+
+.filter-select,
+.filter-search {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #fff;
+  color: #000;
+}
+
+.filter-search {
+  flex: 1;
+}
+
+/* Tabela */
+.table-container {
+  overflow-x: auto;
+  width: 90%;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
+
+.chamados-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.chamados-table th,
+.chamados-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.chamados-table th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+  color: #000;
+}
+
+.chamados-table td {
+  color: #000;
+}
+
+.chamados-table tr:last-child td {
+  border-bottom: none;
+}
+
+.tecnico-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tecnico-email {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Status com cores e ícones */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  width: fit-content;
+}
+
+.status-icon {
+  font-size: 18px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+}
+
+.status-concluido {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-aberto {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-aguardando {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-andamento {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.status-cancelado {
+  background-color: #f8d7da;
+  color: #842029;
+}
+</style>
