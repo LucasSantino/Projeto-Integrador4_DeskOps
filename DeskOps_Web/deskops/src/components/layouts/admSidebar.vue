@@ -21,10 +21,6 @@
         <span class="material-icons">list_alt</span>
         Gestão de Chamados
       </router-link>
-      <router-link to="/adm/perfil" class="nav-link" active-class="active">
-        <span class="material-icons">person</span>
-        Perfil
-      </router-link>
     </nav>
 
     <!-- Perfil -->
