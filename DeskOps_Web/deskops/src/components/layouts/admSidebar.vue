@@ -28,7 +28,7 @@
       <div class="sidebar-profile" @click="toggleProfileMenu">
         <div class="profile-image">👤</div>
         <div class="profile-info">
-          <p class="profile-name">{{ usuario.nome }}</p>
+          <p class="profile-name">Pedro Guerra</p>
           <p class="profile-email">{{ usuario.email }}</p>
         </div>
       </div>
