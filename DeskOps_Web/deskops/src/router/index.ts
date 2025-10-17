@@ -12,6 +12,7 @@ import Dashboard from '../pages/adm/dashboard.vue'
 import GestaoAmbiente from '../pages/adm/gestaoAmbiente.vue'
 import GestaoChamado from '../pages/adm/gestaoChamado.vue'
 import GestaoUsuarios from '../pages/adm/gestaoUsuarios.vue'
+import novoAmbiente from '../pages/adm/novoAmbiente.vue'
 
 // Cliente Pages
 import ChamadoDetalhado from '../pages/cliente/chamadoDetalhado.vue'
@@ -24,6 +25,7 @@ import PerfilCliente from '../pages/cliente/perfil.vue'
 import ChamadosTecnico from '../pages/tecnico/chamadosTecnico.vue'
 import TecnicoChamaDetalha from '../pages/tecnico/tecnico_chamaDetalha.vue'
 import TecnicoPerfil from '../pages/tecnico/tecnicoPerfil.vue'
+import NovoAmbiente from '../pages/adm/novoAmbiente.vue'
 
 const routes: Array<RouteRecordRaw> = [
   // Login Routes
@@ -36,6 +38,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/adm/gestao-ambiente', name: 'GestaoAmbiente', component: GestaoAmbiente },
   { path: '/adm/gestao-chamado', name: 'GestaoChamado', component: GestaoChamado },
   { path: '/adm/gestao-usuarios', name: 'GestaoUsuarios', component: GestaoUsuarios },
+  {path: '/adm/novo-ambiente', name: 'NovoAmbienteo', component: NovoAmbiente},
 
   // Cliente Routes
   { path: '/cliente/chamado-detalhado', name: 'ChamadoDetalhado', component: ChamadoDetalhado },
