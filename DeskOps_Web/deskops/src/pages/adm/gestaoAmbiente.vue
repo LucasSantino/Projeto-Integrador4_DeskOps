@@ -207,9 +207,7 @@ export default defineComponent({
     })
 
     const cadastrarAmbiente = () => {
-      console.log('Cadastrar novo ambiente')
-      // Aqui você implementaria a lógica para cadastrar um novo ambiente
-      // Por exemplo: router.push('/adm/cadastrar-ambiente')
+      router.push('/adm/novo-ambiente')
     }
 
     const editarAmbiente = (id: number) => {
@@ -468,10 +466,20 @@ html, body, #app {
   font-size: 13px;
   line-height: 1.4;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  /* Limite de 3 linhas compatível */
+  max-height: 4.2em; /* 3 linhas * 1.4 line-height */
   overflow: hidden;
+  position: relative;
+  display: block;
+}
+
+.ambiente-descricao::after {
+  content: '...';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(90deg, transparent 0%, white 20%, white 100%);
+  padding-left: 8px;
 }
 
 .responsavel-info {
