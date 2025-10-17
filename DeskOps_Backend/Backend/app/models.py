@@ -14,6 +14,11 @@ class status_chamado(models.TextChoices):
     CONCLUIDO='CONCLUIDO'
     CANCELADO='CANCELADO'
 
+class prioridade_chamado(models.TextChoices):
+    BAIXA='BAIXA',
+    MEDIA='MEDIA',
+    ALTA='ALTA'
+
 
 class Users(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=150, null=False)
@@ -21,21 +26,15 @@ class Users(AbstractBaseUser, PermissionsMixin):
     cargo = models.CharField(max_length=50, null=False)
     cpf = models.CharField(max_length=11, null=False, blank=False, unique=True)
     dt_nascimento = models.DateField(null=False, blank=False)
-    pais = models.CharField(max_length=150)
-    estado = models.CharField(max_length=150)
-    cidade = models.CharField(max_length=150)
-    bairro = models.CharField(max_length=100, null=False, blank=False)
-    cep = models.CharField(max_length=100, null=False, blank=False)
-    rua = models.CharField(max_length=100, null=False, blank=False)
-    numero = models.CharField(max_length=100, null=False, blank=False)
+    endereco = models.CharField(max_length=255, null=False, blank=False)
     foto_user = models.TextField(null=True, blank=True)
 
 
     is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name', 'cargo', 'cpf', 'dt_nascimento', 'pais', 'estado', 'cidade', 'rua', 'bairro', 'cep', 'numero', 'foto_user']
+    REQUIRED_FIELDS = ['name', 'cargo', 'cpf', 'dt_nascimento', 'endereco', 'foto_user']
 
     objects = CustomUserManager()
 
@@ -73,6 +72,10 @@ class Chamado(models.Model):
         max_length=60,
         choices=status_chamado.choices,
         default=status_chamado.AGUARDANDO_ATENDIMENTO,
+    )
+    prioridade = models.CharField(
+        max_length=60,
+        choices=prioridade_chamado.choices,
     )
     creator = models.ForeignKey(Users, related_name='chamado_usuario_FK', on_delete=models.CASCADE)
     employee = models.ManyToManyField(Users, related_name='chamado_funcionario_FK')

@@ -11,16 +11,14 @@ class AdminUsers(UserAdmin):
         (None, {'fields': ('email', 'password')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions',)}),
         ('User Data', {'fields': ('name', 'cpf', 'cargo', 'dt_nascimento', 'foto_user',)}),
-        ('Adress', {'fields': ('pais', 'estado', 'cidade', 'rua', 'bairro', 'cep',)}),
+        ('Adress', {'fields': ('endereco',)}),
     )
     filter_horizontal = ('groups', 'user_permissions',)
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': ('email','name', 'cpf', 'cargo', 'dt_nascimento', 
-                       'pais', 'estado', 'cidade',
-                       'bairro', 'rua', 'cep',
-                       'numero', 'password1', 'password2'),
+                       'endereco', 'password1', 'password2'),
         }),
     )
     ordering = ['email']
