@@ -82,7 +82,6 @@
               </div>
             </div>
 
-      
             <div class="form-section">
               <h3 class="section-title">Categoria de Serviço</h3>
               <select v-model="categoria" class="form-select">
@@ -91,8 +90,18 @@
               </select>
             </div>
 
-    
+            <!-- Seletor de Prioridade Adicionado -->
             <div class="form-section">
+              <h3 class="section-title">Prioridade</h3>
+              <select v-model="prioridade" class="form-select">
+                <option value="" disabled>Selecione a prioridade</option>
+                <option v-for="prioridadeOption in prioridades" :key="prioridadeOption.value" :value="prioridadeOption.value">
+                  {{ prioridadeOption.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-section file-section">
               <h3 class="section-title">Anexar imagem</h3>
               <div class="file-upload">
                 <label class="file-label">
@@ -123,6 +132,18 @@
               <p class="summary-value">{{ categoria || 'Nenhuma selecionada' }}</p>
             </div>
 
+            <!-- Prioridade no Resumo Adicionada -->
+            <div class="summary-section">
+              <p class="summary-label">Prioridade</p>
+              <p class="summary-value">
+                <span :class="['prioridade-badge', prioridadeClass(prioridade)]" v-if="prioridade">
+                  <span class="material-icons prioridade-icon">{{ prioridadeIcon(prioridade) }}</span>
+                  {{ formatarPrioridade(prioridade) }}
+                </span>
+                <span v-else>Nenhuma selecionada</span>
+              </p>
+            </div>
+
             <div class="summary-section">
               <p class="summary-label">Imagem</p>
               <p class="summary-value">Nenhuma imagem selecionada</p>
@@ -150,9 +171,15 @@ export default defineComponent({
     const titulo = ref('')
     const descricao = ref('')
     const categoria = ref('')
+    const prioridade = ref('') // Adicionado campo de prioridade
     const imagemURL = ref<string | null>(null)
     const profileMenuOpen = ref(false)
     const categorias = ref(['Manutenção', 'Suporte', 'Instalação', 'Rede', 'Software', 'Hardware'])
+    const prioridades = ref([ // Adicionadas opções de prioridade
+      { value: 'alta', label: 'Alta' },
+      { value: 'media', label: 'Média' },
+      { value: 'baixa', label: 'Baixa' }
+    ])
     const maxDescricaoChars = 2830
 
     const descricaoLimitada = computed(() => {
@@ -185,6 +212,7 @@ export default defineComponent({
         titulo: titulo.value,
         descricao: descricao.value,
         categoria: categoria.value,
+        prioridade: prioridade.value, // Adicionado prioridade
         imagemURL: imagemURL.value,
       })
       alert('Chamado enviado com sucesso!')
@@ -192,6 +220,7 @@ export default defineComponent({
       titulo.value = ''
       descricao.value = ''
       categoria.value = ''
+      prioridade.value = '' // Limpar prioridade
       imagemURL.value = null
       // Redirecionar para meus chamados
       router.push('/cliente/meus-chamados')
@@ -206,12 +235,42 @@ export default defineComponent({
       }
     }
 
+    // Funções para prioridade
+    const prioridadeClass = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'prioridade-alta'
+        case 'media': return 'prioridade-media'
+        case 'baixa': return 'prioridade-baixa'
+        default: return ''
+      }
+    }
+
+    const prioridadeIcon = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'arrow_upward'
+        case 'media': return 'remove'
+        case 'baixa': return 'arrow_downward'
+        default: return ''
+      }
+    }
+
+    const formatarPrioridade = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'Alta'
+        case 'media': return 'Média'
+        case 'baixa': return 'Baixa'
+        default: return prioridade
+      }
+    }
+
     return {
       titulo,
       descricao,
       categoria,
+      prioridade,
       imagemURL,
       categorias,
+      prioridades,
       profileMenuOpen,
       toggleProfileMenu,
       closeProfileMenu,
@@ -221,6 +280,9 @@ export default defineComponent({
       onFileChange,
       descricaoLimitada,
       maxDescricaoChars,
+      prioridadeClass,
+      prioridadeIcon,
+      formatarPrioridade,
     }
   },
 })
@@ -316,7 +378,8 @@ html, body, #app {
   background-color: #1a1a1a;
 }
 
-.material-icons {
+/* CORREÇÃO: Material-icons apenas na sidebar devem ser brancos */
+.sidebar .material-icons {
   font-size: 20px;
   color: #fff;
 }
@@ -454,12 +517,18 @@ html, body, #app {
   padding: 0 40px;
 }
 
+/* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
+.main-content .material-icons {
+  color: inherit;
+  font-size: inherit;
+}
+
 /* Título da página */
 .page-title {
   color: indigo;
   font-size: 28px;
   font-weight: bold;
-  padding: 50px 0 25px 0;
+  padding: 40px 0 20px 0; /* REDUZIDO: 50px->40px, 25px->20px */
   margin: 0;
   width: 100%;
   text-align: left;
@@ -470,7 +539,9 @@ html, body, #app {
   display: flex;
   gap: 30px;
   width: 100%;
-  margin-bottom: 40px;
+  margin-bottom: 30px; /* REDUZIDO de 40px para 30px */
+  max-height: calc(100vh - 180px); /* ADICIONADO para limitar altura */
+  overflow: hidden;
 }
 
 /* Card do Formulário - ESTILO IDÊNTICO À PÁGINA DE EDIÇÃO */
@@ -483,11 +554,12 @@ html, body, #app {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  min-height: 650px;
+  max-height: 100%; /* ADICIONADO para limitar altura */
+  overflow-y: auto; /* ADICIONADO para scroll interno */
 }
 
 .card-header {
-  padding: 24px;
+  padding: 20px 24px; /* REDUZIDO de 24px para 20px */
 }
 
 .card-title {
@@ -507,14 +579,14 @@ html, body, #app {
 
 /* Seções do Formulário */
 .form-section {
-  padding: 20px 24px;
+  padding: 16px 24px; /* REDUZIDO de 20px para 16px */
 }
 
 .section-title {
   color: #000;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 10px; /* REDUZIDO de 12px para 10px */
   text-align: left;
 }
 
@@ -541,7 +613,8 @@ html, body, #app {
 
 .form-textarea {
   resize: vertical;
-  min-height: 180px;
+  min-height: 100px; /* REDUZIDO de 180px para 100px */
+  max-height: 150px; /* ADICIONADO para limitar altura máxima */
   font-family: inherit;
 }
 
@@ -559,14 +632,7 @@ html, body, #app {
   font-size: 12px;
   color: #666;
   text-align: right;
-  margin-top: 8px;
-}
-
-/* Divisor - APENAS UM MANTIDO ENTRE DESCRIÇÃO E CATEGORIA */
-.divider {
-  height: 1px;
-  background-color: #e0e0e0;
-  margin: 0;
+  margin-top: 6px; /* REDUZIDO de 8px para 6px */
 }
 
 /* SEÇÃO DE IMAGEM SEM UNDERLINE (REMOVIDA) */
@@ -618,7 +684,7 @@ html, body, #app {
 .card-summary {
   flex: 1;
   background-color: #fff;
-  padding: 24px;
+  padding: 20px; /* REDUZIDO de 24px para 20px */
   border: 1px solid #d0d0d0;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -626,25 +692,25 @@ html, body, #app {
   flex-direction: column;
   height: fit-content;
   min-width: 300px;
-  min-height: 500px;
+  max-height: 100%; /* ADICIONADO para limitar altura */
 }
 
 .summary-title {
   color: #000;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
+  margin-bottom: 16px; /* REDUZIDO de 20px para 16px */
+  padding-bottom: 10px; /* REDUZIDO de 12px para 10px */
   border-bottom: 1px solid #e0e0e0;
   text-align: left;
 }
 
 .summary-section {
-  margin-bottom: 16px;
+  margin-bottom: 14px; /* REDUZIDO de 16px para 14px */
 }
 
 .summary-section:last-of-type {
-  margin-bottom: 24px;
+  margin-bottom: 20px; /* REDUZIDO de 24px para 20px */
 }
 
 .summary-label {
@@ -660,6 +726,40 @@ html, body, #app {
   line-height: 1.4;
   word-break: break-word;
   text-align: left;
+}
+
+/* Badge de Prioridade no Resumo */
+.prioridade-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prioridade-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* CORES DAS PRIORIDADES */
+.prioridade-alta {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.prioridade-media {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.prioridade-baixa {
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 /* Container do Botão Criar */
@@ -711,13 +811,14 @@ html, body, #app {
   
   .cards-container {
     flex-direction: column;
+    max-height: none; /* REMOVIDO em telas menores */
   }
   
   .card-form,
   .card-summary {
     flex: none;
     width: 100%;
-    min-height: auto;
+    max-height: none; /* REMOVIDO em telas menores */
   }
 }
 
@@ -757,16 +858,18 @@ html, body, #app {
   
   .cards-container {
     gap: 20px;
+    max-height: none; /* REMOVIDO em mobile */
   }
   
   .card-form,
   .card-summary {
     padding: 0;
-    min-height: auto;
+    max-height: none; /* REMOVIDO em mobile */
   }
   
   .form-textarea {
     min-height: 120px;
+    max-height: 200px; /* AUMENTADO em mobile */
   }
   
   /* Ajuste do dropdown para mobile */

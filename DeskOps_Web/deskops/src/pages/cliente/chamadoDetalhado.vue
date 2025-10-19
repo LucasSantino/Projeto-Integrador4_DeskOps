@@ -82,6 +82,15 @@
               <p class="info-text">{{ chamado.categoria }}</p>
             </div>
 
+            <!-- Campo de Prioridade Adicionado -->
+            <div class="info-section">
+              <h3>Prioridade</h3>
+              <span :class="['prioridade-badge', prioridadeClass(chamado.prioridade)]">
+                <span class="material-icons prioridade-icon">{{ prioridadeIcon(chamado.prioridade) }}</span>
+                {{ formatarPrioridade(chamado.prioridade) }}
+              </span>
+            </div>
+
             <div class="info-section">
               <h3>Imagem</h3>
               <div v-if="chamado.imagem">
@@ -159,6 +168,7 @@ export default defineComponent({
       categoria: 'Suporte Técnico',
       imagem: '', 
       status: 'Em Andamento',
+      prioridade: 'Alta', // Campo de prioridade adicionado
       criadoEm: '10/10/2025 - 14:22',
       atualizadoEm: '11/10/2025 - 09:10',
       criadoPor: { nome: 'Lucas Santino', email: 'lucas@email.com' },
@@ -189,6 +199,34 @@ export default defineComponent({
       return 'info'
     }
 
+    // Funções para prioridade (adicionadas do código do técnico)
+    const prioridadeClass = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'prioridade-alta'
+        case 'media': return 'prioridade-media'
+        case 'baixa': return 'prioridade-baixa'
+        default: return ''
+      }
+    }
+
+    const prioridadeIcon = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'arrow_upward'
+        case 'media': return 'remove'
+        case 'baixa': return 'arrow_downward'
+        default: return ''
+      }
+    }
+
+    const formatarPrioridade = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'Alta'
+        case 'media': return 'Média'
+        case 'baixa': return 'Baixa'
+        default: return prioridade
+      }
+    }
+
     const encerrarChamado = () => {
       alert('Chamado encerrado com sucesso!')
     }
@@ -203,6 +241,9 @@ export default defineComponent({
       goToLogin,
       statusClass, 
       statusIcon, 
+      prioridadeClass,
+      prioridadeIcon,
+      formatarPrioridade,
       encerrarChamado 
     }
   },
@@ -299,7 +340,8 @@ html, body, #app {
   background-color: #1a1a1a;
 }
 
-.material-icons {
+/* CORREÇÃO: Material-icons apenas na sidebar devem ser brancos */
+.sidebar .material-icons {
   font-size: 20px;
   color: #fff;
 }
@@ -437,6 +479,12 @@ html, body, #app {
   padding: 0 40px;
 }
 
+/* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
+.main-content .material-icons {
+  color: inherit;
+  font-size: inherit;
+}
+
 /* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
 .back-container {
   display: flex;
@@ -557,7 +605,8 @@ html, body, #app {
   font-size: 16px;
 }
 
-.status-badge {
+.status-badge,
+.prioridade-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -568,7 +617,8 @@ html, body, #app {
   white-space: nowrap;
 }
 
-.status-icon {
+.status-icon,
+.prioridade-icon {
   font-size: 16px;
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
@@ -598,6 +648,22 @@ html, body, #app {
 .status-cancelado {
   background-color: #f8d7da;
   color: #842029;
+}
+
+/* CORES DAS PRIORIDADES - ADICIONADAS DO CÓDIGO DO TÉCNICO */
+.prioridade-alta {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.prioridade-media {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.prioridade-baixa {
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .chamado-titulo {

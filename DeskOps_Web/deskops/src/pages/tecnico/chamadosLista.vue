@@ -1,59 +1,17 @@
 <template>
-  <div class="meus-chamados-page" @click="closeProfileMenu">
-    <!-- Sidebar do Cliente -->
-    <aside class="sidebar">
-      <!-- Logo -->
-      <div class="sidebar-logo">
-        <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
-      </div>
+  <div class="chamados-tecnico-page" @click="closeProfileMenu">
+    <!-- Sidebar como componente -->
+    <tecnico-sidebar :usuario="usuario" />
 
-      <!-- Links de navegação -->
-      <nav class="sidebar-nav">
-        <router-link to="/cliente/meus-chamados" class="nav-link" active-class="active">
-          <span class="material-icons">list</span>
-          Meus Chamados
-        </router-link>
-        <router-link to="/cliente/novo-chamado" class="nav-link" active-class="active">
-          <span class="material-icons">add</span>
-          Novo Chamado
-        </router-link>
-      </nav>
-
-      <!-- Perfil com dropdown lateral -->
-      <div class="profile-container" ref="profileContainer" @click.stop>
-        <div class="sidebar-profile" @click="toggleProfileMenu">
-          <div class="profile-image">👤</div>
-          <div class="profile-info">
-            <p class="profile-name">Lucas Santino</p>
-            <p class="profile-email">lucas@email.com</p>
-          </div>
-        </div>
-
-        <!-- Dropdown à direita com transição -->
-        <transition name="slide-right">
-          <div v-if="profileMenuOpen" class="profile-dropdown-right">
-            <div class="dropdown-item" @click="goToPerfil">
-              <span class="material-icons">person</span>
-              Perfil
-            </div>
-            <div class="dropdown-item" @click="goToLogin">
-              <span class="material-icons">logout</span>
-              Sair
-            </div>
-          </div>
-        </transition>
-      </div>
-    </aside>
-
-    <!-- Conteúdo principal -->
+    <!-- Conteúdo principal (mesmo da página meusChamados.vue) -->
     <main class="main-content">
       <div class="content-area">
-        <h1 class="page-title">Meus Chamados</h1>
+        <h1 class="page-title">Lista de Chamados</h1>
 
         <!-- Filtros -->
         <div class="filters">
           <select v-model="filtroStatus" class="filter-select">
-            <option value="todos">Todos</option>
+            <option value="todos">Todos os Status</option>
             <option value="concluido">Concluído</option>
             <option value="aberto">Aberto</option>
             <option value="aguardando">Aguardando</option>
@@ -61,7 +19,6 @@
             <option value="cancelado">Cancelado</option>
           </select>
 
-          <!-- Filtro de Prioridade Adicionado -->
           <select v-model="filtroPrioridade" class="filter-select">
             <option value="todos">Todas as Prioridades</option>
             <option value="alta">Alta</option>
@@ -69,7 +26,6 @@
             <option value="baixa">Baixa</option>
           </select>
 
-          <!-- Filtro de Ordenação Adicionado -->
           <select v-model="ordemExibicao" class="filter-select">
             <option value="recente">Mais recente</option>
             <option value="antigo">Mais antigo</option>
@@ -78,7 +34,7 @@
           <input
             type="text"
             v-model="pesquisa"
-            placeholder="Pesquisar por título ou técnico"
+            placeholder="Pesquisar por título ou cliente"
             class="filter-search"
           />
         </div>
@@ -91,7 +47,7 @@
                 <th class="col-atualizado">Atualizado</th>
                 <th class="col-id">ID</th>
                 <th class="col-titulo">Título e Serviço</th>
-                <th class="col-tecnico">Técnico</th>
+                <th class="col-cliente">Cliente</th>
                 <th class="col-prioridade">Prioridade</th>
                 <th class="col-status">Status</th>
               </tr>
@@ -107,9 +63,9 @@
                 <td>{{ chamado.id }}</td>
                 <td>{{ chamado.titulo }}</td>
                 <td>
-                  <div class="tecnico-info">
-                    <p>{{ chamado.tecnico }}</p>
-                    <p class="tecnico-email">{{ chamado.email || chamado.tecnico.toLowerCase() + '@email.com' }}</p>
+                  <div class="cliente-info">
+                    <p>{{ chamado.cliente }}</p>
+                    <p class="cliente-email">{{ chamado.email || chamado.cliente.toLowerCase() + '@email.com' }}</p>
                   </div>
                 </td>
                 <td>
@@ -140,57 +96,56 @@
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import TecnicoSidebar from '@/components/layouts/tecnicoSidebar.vue'
 
 interface Chamado {
   id: number
   atualizado: string
   titulo: string
-  tecnico: string
+  cliente: string
   email?: string
   status: string
   prioridade: string
 }
 
 export default defineComponent({
-  name: 'MeusChamados',
+  name: 'ChamadosLista',
+  components: {
+    TecnicoSidebar
+  },
   setup() {
     const router = useRouter()
     const filtroStatus = ref('todos')
     const filtroPrioridade = ref('todos')
     const ordemExibicao = ref('recente')
     const pesquisa = ref('')
-    const profileMenuOpen = ref(false)
 
-    const toggleProfileMenu = () => {
-      profileMenuOpen.value = !profileMenuOpen.value
-    }
+    const usuario = ref({
+      nome: 'Técnico Silva',
+      email: 'tecnico@empresa.com',
+      dataNascimento: '15/03/1985',
+      cpf: '987.654.321-00',
+      endereco: 'Av. Técnica, 456, São Paulo, SP',
+      tipoUsuario: 'Técnico',
+      foto: '',
+    })
 
     const closeProfileMenu = () => {
-      profileMenuOpen.value = false
-    }
-
-    const goToPerfil = () => {
-      router.push('/cliente/perfil')
-      closeProfileMenu()
-    }
-
-    const goToLogin = () => {
-      router.push('/')
-      closeProfileMenu()
+      // Esta função será chamada no clique da página para fechar o menu de perfil
     }
 
     const goToChamadoDetalhado = (id: number) => {
-      router.push({ path: '/cliente/chamado-detalhado', query: { id: id.toString() } })
+      router.push({ path: '/tecnico/chamado-detalhado', query: { id: id.toString() } })
     }
 
     const chamados = ref<Chamado[]>([
-      { id: 101, atualizado: '11/10/2025 10:30', titulo: 'Troca de cabo', tecnico: 'João', email:'joao@email.com', status: 'Aberto', prioridade: 'alta' },
-      { id: 102, atualizado: '10/10/2025 14:20', titulo: 'Atualização sistema', tecnico: 'Maria', email:'maria@email.com', status: 'Concluído', prioridade: 'media' },
-      { id: 103, atualizado: '09/10/2025 09:50', titulo: 'Manutenção impressora', tecnico: 'Pedro', email:'pedro@email.com', status: 'Em Andamento', prioridade: 'alta' },
-      { id: 104, atualizado: '08/10/2025 11:10', titulo: 'Configuração rede', tecnico: 'Ana', email:'ana@email.com', status: 'Aguardando', prioridade: 'baixa' },
-      { id: 105, atualizado: '07/10/2025 16:00', titulo: 'Backup servidor', tecnico: 'Lucas', email:'lucas@email.com', status: 'Cancelado', prioridade: 'media' },
-      { id: 106, atualizado: '12/10/2025 08:15', titulo: 'Instalação software', tecnico: 'Carlos', email:'carlos@email.com', status: 'Em Andamento', prioridade: 'alta' },
-      { id: 107, atualizado: '06/10/2025 13:45', titulo: 'Reparo computador', tecnico: 'Fernanda', email:'fernanda@email.com', status: 'Concluído', prioridade: 'baixa' },
+      { id: 101, atualizado: '11/10/2025 10:30', titulo: 'Troca de cabo de rede', cliente: 'Lucas Santino', email:'lucas@email.com', status: 'Aberto', prioridade: 'alta' },
+      { id: 102, atualizado: '10/10/2025 14:20', titulo: 'Atualização sistema operacional', cliente: 'Maria Silva', email:'maria@email.com', status: 'Concluído', prioridade: 'media' },
+      { id: 103, atualizado: '09/10/2025 09:50', titulo: 'Manutenção impressora laser', cliente: 'Pedro Costa', email:'pedro@email.com', status: 'Em Andamento', prioridade: 'alta' },
+      { id: 104, atualizado: '08/10/2025 11:10', titulo: 'Configuração rede Wi-Fi', cliente: 'Ana Oliveira', email:'ana@email.com', status: 'Aguardando', prioridade: 'baixa' },
+      { id: 105, atualizado: '07/10/2025 16:00', titulo: 'Backup servidor arquivos', cliente: 'Carlos Santos', email:'carlos@email.com', status: 'Cancelado', prioridade: 'media' },
+      { id: 106, atualizado: '06/10/2025 13:45', titulo: 'Instalação software antivírus', cliente: 'Fernanda Lima', email:'fernanda@email.com', status: 'Em Andamento', prioridade: 'alta' },
+      { id: 107, atualizado: '05/10/2025 08:20', titulo: 'Troca de HD com defeito', cliente: 'Roberto Alves', email:'roberto@email.com', status: 'Concluído', prioridade: 'baixa' },
     ])
 
     const filtrados = computed(() => {
@@ -199,7 +154,7 @@ export default defineComponent({
         const matchPrioridade = filtroPrioridade.value === 'todos' || c.prioridade.toLowerCase() === filtroPrioridade.value.toLowerCase()
         const matchPesquisa =
           c.titulo.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          c.tecnico.toLowerCase().includes(pesquisa.value.toLowerCase())
+          c.cliente.toLowerCase().includes(pesquisa.value.toLowerCase())
         return matchStatus && matchPrioridade && matchPesquisa
       })
     })
@@ -244,7 +199,6 @@ export default defineComponent({
       }
     }
 
-    // Funções para prioridade
     const prioridadeClass = (prioridade: string) => {
       switch (prioridade.toLowerCase()) {
         case 'alta': return 'prioridade-alta'
@@ -273,6 +227,7 @@ export default defineComponent({
     }
 
     return { 
+      usuario,
       filtroStatus, 
       filtroPrioridade,
       ordemExibicao,
@@ -283,11 +238,7 @@ export default defineComponent({
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
-      profileMenuOpen, 
-      toggleProfileMenu, 
       closeProfileMenu, 
-      goToPerfil, 
-      goToLogin, 
       goToChamadoDetalhado 
     }
   },
@@ -312,7 +263,7 @@ html, body, #app {
 }
 
 /* CONTAINER PRINCIPAL - FULLSCREEN */
-.meus-chamados-page {
+.chamados-tecnico-page {
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -325,179 +276,6 @@ html, body, #app {
   left: 0;
   right: 0;
   bottom: 0;
-}
-
-/* SIDEBAR - FIXA E FULL HEIGHT */
-.sidebar {
-  width: 250px;
-  background-color: #000;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 10px;
-  flex-shrink: 0;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-/* Logo - DIMENSÕES AUMENTADAS */
-.sidebar-logo {
-  text-align: left;
-  margin-bottom: 30px;
-  padding: 0 10px;
-}
-
-.logo-image {
-  width: 100%;
-  max-width: 280px;
-  height: 150px;
-  object-fit: contain;
-}
-
-/* Navegação */
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.nav-link {
-  color: #fff;
-  text-decoration: none;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 15px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.nav-link:hover,
-.nav-link.active {
-  background-color: #1a1a1a;
-}
-
-/* CORREÇÃO: Material-icons apenas na sidebar devem ser brancos */
-.sidebar .material-icons {
-  font-size: 20px;
-  color: #fff;
-}
-
-/* Perfil */
-.profile-container {
-  position: relative;
-  margin-top: auto;
-  padding: 20px 10px 0 10px;
-  overflow: visible;
-}
-
-.sidebar-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 12px 15px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.sidebar-profile:hover {
-  background-color: #1a1a1a;
-}
-
-.profile-image {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  min-width: 0;
-}
-
-.profile-name {
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-email {
-  color: #ccc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO COMO NA IMAGEM */
-.profile-dropdown-right {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  z-index: 1001;
-  margin-bottom: 10px;
-  border: 1px solid #333;
-  min-width: 200px;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-  border-bottom: 1px solid #333;
-  font-size: 14px;
-}
-
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item:hover {
-  background-color: #333;
-}
-
-.dropdown-item .material-icons {
-  font-size: 18px;
-  color: #fff;
-}
-
-/* Transição do dropdown - CORRIGIDA */
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.3s ease;
-}
-.slide-right-enter-from,
-.slide-right-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 
 /* CONTEÚDO PRINCIPAL - ALTURA OTIMIZADA */
@@ -521,12 +299,6 @@ html, body, #app {
   min-height: 100vh;
   overflow: hidden;
   padding: 0 40px;
-}
-
-/* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
-.main-content .material-icons {
-  color: inherit;
-  font-size: inherit;
 }
 
 /* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
@@ -655,8 +427,8 @@ html, body, #app {
   min-width: 180px;
 }
 
-.col-tecnico {
-  width: 20%;
+.col-cliente {
+  width: 22%;
   min-width: 160px;
 }
 
@@ -670,12 +442,12 @@ html, body, #app {
   min-width: 120px;
 }
 
-.tecnico-info {
+.cliente-info {
   display: flex;
   flex-direction: column;
 }
 
-.tecnico-email {
+.cliente-email {
   font-size: 12px;
   color: #666;
   margin-top: 2px;
@@ -701,7 +473,7 @@ html, body, #app {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
-/* CORES DOS STATUS CORRIGIDAS - IGUAL À IMAGEM */
+/* CORES DOS STATUS - IGUAL À IMAGEM */
 .status-concluido {
   background-color: #d1fae5;
   color: #065f46;
@@ -775,10 +547,6 @@ html, body, #app {
 
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
-  
   .main-content {
     margin-left: 220px;
     width: calc(100vw - 220px);
@@ -786,11 +554,6 @@ html, body, #app {
   
   .content-area {
     padding: 0 30px;
-  }
-  
-  .logo-image {
-    max-width: 240px;
-    height: 130px;
   }
   
   .page-title {
@@ -824,14 +587,8 @@ html, body, #app {
 }
 
 @media (max-width: 768px) {
-  .meus-chamados-page {
+  .chamados-tecnico-page {
     flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
   }
   
   .main-content {
@@ -852,24 +609,9 @@ html, body, #app {
     padding: 30px 0 15px 0;
   }
   
-  .logo-image {
-    max-width: 220px;
-    height: 110px;
-  }
-  
   .table-container {
     max-height: none;
     min-height: 300px;
-  }
-  
-  /* Ajuste do dropdown para mobile */
-  .profile-dropdown-right {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 0;
-    min-width: 200px;
   }
 }
 
@@ -877,11 +619,6 @@ html, body, #app {
 @media (min-width: 1600px) {
   .content-area {
     max-width: 1400px;
-  }
-  
-  .logo-image {
-    max-width: 300px;
-    height: 160px;
   }
 }
 </style>

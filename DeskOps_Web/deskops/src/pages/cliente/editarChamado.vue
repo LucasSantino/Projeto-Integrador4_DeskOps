@@ -96,6 +96,17 @@
               </select>
             </div>
 
+            <!-- Seletor de Prioridade Adicionado -->
+            <div class="form-section">
+              <h3 class="section-title">Prioridade</h3>
+              <select v-model="prioridade" class="form-select">
+                <option value="" disabled>Selecione a prioridade</option>
+                <option v-for="prioridadeOption in prioridades" :key="prioridadeOption.value" :value="prioridadeOption.value">
+                  {{ prioridadeOption.label }}
+                </option>
+              </select>
+            </div>
+
             <div class="form-section file-section">
               <h3 class="section-title">Anexar imagem</h3>
               <div class="file-upload">
@@ -125,6 +136,18 @@
             <div class="summary-section">
               <p class="summary-label">Categoria do Serviço</p>
               <p class="summary-value">{{ categoria || 'Nenhuma selecionada' }}</p>
+            </div>
+
+            <!-- Prioridade no Resumo Adicionada -->
+            <div class="summary-section">
+              <p class="summary-label">Prioridade</p>
+              <p class="summary-value">
+                <span :class="['prioridade-badge', prioridadeClass(prioridade)]" v-if="prioridade">
+                  <span class="material-icons prioridade-icon">{{ prioridadeIcon(prioridade) }}</span>
+                  {{ formatarPrioridade(prioridade) }}
+                </span>
+                <span v-else>Nenhuma selecionada</span>
+              </p>
             </div>
 
             <div class="summary-section">
@@ -157,10 +180,16 @@ export default defineComponent({
       'Usuário relata que ao tentar acessar o painel, uma tela de erro 500 é exibida. Foi realizado teste em diferentes navegadores e o problema persiste.'
     )
     const categoria = ref('Suporte')
+    const prioridade = ref('media') // Valor padrão para prioridade
     const imagemURL = ref<string | null>(null)
 
     const profileMenuOpen = ref(false)
     const categorias = ref(['Manutenção', 'Suporte', 'Instalação', 'Rede', 'Software', 'Hardware'])
+    const prioridades = ref([
+      { value: 'alta', label: 'Alta' },
+      { value: 'media', label: 'Média' },
+      { value: 'baixa', label: 'Baixa' }
+    ])
     const maxDescricaoChars = 2830
 
     const toggleProfileMenu = () => {
@@ -186,6 +215,7 @@ export default defineComponent({
         titulo: titulo.value,
         descricao: descricao.value,
         categoria: categoria.value,
+        prioridade: prioridade.value,
         imagemURL: imagemURL.value,
       })
       alert('Chamado atualizado com sucesso!')
@@ -201,12 +231,42 @@ export default defineComponent({
       }
     }
 
+    // Funções para prioridade
+    const prioridadeClass = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'prioridade-alta'
+        case 'media': return 'prioridade-media'
+        case 'baixa': return 'prioridade-baixa'
+        default: return ''
+      }
+    }
+
+    const prioridadeIcon = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'arrow_upward'
+        case 'media': return 'remove'
+        case 'baixa': return 'arrow_downward'
+        default: return ''
+      }
+    }
+
+    const formatarPrioridade = (prioridade: string) => {
+      switch (prioridade.toLowerCase()) {
+        case 'alta': return 'Alta'
+        case 'media': return 'Média'
+        case 'baixa': return 'Baixa'
+        default: return prioridade
+      }
+    }
+
     return {
       titulo,
       descricao,
       categoria,
+      prioridade,
       imagemURL,
       categorias,
+      prioridades,
       profileMenuOpen,
       toggleProfileMenu,
       closeProfileMenu,
@@ -215,6 +275,9 @@ export default defineComponent({
       salvarChamado,
       onFileChange,
       maxDescricaoChars,
+      prioridadeClass,
+      prioridadeIcon,
+      formatarPrioridade,
     }
   },
 })
@@ -310,7 +373,8 @@ html, body, #app {
   background-color: #1a1a1a;
 }
 
-.material-icons {
+/* CORREÇÃO: Material-icons apenas na sidebar devem ser brancos */
+.sidebar .material-icons {
   font-size: 20px;
   color: #fff;
 }
@@ -448,13 +512,19 @@ html, body, #app {
   padding: 0 40px;
 }
 
+/* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
+.main-content .material-icons {
+  color: inherit;
+  font-size: inherit;
+}
+
 /* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
 .back-container {
   display: flex;
   align-items: center;
   cursor: pointer;
   color: #000;
-  padding: 50px 0 0 0;
+  padding: 40px 0 0 0; /* REDUZIDO de 50px para 40px */
   margin-bottom: 10px;
   width: 100%;
 }
@@ -483,7 +553,7 @@ html, body, #app {
   color: indigo;
   font-size: 28px;
   font-weight: bold;
-  margin: 0 0 30px 0;
+  margin: 0 0 25px 0; /* REDUZIDO de 30px para 25px */
   width: 100%;
   text-align: left;
 }
@@ -493,7 +563,9 @@ html, body, #app {
   display: flex;
   gap: 30px;
   width: 100%;
-  margin-bottom: 40px;
+  margin-bottom: 30px; /* REDUZIDO de 40px para 30px */
+  max-height: calc(100vh - 200px); /* ADICIONADO para limitar altura máxima */
+  overflow: hidden;
 }
 
 /* Card do Formulário - ESTILO EXATO DA IMAGEM */
@@ -506,12 +578,13 @@ html, body, #app {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  max-height: 100%; /* ADICIONADO para limitar altura */
+  overflow-y: auto; /* ADICIONADO para scroll interno se necessário */
 }
 
 /* REMOVIDA A UNDERLINE DO CARD HEADER */
 .card-header {
-  padding: 24px;
-  /* border-bottom: 1px solid #e0e0e0; REMOVIDO */
+  padding: 20px 24px; /* REDUZIDO padding vertical de 24px para 20px */
 }
 
 .card-title {
@@ -531,19 +604,19 @@ html, body, #app {
 
 /* Seções do Formulário - ESTILO EXATO DA IMAGEM */
 .form-section {
-  padding: 20px 24px;
+  padding: 16px 24px; /* REDUZIDO de 20px para 16px */
 }
 
-/* AUMENTADA A ALTURA DO TEXTAREA */
+/* REDUZIDA A ALTURA DO TEXTAREA */
 .form-textarea {
-  min-height: 150px; /* AUMENTADO DE 120px PARA 150px */
+  min-height: 100px; /* REDUZIDO de 150px para 100px */
 }
 
 .section-title {
   color: #000;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 10px; /* REDUZIDO de 12px para 10px */
   text-align: left;
 }
 
@@ -571,6 +644,7 @@ html, body, #app {
 .form-textarea {
   resize: vertical;
   font-family: inherit;
+  max-height: 200px; /* ADICIONADO para limitar altura máxima */
 }
 
 .form-select {
@@ -587,13 +661,13 @@ html, body, #app {
   font-size: 12px;
   color: #666;
   text-align: right;
-  margin-top: 8px;
+  margin-top: 6px; /* REDUZIDO de 8px para 6px */
 }
 
 /* ADICIONADA UNDERLINE NA SEÇÃO DE IMAGEM */
 .file-section {
-  border-bottom: 1px solid #e0e0e0; /* ADICIONADO */
-  padding-bottom: 20px; /* ADICIONADO para espaçamento */
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px; /* REDUZIDO de 20px para 16px */
 }
 
 /* Upload de Arquivo - ESTILO EXATO DA IMAGEM */
@@ -640,7 +714,7 @@ html, body, #app {
 .card-summary {
   flex: 1;
   background-color: #fff;
-  padding: 24px;
+  padding: 20px; /* REDUZIDO de 24px para 20px */
   border: 1px solid #d0d0d0;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -648,24 +722,25 @@ html, body, #app {
   flex-direction: column;
   height: fit-content;
   min-width: 300px;
+  max-height: 100%; /* ADICIONADO para limitar altura */
 }
 
 .summary-title {
   color: #000;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
+  margin-bottom: 16px; /* REDUZIDO de 20px para 16px */
+  padding-bottom: 10px; /* REDUZIDO de 12px para 10px */
   border-bottom: 1px solid #e0e0e0;
   text-align: left;
 }
 
 .summary-section {
-  margin-bottom: 16px;
+  margin-bottom: 14px; /* REDUZIDO de 16px para 14px */
 }
 
 .summary-section:last-of-type {
-  margin-bottom: 24px;
+  margin-bottom: 20px; /* REDUZIDO de 24px para 20px */
 }
 
 .summary-label {
@@ -683,17 +758,51 @@ html, body, #app {
   text-align: left;
 }
 
+/* Badge de Prioridade no Resumo */
+.prioridade-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prioridade-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* CORES DAS PRIORIDADES */
+.prioridade-alta {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.prioridade-media {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.prioridade-baixa {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
 /* Container do Botão Salvar - MAIOR E CENTRALIZADO */
 .save-btn-container {
   display: flex;
   justify-content: center;
   width: 100%;
   margin-top: auto;
-  padding: 0 10px; /* ADICIONADO para não encostar nas bordas */
+  padding: 0 10px;
 }
 
 .save-btn {
-  padding: 12px 60px; /* AUMENTADO de 40px para 60px */
+  padding: 12px 60px;
   border: none;
   background-color: #000;
   color: #fff;
@@ -702,8 +811,8 @@ html, body, #app {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
-  width: 100%; /* AGORA OCUPA 100% DO CONTAINER */
-  max-width: 280px; /* LARGURA MÁXIMA AUMENTADA */
+  width: 100%;
+  max-width: 280px;
 }
 
 .save-btn:hover {
@@ -732,12 +841,14 @@ html, body, #app {
   
   .cards-container {
     flex-direction: column;
+    max-height: none; /* REMOVIDO em telas menores */
   }
   
   .card-form,
   .card-summary {
     flex: none;
     width: 100%;
+    max-height: none; /* REMOVIDO em telas menores */
   }
   
   .card-summary {
