@@ -1,13 +1,331 @@
 <template>
-  <div>
-    <h1>Perfil do Admin</h1>
+  <div class="perfil-page" @click="closeProfileMenu">
+    <!-- Sidebar do Admin -->
+    <adm-sidebar :usuario="usuario" />
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+      <div class="content-area">
+        <!-- Botão Voltar -->
+        <div class="back-container" @click="$router.push('/adm/dashboard')">
+          <span class="material-icons back-icon">arrow_back</span>
+          <span class="back-text">Voltar</span>
+        </div>
+
+        <!-- Título -->
+        <h1 class="page-title">Perfil do Administrador</h1>
+
+        <div class="cards-container">
+          <!-- Card do Perfil -->
+          <div class="card-form">
+            <div class="perfil-header">
+              <img :src="usuario.foto || defaultFoto" alt="Foto do administrador" class="perfil-foto" />
+              <h2 class="perfil-nome">{{ usuario.nome }}</h2>
+            </div>
+
+            <div class="info-section">
+              <h3>Email</h3>
+              <p class="info-text">{{ usuario.email }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Data de Nascimento</h3>
+              <p class="info-text">{{ usuario.dataNascimento }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>CPF</h3>
+              <p class="info-text">{{ usuario.cpf }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Endereço</h3>
+              <p class="info-text">{{ usuario.endereco }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Tipo de Usuário</h3>
+              <p class="info-text">{{ usuario.tipoUsuario }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Data de Contratação</h3>
+              <p class="info-text">{{ usuario.dataContratacao }}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Senha</h3>
+              <p class="info-text">********</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script lang="ts">
-export default {
+import { defineComponent, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AdmSidebar from '@/components/layouts/admSidebar.vue'
+
+export default defineComponent({
   name: 'AdmPerfil',
-}
+  components: {
+    AdmSidebar
+  },
+  setup() {
+    const router = useRouter()
+
+    const usuario = ref({
+      nome: 'Administrador',
+      email: 'admin@deskops.com',
+      dataNascimento: '10/05/1980',
+      cpf: '111.222.333-44',
+      endereco: 'Av. Principal, 1000, São Paulo, SP',
+      tipoUsuario: 'Administrador',
+      dataContratacao: '01/01/2020',
+      foto: '', 
+    })
+
+    // Para desenvolvimento, usando um placeholder
+    const defaultFoto = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNDAiIHI9IjIwIiBmaWxsPSIjOEREQ0RGIi8+CjxyZWN0IHg9IjI1IiB5PSI2NSIgd2lkdGg9IjUwIiBoZWlnaHQ9IjM1IiBmaWxsPSIjOEREQ0RGIi8+Cjwvc3ZnPgo='
+
+    const closeProfileMenu = () => {
+      // Esta função será chamada no clique da página para fechar o menu de perfil
+    }
+
+    return {
+      usuario,
+      defaultFoto,
+      closeProfileMenu
+    }
+  },
+})
 </script>
 
-<style scoped></style>
+<style scoped>
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* RESET COMPLETO E FULLSCREEN */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* CONTAINER PRINCIPAL - FULLSCREEN */
+.perfil-page {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN */
+.main-content {
+  flex: 1;
+  background-color: #fff;
+  margin-left: 250px;
+  width: calc(100vw - 250px);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  height: auto;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 0 40px;
+}
+
+/* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
+.back-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #000;
+  padding: 50px 0 0 0;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.back-icon {
+  font-size: 22px;
+  margin-right: 8px;
+  color: #000;
+}
+
+.back-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.back-container:hover {
+  color: #555;
+}
+
+.back-container:hover .back-icon {
+  color: #555;
+}
+
+/* Título da página */
+.page-title {
+  color: indigo;
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0 0 30px 0;
+  width: 100%;
+  text-align: left;
+}
+
+/* Container dos Cards - CENTRALIZADO */
+.cards-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+/* Card do Perfil - ESTILO CONSISTENTE */
+.card-form {
+  width: 480px;
+  background-color: #fff;
+  padding: 30px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Perfil Header */
+.perfil-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 10px;
+  text-align: left;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.perfil-foto {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid indigo;
+}
+
+.perfil-nome {
+  font-size: 22px;
+  font-weight: bold;
+  color: #000;
+  text-align: left;
+}
+
+/* Informações */
+.info-section {
+  text-align: left;
+}
+
+.info-section h3 {
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.info-text {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 220px;
+    width: calc(100vw - 220px);
+  }
+  
+  .content-area {
+    padding: 0 30px;
+  }
+  
+  .card-form {
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
+@media (max-width: 768px) {
+  .perfil-page {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    height: auto;
+    min-height: calc(100vh - 200px);
+  }
+  
+  .content-area {
+    height: auto;
+    padding: 0 20px;
+    min-height: auto;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .perfil-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .perfil-nome {
+    text-align: center;
+  }
+  
+  .card-form {
+    padding: 20px;
+    width: 100%;
+  }
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1600px) {
+  .content-area {
+    max-width: 1400px;
+  }
+}
+</style>

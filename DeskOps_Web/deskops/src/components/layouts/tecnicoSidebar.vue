@@ -5,13 +5,13 @@
     </div>
 
     <nav class="sidebar-nav">
+      <router-link to="/tecnico/chamados-lista" class="nav-link" active-class="active">
+        <span class="material-icons">list </span>
+        Lista de Chamados
+      </router-link>
       <router-link to="/tecnico/chamados" class="nav-link" active-class="active">
         <span class="material-icons">list</span>
         Meus Chamados
-      </router-link>
-      <router-link to="/tecnico/dashboard" class="nav-link" active-class="active">
-        <span class="material-icons">dashboard</span>
-        Dashboard
       </router-link>
     </nav>
 

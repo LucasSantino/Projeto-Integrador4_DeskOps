@@ -1,32 +1,33 @@
 <template>
-  <div class="novo-ambiente-page" @click="closeProfileMenu">
+  <div class="novo-ativo-page" @click="closeProfileMenu">
     <!-- Sidebar do Admin -->
     <adm-sidebar :usuario="usuario" />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
       <div class="content-area">
-         <!-- Botão Voltar -->
-        <div class="back-container" @click="$router.push('/adm/gestao-ambiente')">
+        <!-- Botão Voltar -->
+        <div class="back-container" @click="$router.push('/adm/gestao-ativos')">
           <span class="material-icons back-icon">arrow_back</span>
           <span class="back-text">Voltar</span>
         </div>
-        <h1 class="page-title">Novo Ambiente</h1>
+        <h1 class="page-title">Novo Ativo</h1>
+
         <!-- Cards -->
         <div class="cards-container">
           <!-- Formulário -->
           <div class="card-form">
             <div class="card-header">
-              <h2 class="card-title">Informações do Ambiente</h2>
-              <p class="card-subtitle">Insira as informações abaixo para cadastrar um novo ambiente</p>
+              <h2 class="card-title">Informações do Ativo</h2>
+              <p class="card-subtitle">Insira as informações abaixo para cadastrar um novo ativo</p>
             </div>
 
             <div class="form-section">
-              <h3 class="section-title">Nome do Ambiente</h3>
+              <h3 class="section-title">Nome do Ativo</h3>
               <input
                 type="text"
                 v-model="nome"
-                placeholder="Digite o nome do ambiente"
+                placeholder="Digite o nome do ativo"
                 class="form-input"
                 maxlength="250"
               />
@@ -39,7 +40,7 @@
               <h3 class="section-title">Descrição</h3>
               <textarea
                 v-model="descricao"
-                placeholder="Descreva as características e finalidade do ambiente"
+                placeholder="Descreva as características e finalidade do ativo"
                 :maxlength="maxDescricaoChars"
                 class="form-textarea"
               ></textarea>
@@ -49,13 +50,21 @@
             </div>
 
             <div class="form-section">
-              <h3 class="section-title">Funcionário Responsável</h3>
-              <select v-model="funcionarioResponsavel" class="form-select">
-                <option value="" disabled>Selecione o funcionário responsável</option>
-                <option v-for="funcionario in funcionarios" :key="funcionario.id" :value="funcionario.id">
-                  {{ funcionario.nome }} - {{ funcionario.email }}
+              <h3 class="section-title">Ambiente</h3>
+              <select v-model="ambienteSelecionado" class="form-select">
+                <option value="" disabled>Selecione o ambiente</option>
+                <option v-for="ambiente in ambientes" :key="ambiente.id" :value="ambiente.id">
+                  {{ ambiente.nome }} - {{ ambiente.localizacao }}
                 </option>
-                <option value="">Nenhum responsável</option>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <h3 class="section-title">Status</h3>
+              <select v-model="status" class="form-select">
+                <option value="" disabled>Selecione o status</option>
+                <option value="ativo">Ativo</option>
+                <option value="manutencao">Em Manutenção</option>
               </select>
             </div>
           </div>
@@ -65,7 +74,7 @@
             <h2 class="summary-title">Resumo</h2>
             
             <div class="summary-section">
-              <p class="summary-label">Nome do Ambiente</p>
+              <p class="summary-label">Nome do Ativo</p>
               <p class="summary-value">{{ nome || 'Nenhum nome informado' }}</p>
             </div>
 
@@ -75,12 +84,21 @@
             </div>
 
             <div class="summary-section">
-              <p class="summary-label">Funcionário Responsável</p>
-              <p class="summary-value">{{ funcionarioResponsavelNome || 'Nenhum responsável' }}</p>
+              <p class="summary-label">Ambiente</p>
+              <p class="summary-value">{{ ambienteNome || 'Nenhum ambiente selecionado' }}</p>
+            </div>
+
+            <div class="summary-section">
+              <p class="summary-label">Status</p>
+              <p class="summary-value">{{ statusFormatado || 'Nenhum status selecionado' }}</p>
+            </div>
+            <div class="summary-section">
+              <p class="summary-label">Qrcode</p>
+              <p class="summary-value">Gerado na pagina Gestao Ativos</p>
             </div>
 
             <div class="create-btn-container">
-              <button class="create-btn" @click="submitAmbiente">Cadastrar Ambiente</button>
+              <button class="create-btn" @click="submitAtivo">Cadastrar Ativo</button>
             </div>
           </div>
         </div>
@@ -94,14 +112,14 @@ import { defineComponent, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
 
-interface Funcionario {
+interface Ambiente {
   id: number
   nome: string
-  email: string
+  localizacao: string
 }
 
 export default defineComponent({
-  name: 'NovoAmbiente',
+  name: 'NovoAtivo',
   components: {
     AdmSidebar
   },
@@ -110,7 +128,8 @@ export default defineComponent({
     
     const nome = ref('')
     const descricao = ref('')
-    const funcionarioResponsavel = ref<number | string>('')
+    const ambienteSelecionado = ref<number | string>('')
+    const status = ref<string>('')
     const maxDescricaoChars = 400
 
     const usuario = ref({
@@ -123,13 +142,13 @@ export default defineComponent({
       foto: '', 
     })
 
-    const funcionarios = ref<Funcionario[]>([
-      { id: 1, nome: 'Lucas Santino', email: 'lucas@email.com' },
-      { id: 2, nome: 'Maria Silva', email: 'maria@email.com' },
-      { id: 3, nome: 'Victor Ribeiro', email: 'victor@email.com' },
-      { id: 4, nome: 'Carlos Santos', email: 'carlos@email.com' },
-      { id: 5, nome: 'Ana Oliveira', email: 'ana@email.com' },
-      { id: 6, nome: 'Pedro Costa', email: 'pedro@email.com' },
+    const ambientes = ref<Ambiente[]>([
+      { id: 1, nome: 'Sala de Reuniões - Matriz', localizacao: 'Andar 1' },
+      { id: 2, nome: 'Laboratório de TI', localizacao: 'Andar 2' },
+      { id: 3, nome: 'Data Center', localizacao: 'Andar Térreo' },
+      { id: 4, nome: 'Escritório - Andar 3', localizacao: 'Andar 3' },
+      { id: 5, nome: 'Sala de Treinamento', localizacao: 'Andar 2' },
+      { id: 6, nome: 'Recepção', localizacao: 'Andar Térreo' },
     ])
 
     const descricaoLimitada = computed(() => {
@@ -139,59 +158,82 @@ export default defineComponent({
         : descricao.value
     })
 
-    const funcionarioResponsavelNome = computed(() => {
-      if (!funcionarioResponsavel.value) return 'Nenhum responsável'
-      const funcionario = funcionarios.value.find(f => f.id === funcionarioResponsavel.value)
-      return funcionario ? `${funcionario.nome} - ${funcionario.email}` : 'Nenhum responsável'
+    const ambienteNome = computed(() => {
+      if (!ambienteSelecionado.value) return 'Nenhum ambiente selecionado'
+      const ambiente = ambientes.value.find(a => a.id === ambienteSelecionado.value)
+      return ambiente ? `${ambiente.nome} - ${ambiente.localizacao}` : 'Nenhum ambiente selecionado'
+    })
+
+    const statusFormatado = computed(() => {
+      switch (status.value) {
+        case 'ativo': return 'Ativo'
+        case 'manutencao': return 'Em Manutenção'
+        default: return 'Nenhum status selecionado'
+      }
     })
 
     const closeProfileMenu = () => {
       // Esta função será chamada no clique da página para fechar o menu de perfil
     }
 
-    const submitAmbiente = () => {
+    const submitAtivo = () => {
       // Validações
       if (!nome.value.trim()) {
-        alert('Por favor, informe o nome do ambiente')
+        alert('Por favor, informe o nome do ativo')
         return
       }
 
       if (!descricao.value.trim()) {
-        alert('Por favor, informe a descrição do ambiente')
+        alert('Por favor, informe a descrição do ativo')
         return
       }
 
-      const ambienteData = {
-        name: nome.value.trim(),
-        description: descricao.value.trim(),
-        employee: funcionarioResponsavel.value || null
+      if (!ambienteSelecionado.value) {
+        alert('Por favor, selecione um ambiente')
+        return
       }
 
-      console.log('Dados do ambiente:', ambienteData)
+      if (!status.value) {
+        alert('Por favor, selecione um status')
+        return
+      }
+
+      const ativoData = {
+        name: nome.value.trim(),
+        description: descricao.value.trim(),
+        environment_FK: ambienteSelecionado.value,
+        status: status.value
+        // qr_code será gerado automaticamente pelo backend
+      }
+
+      console.log('Dados do ativo:', ativoData)
       
       // Simular envio para API
-      alert('Ambiente cadastrado com sucesso!')
+      alert('Ativo cadastrado com sucesso! O QR Code foi gerado automaticamente.')
       
       // Limpar formulário
       nome.value = ''
       descricao.value = ''
-      funcionarioResponsavel.value = ''
+      ambienteSelecionado.value = ''
+      status.value = ''
       
-      // Redirecionar para gestão de ambientes
-      router.push('/adm/gestao-ambiente')
+      // Redirecionar para gestão de ativos
+      router.push('/adm/gestao-ativo')
     }
 
     return {
       nome,
       descricao,
-      funcionarioResponsavel,
-      funcionarios,
+      ambienteSelecionado,
+      status,
+      ambientes,
       usuario,
       maxDescricaoChars,
       descricaoLimitada,
-      funcionarioResponsavelNome,
+      ambienteNome,
+      statusFormatado,
       closeProfileMenu,
-      submitAmbiente
+      submitAtivo
     }
   },
 })
@@ -215,7 +257,7 @@ html, body, #app {
 }
 
 /* CONTAINER PRINCIPAL - FULLSCREEN */
-.novo-ambiente-page {
+.novo-ativo-page {
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -489,7 +531,7 @@ html, body, #app {
 }
 
 @media (max-width: 768px) {
-  .novo-ambiente-page {
+  .novo-ativo-page {
     flex-direction: column;
   }
   

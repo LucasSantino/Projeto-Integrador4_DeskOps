@@ -11,7 +11,7 @@
         <!-- Cards de Métricas -->
         <div class="metrics-cards">
           <!-- Chamados -->
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-chamado')">
             <div class="metric-header">
               <span class="material-icons metric-icon status-aberto">circle</span>
               <h3 class="metric-title">Chamados Abertos</h3>
@@ -23,7 +23,7 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-chamado')">
             <div class="metric-header">
               <span class="material-icons metric-icon status-concluido">check_circle</span>
               <h3 class="metric-title">Chamados Concluídos</h3>
@@ -35,7 +35,7 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-chamado')">
             <div class="metric-header">
               <span class="material-icons metric-icon status-aguardando">hourglass_top</span>
               <h3 class="metric-title">Aguardando</h3>
@@ -47,7 +47,7 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-chamado')">
             <div class="metric-header">
               <span class="material-icons metric-icon status-andamento">autorenew</span>
               <h3 class="metric-title">Em Andamento</h3>
@@ -59,7 +59,7 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-chamado')">
             <div class="metric-header">
               <span class="material-icons metric-icon status-cancelado">cancel</span>
               <h3 class="metric-title">Cancelados</h3>
@@ -71,9 +71,9 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-usuarios')">
             <div class="metric-header">
-              <span class="material-icons metric-icon">people</span>
+              <span class="material-icons metric-icon icon-usuarios">people</span>
               <h3 class="metric-title">Total de Usuários</h3>
             </div>
             <div class="metric-value">{{ metrics.totalUsuarios }}</div>
@@ -83,10 +83,10 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-ativos')">
             <div class="metric-header">
-              <span class="material-icons metric-icon">person</span>
-              <h3 class="metric-title">Usuários Ativos</h3>
+              <span class="material-icons metric-icon icon-ativos">inventory</span>
+              <h3 class="metric-title">Ativos</h3>
             </div>
             <div class="metric-value">{{ metrics.usuariosAtivos }}</div>
             <div class="metric-trend positive">
@@ -95,9 +95,9 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card clickable" @click="navigateTo('/adm/gestao-ambiente')">
             <div class="metric-header">
-              <span class="material-icons metric-icon">business</span>
+              <span class="material-icons metric-icon icon-ambientes">apartment</span>
               <h3 class="metric-title">Ambientes</h3>
             </div>
             <div class="metric-value">{{ metrics.totalAmbientes }}</div>
@@ -138,6 +138,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
 
 Chart.register(...registerables)
@@ -148,6 +149,8 @@ export default defineComponent({
     AdmSidebar
   },
   setup() {
+    const router = useRouter()
+    
     const usuario = ref({
       nome: 'Administrador',
       email: 'admin@deskops.com',
@@ -178,6 +181,10 @@ export default defineComponent({
       // Esta função será chamada no clique da página para fechar o menu de perfil
     }
 
+    const navigateTo = (route: string) => {
+      router.push(route)
+    }
+
     const initCharts = () => {
       // Destruir gráficos existentes
       if (chamadosChartInstance) {
@@ -187,7 +194,7 @@ export default defineComponent({
         usuariosChartInstance.destroy()
       }
 
-      // Gráfico de Chamados
+      // Gráfico de Chamados - COM TODOS OS STATUS
       if (chamadosChart.value) {
         const ctx = chamadosChart.value.getContext('2d')
         if (ctx) {
@@ -202,7 +209,8 @@ export default defineComponent({
                   borderColor: '#0f5132',
                   backgroundColor: 'rgba(209, 231, 221, 0.1)',
                   tension: 0.4,
-                  fill: true
+                  fill: true,
+                  borderWidth: 2
                 },
                 {
                   label: 'Concluídos',
@@ -210,7 +218,8 @@ export default defineComponent({
                   borderColor: '#065f46',
                   backgroundColor: 'rgba(209, 250, 229, 0.1)',
                   tension: 0.4,
-                  fill: true
+                  fill: true,
+                  borderWidth: 2
                 },
                 {
                   label: 'Em Andamento',
@@ -218,7 +227,26 @@ export default defineComponent({
                   borderColor: '#084298',
                   backgroundColor: 'rgba(207, 226, 255, 0.1)',
                   tension: 0.4,
-                  fill: true
+                  fill: true,
+                  borderWidth: 2
+                },
+                {
+                  label: 'Aguardando',
+                  data: [3, 5, 8, 6, 4, 7, 5],
+                  borderColor: '#856404',
+                  backgroundColor: 'rgba(255, 243, 205, 0.1)',
+                  tension: 0.4,
+                  fill: true,
+                  borderWidth: 2
+                },
+                {
+                  label: 'Cancelados',
+                  data: [1, 2, 1, 3, 2, 1, 2],
+                  borderColor: '#842029',
+                  backgroundColor: 'rgba(248, 215, 218, 0.1)',
+                  tension: 0.4,
+                  fill: true,
+                  borderWidth: 2
                 }
               ]
             },
@@ -228,21 +256,39 @@ export default defineComponent({
               plugins: {
                 legend: {
                   position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    padding: 15
+                  }
                 },
-                title: {
-                  display: false
+                tooltip: {
+                  mode: 'index',
+                  intersect: false
                 }
+              },
+              interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
               },
               scales: {
                 y: {
                   beginAtZero: true,
                   grid: {
                     color: 'rgba(0, 0, 0, 0.1)'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Quantidade de Chamados'
                   }
                 },
                 x: {
                   grid: {
                     color: 'rgba(0, 0, 0, 0.1)'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Dias do Mês'
                   }
                 }
               }
@@ -266,7 +312,8 @@ export default defineComponent({
                   borderColor: '#6366f1',
                   backgroundColor: 'rgba(99, 102, 241, 0.1)',
                   tension: 0.4,
-                  fill: true
+                  fill: true,
+                  borderWidth: 2
                 },
                 {
                   label: 'Novos Usuários',
@@ -274,7 +321,8 @@ export default defineComponent({
                   borderColor: '#ec4899',
                   backgroundColor: 'rgba(236, 72, 153, 0.1)',
                   tension: 0.4,
-                  fill: true
+                  fill: true,
+                  borderWidth: 2
                 }
               ]
             },
@@ -284,21 +332,39 @@ export default defineComponent({
               plugins: {
                 legend: {
                   position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    padding: 15
+                  }
                 },
-                title: {
-                  display: false
+                tooltip: {
+                  mode: 'index',
+                  intersect: false
                 }
+              },
+              interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
               },
               scales: {
                 y: {
                   beginAtZero: true,
                   grid: {
                     color: 'rgba(0, 0, 0, 0.1)'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Quantidade de Usuários'
                   }
                 },
                 x: {
                   grid: {
                     color: 'rgba(0, 0, 0, 0.1)'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Dias do Mês'
                   }
                 }
               }
@@ -327,7 +393,8 @@ export default defineComponent({
       metrics,
       chamadosChart,
       usuariosChart,
-      closeProfileMenu
+      closeProfileMenu,
+      navigateTo
     }
   },
 })
@@ -424,6 +491,14 @@ html, body, #app {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.metric-card.clickable {
+  cursor: pointer;
+}
+
+.metric-card.clickable:hover {
+  border-color: indigo;
+}
+
 .metric-header {
   display: flex;
   align-items: center;
@@ -471,6 +546,48 @@ html, body, #app {
   font-size: 16px;
 }
 
+/* CORES DOS STATUS - IGUAL À IMAGEM ORIGINAL */
+.status-concluido {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-aberto {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-aguardando {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-andamento {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.status-cancelado {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+/* NOVAS CORES PARA OS ÍCONES DE USUÁRIOS E AMBIENTES */
+.icon-usuarios {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.icon-ativos {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.icon-ambientes {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
 /* Container dos Gráficos */
 .charts-container {
   display: grid;
@@ -514,32 +631,6 @@ html, body, #app {
 .chart-content canvas {
   width: 100% !important;
   height: 100% !important;
-}
-
-/* CORES DOS STATUS - IGUAL À IMAGEM ORIGINAL */
-.status-concluido {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-aberto {
-  background-color: #d1e7dd;
-  color: #0f5132;
-}
-
-.status-aguardando {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.status-andamento {
-  background-color: #cfe2ff;
-  color: #084298;
-}
-
-.status-cancelado {
-  background-color: #f8d7da;
-  color: #842029;
 }
 
 /* RESPONSIVIDADE */

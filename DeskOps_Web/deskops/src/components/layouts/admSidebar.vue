@@ -13,14 +13,20 @@
         <span class="material-icons">business</span>
         Gestão de Ambientes
       </router-link>
-      <router-link to="/adm/gestao-usuarios" class="nav-link" active-class="active">
-        <span class="material-icons">people</span>
-        Gestão de Usuários
+      <router-link to="/adm/gestao-ativos" class="nav-link" active-class="active">
+        <span class="material-icons">inventory</span>
+        Gestão de Ativos
       </router-link>
       <router-link to="/adm/gestao-chamado" class="nav-link" active-class="active">
         <span class="material-icons">list_alt</span>
         Gestão de Chamados
       </router-link>
+      <router-link to="/adm/gestao-usuarios" class="nav-link" active-class="active">
+        <span class="material-icons">people</span>
+        Gestão de Usuários
+      </router-link>
+      
+      
     </nav>
 
     <!-- Perfil -->
