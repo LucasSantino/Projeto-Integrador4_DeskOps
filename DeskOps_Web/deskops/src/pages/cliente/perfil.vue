@@ -1,45 +1,10 @@
 <template>
-  <div class="perfil-page" @click="closeProfileMenu">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
-      </div>
-
-      <nav class="sidebar-nav">
-        <router-link to="/cliente/meus-chamados" class="nav-link" active-class="active">
-          <span class="material-icons">list</span>
-          Meus Chamados
-        </router-link>
-        <router-link to="/cliente/novo-chamado" class="nav-link" active-class="active">
-          <span class="material-icons">add</span>
-          Novo Chamado
-        </router-link>
-      </nav>
-
-      <!-- Perfil -->
-      <div class="profile-container" ref="profileContainer" @click.stop>
-        <div class="sidebar-profile" @click="toggleProfileMenu">
-          <div class="profile-image">👤</div>
-          <div class="profile-info">
-            <p class="profile-name">{{ usuario.nome }}</p>
-            <p class="profile-email">{{ usuario.email }}</p>
-          </div>
-        </div>
-
-        <!-- Dropdown corrigido -->
-        <transition name="slide-right">
-          <div v-if="profileMenuOpen" class="profile-dropdown-right">
-            <div class="dropdown-item" @click="goToPerfil">
-              <span class="material-icons">person</span> Perfil
-            </div>
-            <div class="dropdown-item" @click="goToLogin">
-              <span class="material-icons">logout</span> Sair
-            </div>
-          </div>
-        </transition>
-      </div>
-    </aside>
+  <div class="perfil-page">
+    <!-- Sidebar como componente -->
+    <ClienteSidebar 
+      :user-name="usuario.nome" 
+      :user-email="usuario.email"
+    />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
@@ -100,30 +65,15 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
 
 export default defineComponent({
   name: 'Perfil',
+  components: {
+    ClienteSidebar
+  },
   setup() {
     const router = useRouter()
-    const profileMenuOpen = ref(false)
-
-    const toggleProfileMenu = () => {
-      profileMenuOpen.value = !profileMenuOpen.value
-    }
-
-    const closeProfileMenu = () => {
-      profileMenuOpen.value = false
-    }
-
-    const goToPerfil = () => {
-      router.push('/cliente/perfil')
-      closeProfileMenu()
-    }
-
-    const goToLogin = () => {
-      router.push('/')
-      closeProfileMenu()
-    }
 
     const usuario = ref({
       nome: 'Lucas Santino da Silva',
@@ -140,11 +90,6 @@ export default defineComponent({
     return {
       usuario,
       defaultFoto,
-      profileMenuOpen,
-      toggleProfileMenu,
-      closeProfileMenu,
-      goToPerfil,
-      goToLogin,
     }
   },
 })
@@ -183,178 +128,6 @@ html, body, #app {
   bottom: 0;
 }
 
-/* SIDEBAR - FIXA E FULL HEIGHT */
-.sidebar {
-  width: 250px;
-  background-color: #000;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 10px;
-  flex-shrink: 0;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-/* Logo - DIMENSÕES AUMENTADAS */
-.sidebar-logo {
-  text-align: left;
-  margin-bottom: 30px;
-  padding: 0 10px;
-}
-
-.logo-image {
-  width: 100%;
-  max-width: 280px;
-  height: 150px;
-  object-fit: contain;
-}
-
-/* Navegação */
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.nav-link {
-  color: #fff;
-  text-decoration: none;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 15px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.nav-link:hover,
-.nav-link.active {
-  background-color: #1a1a1a;
-}
-
-.material-icons {
-  font-size: 20px;
-  color: #fff;
-}
-
-/* Perfil */
-.profile-container {
-  position: relative;
-  margin-top: auto;
-  padding: 20px 10px 0 10px;
-  overflow: visible;
-}
-
-.sidebar-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 12px 15px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.sidebar-profile:hover {
-  background-color: #1a1a1a;
-}
-
-.profile-image {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  min-width: 0;
-}
-
-.profile-name {
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-email {
-  color: #ccc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO */
-.profile-dropdown-right {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  z-index: 1001;
-  margin-bottom: 10px;
-  border: 1px solid #333;
-  min-width: 200px;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-  border-bottom: 1px solid #333;
-  font-size: 14px;
-}
-
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item:hover {
-  background-color: #333;
-}
-
-.dropdown-item .material-icons {
-  font-size: 18px;
-  color: #fff;
-}
-
-/* Transição do dropdown - CORRIGIDA */
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.3s ease;
-}
-.slide-right-enter-from,
-.slide-right-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
 /* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN */
 .main-content {
   flex: 1;
@@ -376,6 +149,12 @@ html, body, #app {
   min-height: 100vh;
   overflow: hidden;
   padding: 0 40px;
+}
+
+/* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
+.main-content .material-icons {
+  color: inherit;
+  font-size: inherit;
 }
 
 /* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
@@ -487,10 +266,6 @@ html, body, #app {
 
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
-  
   .main-content {
     margin-left: 220px;
     width: calc(100vw - 220px);
@@ -498,11 +273,6 @@ html, body, #app {
   
   .content-area {
     padding: 0 30px;
-  }
-  
-  .logo-image {
-    max-width: 240px;
-    height: 130px;
   }
   
   .card-form {
@@ -514,12 +284,6 @@ html, body, #app {
 @media (max-width: 768px) {
   .perfil-page {
     flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
   }
   
   .main-content {
@@ -539,11 +303,6 @@ html, body, #app {
     font-size: 24px;
   }
   
-  .logo-image {
-    max-width: 220px;
-    height: 110px;
-  }
-  
   .perfil-header {
     flex-direction: column;
     text-align: center;
@@ -558,27 +317,12 @@ html, body, #app {
     padding: 20px;
     width: 100%;
   }
-  
-  /* Ajuste do dropdown para mobile */
-  .profile-dropdown-right {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 0;
-    min-width: 200px;
-  }
 }
 
 /* Estilos para telas muito grandes */
 @media (min-width: 1600px) {
   .content-area {
     max-width: 1400px;
-  }
-  
-  .logo-image {
-    max-width: 300px;
-    height: 160px;
   }
 }
 </style>

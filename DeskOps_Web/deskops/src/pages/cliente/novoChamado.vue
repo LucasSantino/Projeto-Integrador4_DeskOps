@@ -1,49 +1,11 @@
 <template>
   <div class="novo-chamado-page" @click="closeProfileMenu">
-    <!-- Sidebar do Cliente -->
-    <aside class="sidebar">
-      <!-- Logo -->
-      <div class="sidebar-logo">
-        <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
-      </div>
-
-      <!-- Links de navegação -->
-      <nav class="sidebar-nav">
-        <router-link to="/cliente/meus-chamados" class="nav-link" active-class="active">
-          <span class="material-icons">list</span>
-          Meus Chamados
-        </router-link>
-        <router-link to="/cliente/novo-chamado" class="nav-link" active-class="active">
-          <span class="material-icons">add</span>
-          Novo Chamado
-        </router-link>
-      </nav>
-
-      <!-- Perfil com dropdown lateral -->
-      <div class="profile-container" ref="profileContainer" @click.stop>
-        <div class="sidebar-profile" @click="toggleProfileMenu">
-          <div class="profile-image">👤</div>
-          <div class="profile-info">
-            <p class="profile-name">Lucas Santino</p>
-            <p class="profile-email">lucas@email.com</p>
-          </div>
-        </div>
-
-        <!-- Dropdown corrigido -->
-        <transition name="slide-right">
-          <div v-if="profileMenuOpen" class="profile-dropdown-right">
-            <div class="dropdown-item" @click="goToPerfil">
-              <span class="material-icons">person</span>
-              Perfil
-            </div>
-            <div class="dropdown-item" @click="goToLogin">
-              <span class="material-icons">logout</span>
-              Sair
-            </div>
-          </div>
-        </transition>
-      </div>
-    </aside>
+    <!-- Sidebar do Cliente como componente -->
+    <ClienteSidebar 
+      :user-name="userName" 
+      :user-email="userEmail"
+      @close-profile-menu="closeProfileMenu"
+    />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
@@ -162,25 +124,32 @@
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
 
 export default defineComponent({
   name: 'NovoChamado',
+  components: {
+    ClienteSidebar
+  },
   setup() {
     const router = useRouter()
     
     const titulo = ref('')
     const descricao = ref('')
     const categoria = ref('')
-    const prioridade = ref('') // Adicionado campo de prioridade
+    const prioridade = ref('')
     const imagemURL = ref<string | null>(null)
-    const profileMenuOpen = ref(false)
     const categorias = ref(['Manutenção', 'Suporte', 'Instalação', 'Rede', 'Software', 'Hardware'])
-    const prioridades = ref([ // Adicionadas opções de prioridade
+    const prioridades = ref([
       { value: 'alta', label: 'Alta' },
       { value: 'media', label: 'Média' },
       { value: 'baixa', label: 'Baixa' }
     ])
     const maxDescricaoChars = 2830
+    
+    // Dados do usuário - você pode obter isso de um store ou API
+    const userName = ref('Lucas Santino')
+    const userEmail = ref('lucas@email.com')
 
     const descricaoLimitada = computed(() => {
       if (!descricao.value) return 'Nenhuma descrição'
@@ -189,22 +158,9 @@ export default defineComponent({
         : descricao.value
     })
 
-    const toggleProfileMenu = () => {
-      profileMenuOpen.value = !profileMenuOpen.value
-    }
-
     const closeProfileMenu = () => {
-      profileMenuOpen.value = false
-    }
-
-    const goToPerfil = () => {
-      router.push('/cliente/perfil')
-      closeProfileMenu()
-    }
-
-    const goToLogin = () => {
-      router.push('/')
-      closeProfileMenu()
+      // Esta função será chamada quando clicar fora do menu
+      // Você pode emitir um evento do componente sidebar se necessário
     }
 
     const submitChamado = () => {
@@ -212,7 +168,7 @@ export default defineComponent({
         titulo: titulo.value,
         descricao: descricao.value,
         categoria: categoria.value,
-        prioridade: prioridade.value, // Adicionado prioridade
+        prioridade: prioridade.value,
         imagemURL: imagemURL.value,
       })
       alert('Chamado enviado com sucesso!')
@@ -220,7 +176,7 @@ export default defineComponent({
       titulo.value = ''
       descricao.value = ''
       categoria.value = ''
-      prioridade.value = '' // Limpar prioridade
+      prioridade.value = ''
       imagemURL.value = null
       // Redirecionar para meus chamados
       router.push('/cliente/meus-chamados')
@@ -271,15 +227,13 @@ export default defineComponent({
       imagemURL,
       categorias,
       prioridades,
-      profileMenuOpen,
-      toggleProfileMenu,
-      closeProfileMenu,
-      goToPerfil,
-      goToLogin,
+      userName,
+      userEmail,
       submitChamado,
       onFileChange,
       descricaoLimitada,
       maxDescricaoChars,
+      closeProfileMenu,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
@@ -289,7 +243,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+/* Mantenha todos os estilos CSS existentes da página novoChamado.vue */
+/* Apenas remova os estilos relacionados à sidebar que agora estão no componente separado */
 
 /* RESET COMPLETO E FULLSCREEN */
 * {
@@ -319,179 +274,6 @@ html, body, #app {
   left: 0;
   right: 0;
   bottom: 0;
-}
-
-/* SIDEBAR - FIXA E FULL HEIGHT */
-.sidebar {
-  width: 250px;
-  background-color: #000;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 10px;
-  flex-shrink: 0;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-/* Logo - DIMENSÕES AUMENTADAS */
-.sidebar-logo {
-  text-align: left;
-  margin-bottom: 30px;
-  padding: 0 10px;
-}
-
-.logo-image {
-  width: 100%;
-  max-width: 280px;
-  height: 150px;
-  object-fit: contain;
-}
-
-/* Navegação */
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.nav-link {
-  color: #fff;
-  text-decoration: none;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 15px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.nav-link:hover,
-.nav-link.active {
-  background-color: #1a1a1a;
-}
-
-/* CORREÇÃO: Material-icons apenas na sidebar devem ser brancos */
-.sidebar .material-icons {
-  font-size: 20px;
-  color: #fff;
-}
-
-/* Perfil */
-.profile-container {
-  position: relative;
-  margin-top: auto;
-  padding: 20px 10px 0 10px;
-  overflow: visible;
-}
-
-.sidebar-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 12px 15px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.sidebar-profile:hover {
-  background-color: #1a1a1a;
-}
-
-.profile-image {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  min-width: 0;
-}
-
-.profile-name {
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-email {
-  color: #ccc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO */
-.profile-dropdown-right {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  z-index: 1001;
-  margin-bottom: 10px;
-  border: 1px solid #333;
-  min-width: 200px;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-  border-bottom: 1px solid #333;
-  font-size: 14px;
-}
-
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item:hover {
-  background-color: #333;
-}
-
-.dropdown-item .material-icons {
-  font-size: 18px;
-  color: #fff;
-}
-
-/* Transição do dropdown - CORRIGIDA */
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.3s ease;
-}
-.slide-right-enter-from,
-.slide-right-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 
 /* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN */
@@ -528,7 +310,7 @@ html, body, #app {
   color: indigo;
   font-size: 28px;
   font-weight: bold;
-  padding: 40px 0 20px 0; /* REDUZIDO: 50px->40px, 25px->20px */
+  padding: 40px 0 20px 0;
   margin: 0;
   width: 100%;
   text-align: left;
@@ -539,8 +321,8 @@ html, body, #app {
   display: flex;
   gap: 30px;
   width: 100%;
-  margin-bottom: 30px; /* REDUZIDO de 40px para 30px */
-  max-height: calc(100vh - 180px); /* ADICIONADO para limitar altura */
+  margin-bottom: 30px;
+  max-height: calc(100vh - 180px);
   overflow: hidden;
 }
 
@@ -554,12 +336,12 @@ html, body, #app {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  max-height: 100%; /* ADICIONADO para limitar altura */
-  overflow-y: auto; /* ADICIONADO para scroll interno */
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .card-header {
-  padding: 20px 24px; /* REDUZIDO de 24px para 20px */
+  padding: 20px 24px;
 }
 
 .card-title {
@@ -579,14 +361,14 @@ html, body, #app {
 
 /* Seções do Formulário */
 .form-section {
-  padding: 16px 24px; /* REDUZIDO de 20px para 16px */
+  padding: 16px 24px;
 }
 
 .section-title {
   color: #000;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 10px; /* REDUZIDO de 12px para 10px */
+  margin-bottom: 10px;
   text-align: left;
 }
 
@@ -613,8 +395,8 @@ html, body, #app {
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px; /* REDUZIDO de 180px para 100px */
-  max-height: 150px; /* ADICIONADO para limitar altura máxima */
+  min-height: 100px;
+  max-height: 150px;
   font-family: inherit;
 }
 
@@ -632,13 +414,8 @@ html, body, #app {
   font-size: 12px;
   color: #666;
   text-align: right;
-  margin-top: 6px; /* REDUZIDO de 8px para 6px */
+  margin-top: 6px;
 }
-
-/* SEÇÃO DE IMAGEM SEM UNDERLINE (REMOVIDA) */
-/* .file-section {
-  border-bottom: 1px solid #e0e0e0; REMOVIDO
-} */
 
 /* Upload de Arquivo */
 .file-upload {
@@ -684,7 +461,7 @@ html, body, #app {
 .card-summary {
   flex: 1;
   background-color: #fff;
-  padding: 20px; /* REDUZIDO de 24px para 20px */
+  padding: 20px;
   border: 1px solid #d0d0d0;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -692,25 +469,25 @@ html, body, #app {
   flex-direction: column;
   height: fit-content;
   min-width: 300px;
-  max-height: 100%; /* ADICIONADO para limitar altura */
+  max-height: 100%;
 }
 
 .summary-title {
   color: #000;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 16px; /* REDUZIDO de 20px para 16px */
-  padding-bottom: 10px; /* REDUZIDO de 12px para 10px */
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #e0e0e0;
   text-align: left;
 }
 
 .summary-section {
-  margin-bottom: 14px; /* REDUZIDO de 16px para 14px */
+  margin-bottom: 14px;
 }
 
 .summary-section:last-of-type {
-  margin-bottom: 20px; /* REDUZIDO de 24px para 20px */
+  margin-bottom: 20px;
 }
 
 .summary-label {
@@ -791,10 +568,6 @@ html, body, #app {
 
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
-  
   .main-content {
     margin-left: 220px;
     width: calc(100vw - 220px);
@@ -804,33 +577,22 @@ html, body, #app {
     padding: 0 30px;
   }
   
-  .logo-image {
-    max-width: 240px;
-    height: 130px;
-  }
-  
   .cards-container {
     flex-direction: column;
-    max-height: none; /* REMOVIDO em telas menores */
+    max-height: none;
   }
   
   .card-form,
   .card-summary {
     flex: none;
     width: 100%;
-    max-height: none; /* REMOVIDO em telas menores */
+    max-height: none;
   }
 }
 
 @media (max-width: 768px) {
   .novo-chamado-page {
     flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
   }
   
   .main-content {
@@ -851,47 +613,26 @@ html, body, #app {
     padding: 30px 0 15px 0;
   }
   
-  .logo-image {
-    max-width: 220px;
-    height: 110px;
-  }
-  
   .cards-container {
     gap: 20px;
-    max-height: none; /* REMOVIDO em mobile */
+    max-height: none;
   }
   
   .card-form,
   .card-summary {
     padding: 0;
-    max-height: none; /* REMOVIDO em mobile */
+    max-height: none;
   }
   
   .form-textarea {
     min-height: 120px;
-    max-height: 200px; /* AUMENTADO em mobile */
-  }
-  
-  /* Ajuste do dropdown para mobile */
-  .profile-dropdown-right {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 0;
-    min-width: 200px;
+    max-height: 200px;
   }
 }
 
-/* Estilos para telas muito grandes */
 @media (min-width: 1600px) {
   .content-area {
     max-width: 1400px;
-  }
-  
-  .logo-image {
-    max-width: 300px;
-    height: 160px;
   }
 }
 </style>
