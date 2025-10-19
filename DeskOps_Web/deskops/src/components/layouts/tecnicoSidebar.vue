@@ -10,7 +10,7 @@
         Lista de Chamados
       </router-link>
       <router-link to="/tecnico/chamados" class="nav-link" active-class="active">
-        <span class="material-icons">list</span>
+        <span class="material-icons">view_list</span>
         Meus Chamados
       </router-link>
     </nav>
