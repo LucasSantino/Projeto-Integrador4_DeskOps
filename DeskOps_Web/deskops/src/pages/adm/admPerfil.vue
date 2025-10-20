@@ -1,5 +1,5 @@
 <template>
-  <div class="perfil-page" @click="closeProfileMenu">
+  <div class="perfil-page">
     <!-- Sidebar do Admin -->
     <adm-sidebar :usuario="usuario" />
 
@@ -18,44 +18,117 @@
         <div class="cards-container">
           <!-- Card do Perfil -->
           <div class="card-form">
-            <div class="perfil-header">
-              <img :src="usuario.foto || defaultFoto" alt="Foto do administrador" class="perfil-foto" />
-              <h2 class="perfil-nome">{{ usuario.nome }}</h2>
+            <!-- Header com botão de editar -->
+            <div class="card-header">
+              <div class="header-actions">
+                <button v-if="!editMode" class="edit-btn" @click="enterEditMode">
+                  <span class="material-icons">edit</span>
+                  Editar
+                </button>
+                <div v-else class="action-buttons">
+                  <button class="cancel-btn" @click="cancelEdit">
+                    Cancelar
+                  </button>
+                  <button class="save-btn" @click="saveChanges">
+                    Salvar Alterações
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div class="info-section">
-              <h3>Email</h3>
-              <p class="info-text">{{ usuario.email }}</p>
-            </div>
+            <!-- Conteúdo do formulário -->
+            <div class="form-content">
+              <!-- Foto e Nome -->
+              <div class="form-section profile-section">
+                <div class="profile-header">
+                  <div class="foto-container">
+                    <img :src="usuario.foto || defaultFoto" alt="Foto do administrador" class="perfil-foto" />
+                    <button v-if="editMode" class="change-photo-btn" @click="changePhoto">
+                      <span class="material-icons">photo_camera</span>
+                    </button>
+                  </div>
+                  <div class="name-container">
+                    <h3 class="section-title">Nome Completo</h3>
+                    <p v-if="!editMode" class="info-text">{{ usuario.nome }}</p>
+                    <input 
+                      v-else
+                      v-model="usuarioEditado.nome"
+                      type="text"
+                      class="form-input"
+                      placeholder="Digite seu nome completo"
+                    />
+                  </div>
+                </div>
+              </div>
 
-            <div class="info-section">
-              <h3>Data de Nascimento</h3>
-              <p class="info-text">{{ usuario.dataNascimento }}</p>
-            </div>
+              <!-- Linha divisória apenas acima do email -->
+              <div class="divider-line"></div>
 
-            <div class="info-section">
-              <h3>CPF</h3>
-              <p class="info-text">{{ usuario.cpf }}</p>
-            </div>
+              <!-- Email -->
+              <div class="form-section">
+                <h3 class="section-title">Email</h3>
+                <p v-if="!editMode" class="info-text">{{ usuario.email }}</p>
+                <input 
+                  v-else
+                  v-model="usuarioEditado.email"
+                  type="email"
+                  class="form-input"
+                  placeholder="Digite seu email"
+                />
+              </div>
 
-            <div class="info-section">
-              <h3>Endereço</h3>
-              <p class="info-text">{{ usuario.endereco }}</p>
-            </div>
+              <!-- Demais campos sem linhas divisorias -->
+              <div class="form-section">
+                <h3 class="section-title">Data de Nascimento</h3>
+                <p v-if="!editMode" class="info-text">{{ usuario.dataNascimento }}</p>
+                <input 
+                  v-else
+                  v-model="usuarioEditado.dataNascimento"
+                  type="text"
+                  class="form-input"
+                  placeholder="DD/MM/AAAA"
+                />
+              </div>
 
-            <div class="info-section">
-              <h3>Tipo de Usuário</h3>
-              <p class="info-text">{{ usuario.tipoUsuario }}</p>
-            </div>
+              <div class="form-section">
+                <h3 class="section-title">CPF</h3>
+                <p v-if="!editMode" class="info-text">{{ usuario.cpf }}</p>
+                <input 
+                  v-else
+                  v-model="usuarioEditado.cpf"
+                  type="text"
+                  class="form-input"
+                  placeholder="000.000.000-00"
+                />
+              </div>
 
-            <div class="info-section">
-              <h3>Data de Contratação</h3>
-              <p class="info-text">{{ usuario.dataContratacao }}</p>
-            </div>
+              <div class="form-section">
+                <h3 class="section-title">Endereço</h3>
+                <p v-if="!editMode" class="info-text">{{ usuario.endereco }}</p>
+                <textarea 
+                  v-else
+                  v-model="usuarioEditado.endereco"
+                  class="form-textarea"
+                  placeholder="Digite seu endereço completo"
+                  rows="2"
+                ></textarea>
+              </div>
 
-            <div class="info-section">
-              <h3>Senha</h3>
-              <p class="info-text">********</p>
+              <div class="form-section">
+                <h3 class="section-title">Tipo de Usuário</h3>
+                <p class="info-text">{{ usuario.tipoUsuario }}</p>
+              </div>
+
+              <div class="form-section">
+                <h3 class="section-title">Senha</h3>
+                <div class="password-section">
+                  <p class="info-text">********</p>
+                  <button v-if="editMode" class="change-password-btn" @click="changePassword">
+                    <span class="material-icons">lock_reset</span>
+                    Redefinir Senha
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -65,7 +138,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
 
@@ -76,6 +149,7 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter()
+    const editMode = ref(false)
 
     const usuario = ref({
       nome: 'Administrador',
@@ -84,21 +158,67 @@ export default defineComponent({
       cpf: '111.222.333-44',
       endereco: 'Av. Principal, 1000, São Paulo, SP',
       tipoUsuario: 'Administrador',
-      dataContratacao: '01/01/2020',
       foto: '', 
     })
 
-    // Para desenvolvimento, usando um placeholder
-    const defaultFoto = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNDAiIHI9IjIwIiBmaWxsPSIjOEREQ0RGIi8+CjxyZWN0IHg9IjI1IiB5PSI2NSIgd2lkdGg9IjUwIiBoZWlnaHQ9IjM1IiBmaWxsPSIjOEREQ0RGIi8+Cjwvc3ZnPgo='
+    const usuarioEditado = reactive({ ...usuario.value })
 
-    const closeProfileMenu = () => {
-      // Esta função será chamada no clique da página para fechar o menu de perfil
+    // Para desenvolvimento, usando um placeholder
+    const defaultFoto = new URL('../../assets/images/default-avatar.png', import.meta.url).href
+
+    const enterEditMode = () => {
+      Object.assign(usuarioEditado, usuario.value)
+      editMode.value = true
+    }
+
+    const cancelEdit = () => {
+      editMode.value = false
+      Object.assign(usuarioEditado, usuario.value)
+    }
+
+    const saveChanges = () => {
+      Object.assign(usuario.value, usuarioEditado)
+      editMode.value = false
+      console.log('Dados salvos:', usuario.value)
+      alert('Alterações salvas com sucesso!')
+    }
+
+    const changePhoto = () => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = (e) => {
+        const target = e.target as HTMLInputElement
+        if (target.files && target.files[0]) {
+          const file = target.files[0]
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            usuarioEditado.foto = e.target?.result as string
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+      input.click()
+    }
+
+    const changePassword = () => {
+      const newPassword = prompt('Digite sua nova senha:')
+      if (newPassword) {
+        console.log('Nova senha definida')
+        alert('Senha alterada com sucesso!')
+      }
     }
 
     return {
       usuario,
+      usuarioEditado,
       defaultFoto,
-      closeProfileMenu
+      editMode,
+      enterEditMode,
+      cancelEdit,
+      saveChanges,
+      changePhoto,
+      changePassword,
     }
   },
 })
@@ -160,6 +280,12 @@ html, body, #app {
   padding: 0 40px;
 }
 
+/* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
+.main-content .material-icons {
+  color: inherit;
+  font-size: inherit;
+}
+
 /* Cabeçalho - MAIS ESPAÇAMENTO SUPERIOR */
 .back-container {
   display: flex;
@@ -210,51 +336,146 @@ html, body, #app {
 
 /* Card do Perfil - ESTILO CONSISTENTE */
 .card-form {
-  width: 480px;
+  width: 500px;
   background-color: #fff;
-  padding: 30px;
+  padding: 0;
   border: 1px solid #d0d0d0;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+}
+
+/* Card Header - APENAS BOTÕES NO CANTO SUPERIOR DIREITO */
+.card-header {
+  padding: 20px 24px 0 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Botões de ação - ESTILO CONSISTENTE */
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.edit-btn:hover {
+  background-color: #333;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.cancel-btn, .save-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.cancel-btn {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #d0d0d0;
+}
+
+.cancel-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.save-btn {
+  background-color: #000;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background-color: #333;
+}
+
+/* Conteúdo do formulário - SEM SCROLLBAR */
+.form-content {
+  flex: 1;
+  padding: 0;
+}
+
+/* Seções do Formulário - SEM BORDAS */
+.form-section {
+  padding: 16px 24px;
+}
+
+.profile-section {
+  padding: 0 24px 16px 24px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: flex-start;
   gap: 20px;
 }
 
-/* Perfil Header */
-.perfil-header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 10px;
-  text-align: left;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
+.foto-container {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .perfil-foto {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid indigo;
+  border: 2px solid indigo;
 }
 
-.perfil-nome {
-  font-size: 22px;
-  font-weight: bold;
+.change-photo-btn {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.change-photo-btn:hover {
+  background-color: #333;
+}
+
+.name-container {
+  flex: 1;
+}
+
+.section-title {
   color: #000;
-  text-align: left;
-}
-
-/* Informações */
-.info-section {
-  text-align: left;
-}
-
-.info-section h3 {
-  color: #000;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 8px;
   text-align: left;
@@ -265,6 +486,67 @@ html, body, #app {
   font-size: 14px;
   line-height: 1.5;
   text-align: left;
+  min-height: 20px;
+}
+
+/* Linha divisória apenas acima do email */
+.divider-line {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0 24px;
+}
+
+/* Campos de edição - ESTILO IDÊNTICO AO NOVO CHAMADO */
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  background-color: transparent;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  text-align: left;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-bottom-color: #000;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 60px;
+  max-height: 120px;
+}
+
+/* Seção de senha */
+.password-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.change-password-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.change-password-btn:hover {
+  background-color: #f5f5f5;
+  border-color: #ccc;
 }
 
 /* RESPONSIVIDADE */
@@ -280,7 +562,7 @@ html, body, #app {
   
   .card-form {
     width: 100%;
-    max-width: 480px;
+    max-width: 500px;
   }
 }
 
@@ -304,21 +586,88 @@ html, body, #app {
   
   .page-title {
     font-size: 24px;
-  }
-  
-  .perfil-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-  }
-  
-  .perfil-nome {
-    text-align: center;
+    margin: 0 0 20px 0;
   }
   
   .card-form {
-    padding: 20px;
     width: 100%;
+  }
+  
+  .card-header {
+    padding: 15px 20px 0 20px;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .name-container {
+    width: 100%;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .cancel-btn, .save-btn {
+    width: 100%;
+  }
+  
+  .password-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .back-container {
+    padding: 30px 0 0 0;
+  }
+  
+  .form-section {
+    padding: 12px 20px;
+  }
+  
+  .profile-section {
+    padding: 0 20px 12px 20px;
+  }
+  
+  .divider-line {
+    margin: 0 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-area {
+    padding: 0 15px;
+  }
+  
+  .card-header {
+    padding: 12px 15px 0 15px;
+  }
+  
+  .form-section {
+    padding: 10px 15px;
+  }
+  
+  .profile-section {
+    padding: 0 15px 10px 15px;
+  }
+  
+  .divider-line {
+    margin: 0 15px;
+  }
+  
+  .action-buttons {
+    gap: 8px;
+  }
+  
+  .cancel-btn, .save-btn {
+    padding: 10px 12px;
+    font-size: 13px;
   }
 }
 

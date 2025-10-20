@@ -245,7 +245,7 @@ export default defineComponent({
   margin: 0;
   font-size: 12px;
 }
-/* DROPDOWN CORRIGIDO - 
+/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO */
 .profile-dropdown-right {
   position: absolute;
   bottom: 100%;
@@ -257,7 +257,7 @@ export default defineComponent({
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   z-index: 1001;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   border: 1px solid #333;
   min-width: 200px;
 }
@@ -266,13 +266,13 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   color: #fff;
   cursor: pointer;
   transition: background-color 0.2s;
   white-space: nowrap;
   border-bottom: 1px solid #333;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .dropdown-item:last-child {
@@ -284,8 +284,19 @@ export default defineComponent({
 }
 
 .dropdown-item .material-icons {
-  font-size: 18px;
+  font-size: 16px;
   color: #fff;
+}
+
+/* Transição do dropdown - CORRIGIDA */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 /* Transição do dropdown - CORRIGIDA */
