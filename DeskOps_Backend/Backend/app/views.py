@@ -2,7 +2,28 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from .serializers import *
 from .models import *
-from random import randint
 from rest_framework.response import Response
-from datetime import date
-from .utils import isPremium
+
+class UsersView(ModelViewSet):
+    queryset = Users.objects.all()
+    serializer_class = UserSerializer
+
+class EnvironmentView(ModelViewSet):
+    queryset = Environment.objects.all()
+    serializer_class = EnvironmentSerializer
+
+class AtivoView(ModelViewSet):
+    queryset = Ativo.objects.all()
+    serializer_class = AtivoSerializer
+
+class ChamadoView(ModelViewSet):
+    queryset = Chamado.objects.all()
+    serializer_class = ChamadoSerializer
+
+class ComentarioView(ModelViewSet):
+    queryset = Comentario.objects.all()
+    serializer_class = ComentarioSerializer
+
+class NotificateView(ModelViewSet):
+    queryset = Notificate.objects.all()
+    serializer_class = NotificateSerializer
