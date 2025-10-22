@@ -11,7 +11,7 @@ import 'ui/cliente/novo_chamado.dart';
 import 'ui/cliente/chamado_detalhado.dart';
 import 'ui/cliente/editar_chamado.dart';
 
-// Importando telas do técnico
+// Importando telas do técnico;
 import 'ui/tecnico/dashboard.dart';
 import 'ui/tecnico/detalhes_ativos.dart';
 import 'ui/tecnico/chamadosTecnico.dart';
