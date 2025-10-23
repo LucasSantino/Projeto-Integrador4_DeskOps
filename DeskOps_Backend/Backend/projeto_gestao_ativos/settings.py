@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "corsheaders",  # comunicação back-front (segurança)
     "rest_framework",  # back como api
     "rest_framework.authtoken",  # autenticação via api
+    "djoser",  #autorização e autenticação
     "app",  # meu app da mangetech
 ]
 
@@ -132,7 +133,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     # por padrão a api está liberada s/ autenticação
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        'rest_framework.permissions.IsAuthenticated',
     ],
     # configura que a autenticação padrão é por WebToken
     "DEFAULT_AUTHENTICATION_CLASSES": [

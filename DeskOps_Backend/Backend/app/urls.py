@@ -9,7 +9,6 @@ router.register(r'users', UsersView)
 router.register(r'environment', EnvironmentView)
 router.register(r'ativo', AtivoView)
 router.register(r'chamado', ChamadoView)
-router.register(r'comentario', ComentarioView) 
 router.register(r'notificate', NotificateView) 
 
 urlpatterns = router.urls

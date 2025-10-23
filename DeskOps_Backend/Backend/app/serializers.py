@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
@@ -19,17 +20,27 @@ class AtivoSerializer(serializers.ModelSerializer):
         fields = '__all__'
         many = True
 
+
 class ChamadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chamado
         fields = '__all__'
         many = True
 
-class ComentarioSerializer(serializers.ModelSerializer):
+
+
+class ChamadoReadSerializar(serializers.ModelSerializer):
+    from .models import Users
+
+    chamado_funcionario_FK = UserSerializer()
+    chamado_usuario_FK = UserSerializer()
+    
     class Meta:
-        model = Comentario
+        model = Chamado
         fields = '__all__'
         many = True
+
+
 
 class NotificateSerializer(serializers.ModelSerializer):
     class Meta:

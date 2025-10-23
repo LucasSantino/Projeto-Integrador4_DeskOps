@@ -20,10 +20,6 @@ class ChamadoView(ModelViewSet):
     queryset = Chamado.objects.all()
     serializer_class = ChamadoSerializer
 
-class ComentarioView(ModelViewSet):
-    queryset = Comentario.objects.all()
-    serializer_class = ComentarioSerializer
-
 class NotificateView(ModelViewSet):
     queryset = Notificate.objects.all()
     serializer_class = NotificateSerializer

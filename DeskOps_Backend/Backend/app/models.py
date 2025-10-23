@@ -80,19 +80,8 @@ class Chamado(models.Model):
     creator = models.ForeignKey(Users, related_name='chamado_usuario_FK', on_delete=models.CASCADE)
     employee = models.ManyToManyField(Users, related_name='chamado_funcionario_FK')
     asset = models.ForeignKey(Ativo, related_name='chamado_ativo_FK', on_delete=models.CASCADE)
+    update_date = models.DateTimeField(auto_now=True)
     photo = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return self.title
-    
-class Comentario(models.Model):
-    title = models.CharField(max_length=50, null=False)
-    description = models.CharField(max_length=500, null=False)
-    dt_criacao = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(Users, related_name='comentario_usuario_FK', on_delete=models.CASCADE)
-    chamado_FK = models.ForeignKey(Chamado, related_name='comentario_chamado_FK', on_delete=models.CASCADE)
-    horario = models.TimeField(auto_now_add=True)
-    data = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return self.title
