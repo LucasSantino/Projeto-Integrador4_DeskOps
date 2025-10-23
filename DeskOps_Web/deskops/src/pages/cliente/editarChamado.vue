@@ -47,9 +47,9 @@
             </div>
 
             <div class="form-section">
-              <h3 class="section-title">Categoria de Serviço</h3>
+              <h3 class="section-title">Ambiente</h3>
               <select v-model="categoria" class="form-select">
-                <option value="" disabled>Selecione a categoria de Serviço</option>
+                <option value="" disabled>Selecione o Ambiente</option>
                 <option v-for="cat in categorias" :key="cat" :value="cat">{{ cat }}</option>
               </select>
             </div>

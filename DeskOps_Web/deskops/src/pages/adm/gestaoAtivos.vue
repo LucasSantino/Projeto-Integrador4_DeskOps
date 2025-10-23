@@ -148,10 +148,15 @@
           <div class="qr-section">
             <h3 class="qr-title">Código QR</h3>
             <div class="qr-container">
-              <div class="qr-placeholder">
-                <span class="material-icons qr-icon">qr_code_2</span>
-                <p class="qr-text">QR Code gerado automaticamente</p>
-                <p class="qr-subtext">ID: {{ ativoSelecionado?.qrCode }}</p>
+              <div class="qr-code-wrapper">
+                <qrcode-vue
+                  :value="qrCodeValue"
+                  :size="200"
+                  level="H"
+                  render-as="canvas"
+                  class="qr-code"
+                />
+                <p class="qr-subtext">ID: {{ ativoSelecionado?.id }}</p>
               </div>
             </div>
             <div class="qr-actions">
@@ -175,6 +180,7 @@
 import { defineComponent, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
+import QrcodeVue from 'qrcode.vue'
 
 interface Ambiente {
   id: number
@@ -194,7 +200,8 @@ interface Ativo {
 export default defineComponent({
   name: 'GestaoAtivos',
   components: {
-    AdmSidebar
+    AdmSidebar,
+    QrcodeVue
   },
   setup() {
     const router = useRouter()
@@ -290,6 +297,23 @@ export default defineComponent({
       },
     ])
 
+    // Computed para gerar o valor do QR Code
+    const qrCodeValue = computed(() => {
+      if (!ativoSelecionado.value) return ''
+      
+      // Você pode personalizar o conteúdo do QR Code
+      return JSON.stringify({
+        id: ativoSelecionado.value.id,
+        nome: ativoSelecionado.value.nome,
+        descricao: ativoSelecionado.value.descricao,
+        ambiente: ativoSelecionado.value.ambiente.nome,
+        localizacao: ativoSelecionado.value.ambiente.localizacao,
+        status: ativoSelecionado.value.status,
+        sistema: 'DeskOps',
+        tipo: 'ativo'
+      })
+    })
+
     const closeProfileMenu = () => {
       // Esta função será chamada no clique da página para fechar o menu de perfil
     }
@@ -313,8 +337,16 @@ export default defineComponent({
     }
 
     const downloadQRCode = () => {
-      // Simular download do QR Code
-      alert(`QR Code do ativo ${ativoSelecionado.value?.nome} baixado com sucesso!`)
+      if (!ativoSelecionado.value) return
+      
+      // Criar um elemento canvas temporário para download
+      const canvas = document.querySelector('.qr-code canvas') as HTMLCanvasElement
+      if (canvas) {
+        const link = document.createElement('a')
+        link.download = `qrcode-ativo-${ativoSelecionado.value.id}.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+      }
     }
 
     const imprimirQRCode = () => {
@@ -381,6 +413,7 @@ export default defineComponent({
       ativosOrdenados,
       modalAberto,
       ativoSelecionado,
+      qrCodeValue,
       statusClass,
       statusIcon,
       formatarStatus,
@@ -934,6 +967,29 @@ html, body, #app {
 .btn-print:hover {
   background-color: #e5e7eb;
 }
+
+/* QR Code */
+.qr-code-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-code {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px;
+  background: white;
+}
+
+.qr-subtext {
+  color: #6b7280;
+  font-size: 12px;
+  margin: 0;
+  font-weight: 500;
+}
+
 
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {

@@ -40,8 +40,8 @@
             </div>
 
             <div class="info-section">
-              <h3>Categoria</h3>
-              <p class="info-text">{{ chamado.categoria }}</p>
+              <h3>Ambiente</h3>
+              <p class="info-text">{{ chamado.Ambiente }}</p>
             </div>
 
             <!-- Campo de Prioridade Adicionado -->
@@ -121,7 +121,7 @@ export default defineComponent({
       titulo: 'Erro ao acessar o painel administrativo',
       descricao:
         'Usuário relata que ao tentar acessar o painel, uma tela de erro 500 é exibida. Foi realizado teste em diferentes navegadores e o problema persiste.',
-      categoria: 'Suporte Técnico',
+      Ambiente: 'Departamento Adiministrativo',
       imagem: '', 
       status: 'Em Andamento',
       prioridade: 'Alta', // Campo de prioridade adicionado
