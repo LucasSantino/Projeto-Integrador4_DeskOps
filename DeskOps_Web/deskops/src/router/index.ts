@@ -30,6 +30,9 @@ import TecnicoChamaDetalha from '../pages/tecnico/tecnico_chamaDetalha.vue'
 import TecnicoPerfil from '../pages/tecnico/tecnicoPerfil.vue'
 import ChamadosLista from '@/pages/tecnico/chamadosLista.vue'
 
+// Public Pages (para acesso via QR Code)
+import TechDetalhesAtivos from '../pages/techDetalhesAtivos.vue' // ← CORRIGIDO para minúsculo
+
 const routes: Array<RouteRecordRaw> = [
   // Login Routes
   { path: '/', name: 'Login', component: Login },
@@ -53,12 +56,14 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/cliente/novo-chamado', name: 'NovoChamado', component: NovoChamado },
   { path: '/cliente/perfil', name: 'PerfilCliente', component: PerfilCliente },
 
-
   // Tecnico Routes
   { path: '/tecnico/chamados', name: 'ChamadosTecnico', component: ChamadosTecnico },
   { path: '/tecnico/chamados-lista', name: 'ChamadosLista', component: ChamadosLista },
   { path: '/tecnico/chamado-detalhado', name: 'TecnicoChamaDetalha', component: TecnicoChamaDetalha },
   { path: '/tecnico/perfil', name: 'TecnicoPerfil', component: TecnicoPerfil },
+
+  // Public Routes (acesso via QR Code - SEM autenticação)
+  { path: '/tech/ativo/:id', name: 'TechDetalhesAtivos', component: TechDetalhesAtivos,props: true },
 ]
 
 const router = createRouter({
