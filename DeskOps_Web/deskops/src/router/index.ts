@@ -3,35 +3,35 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
 // Login Pages
-import Login from '../pages/login/Login.vue'
-import Cadastro from '../pages/login/cadastro.vue'
+import Login from '@/pages/login/Login.vue'
+import Cadastro from '@/pages/login/cadastro.vue'
 
 // Admin Pages
-import AdmPerfil from '../pages/adm/admPerfil.vue'
-import Dashboard from '../pages/adm/dashboard.vue'
-import GestaoAmbiente from '../pages/adm/gestaoAmbiente.vue'
-import GestaoChamado from '../pages/adm/gestaoChamado.vue'
-import GestaoUsuarios from '../pages/adm/gestaoUsuarios.vue'
-import NovoAmbiente from '../pages/adm/novoAmbiente.vue'
-import GestaoAtivos from '../pages/adm/gestaoAtivos.vue'
-import NovoAtivo from '../pages/adm/novoAtivo.vue'
+import AdmPerfil from '@/pages/adm/admPerfil.vue'
+import Dashboard from '@/pages/adm/dashboard.vue'
+import GestaoAmbiente from '@/pages/adm/gestaoAmbiente.vue'
+import GestaoChamado from '@/pages/adm/gestaoChamado.vue'
+import GestaoUsuarios from '@/pages/adm/gestaoUsuarios.vue'
+import NovoAmbiente from '@/pages/adm/novoAmbiente.vue'
+import GestaoAtivos from '@/pages/adm/gestaoAtivos.vue'
+import NovoAtivo from '@/pages/adm/novoAtivo.vue'
 import DetalhesAtivos from '@/pages/adm/detalhesAtivos.vue'
 
 // Cliente Pages
-import ChamadoDetalhado from '../pages/cliente/chamadoDetalhado.vue'
-import EditarChamado from '../pages/cliente/editarChamado.vue'
-import MeusChamados from '../pages/cliente/meusChamados.vue'
-import NovoChamado from '../pages/cliente/novoChamado.vue'
-import PerfilCliente from '../pages/cliente/perfil.vue'
+import ChamadoDetalhado from '@/pages/cliente/chamadoDetalhado.vue'
+import EditarChamado from '@/pages/cliente/editarChamado.vue'
+import MeusChamados from '@/pages/cliente/meusChamados.vue'
+import NovoChamado from '@/pages/cliente/novoChamado.vue'
+import PerfilCliente from '@/pages/cliente/perfil.vue'
 
 // Tecnico Pages
-import ChamadosTecnico from '../pages/tecnico/chamadosTecnico.vue'
-import TecnicoChamaDetalha from '../pages/tecnico/tecnico_chamaDetalha.vue'
-import TecnicoPerfil from '../pages/tecnico/tecnicoPerfil.vue'
+import ChamadosTecnico from '@/pages/tecnico/chamadosTecnico.vue'
+import TecnicoChamaDetalha from '@/pages/tecnico/tecnico_chamaDetalha.vue'
+import TecnicoPerfil from '@/pages/tecnico/tecnicoPerfil.vue'
 import ChamadosLista from '@/pages/tecnico/chamadosLista.vue'
 
 // Public Pages (para acesso via QR Code)
-import TechDetalhesAtivos from '../pages/techDetalhesAtivos.vue' // ← CORRIGIDO para minúsculo
+import TechDetalhesAtivos from '@/pages/TechDetalhesAtivos.vue' 
 
 const routes: Array<RouteRecordRaw> = [
   // Login Routes
