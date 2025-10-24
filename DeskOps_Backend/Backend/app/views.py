@@ -16,9 +16,11 @@ class AtivoView(ModelViewSet):
     queryset = Ativo.objects.all()
     serializer_class = AtivoSerializer
 
-class ChamadoView(ModelViewSet):
+class ChamadoView(ReadWriteSerializer, ModelViewSet):
     queryset = Chamado.objects.all()
+    read_serializer_class = 
     serializer_class = ChamadoSerializer
+
 
 class NotificateView(ModelViewSet):
     queryset = Notificate.objects.all()
