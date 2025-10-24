@@ -12,13 +12,17 @@
           <span class="back-text">Voltar</span>
         </div>
 
-        <!-- Título (sem botão Editar) -->
+        <!-- Título com botão de excluir no canto direito -->
         <div class="title-container">
           <h1 class="page-title">Detalhes do Ativo</h1>
+          <button class="btn-excluir" @click.stop="excluirAtivo">
+            <span class="material-icons">delete</span>
+            Excluir Ativo
+          </button>
         </div>
 
         <div class="cards-container">
-          <!-- Card do ativo -->
+          <!-- Card do ativo (MAIOR) -->
           <div class="card-form">
             <div class="header-info">
               <p class="ativo-id">#{{ ativo.id }}</p>
@@ -41,14 +45,6 @@
               <p class="info-text">{{ ativo.ambiente.localizacao }}</p>
             </div>
 
-            <div class="info-section">
-              <h3>QR Code</h3>
-              <div class="qr-code-display">
-                <span class="material-icons qr-icon-large">qr_code_2</span>
-                <p class="qr-code-id">ID: {{ ativo.qrCode }}</p>
-              </div>
-            </div>
-
             <div class="date-info">
               <div class="date-container left">
                 <h3 class="date-title">Data de Criação</h3>
@@ -61,16 +57,11 @@
             </div>
           </div>
 
-          <!-- Card de ações -->
+          <!-- Card de ações (MENOR) -->
           <div class="card-summary">
             <h2 class="card-title">Ações</h2>
             
             <div class="action-buttons">
-              <button class="btn-primary" @click="gerarQRCode">
-                <span class="material-icons">qr_code_2</span>
-                Gerar QR Code
-              </button>
-              
               <button 
                 class="btn-secondary" 
                 @click="alterarStatus"
@@ -79,11 +70,6 @@
                   {{ ativo.status === 'ativo' ? 'build' : 'check_circle' }}
                 </span>
                 {{ ativo.status === 'ativo' ? 'Colocar em Manutenção' : 'Ativar Ativo' }}
-              </button>
-              
-              <button class="btn-danger" @click="excluirAtivo">
-                <span class="material-icons">delete</span>
-                Excluir Ativo
               </button>
             </div>
 
@@ -102,6 +88,10 @@
               <div class="info-item">
                 <span class="info-label">Localização:</span>
                 <span class="info-value">{{ ativo.ambiente.localizacao }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">ID QR Code:</span>
+                <span class="info-value">{{ ativo.qrCode }}</span>
               </div>
             </div>
           </div>
@@ -194,11 +184,6 @@ export default defineComponent({
       }
     }
 
-    const gerarQRCode = () => {
-      alert('QR Code gerado com sucesso!')
-      // Aqui você implementaria a lógica para gerar/regenerar o QR Code
-    }
-
     const alterarStatus = () => {
       const novoStatus = ativo.value.status === 'ativo' ? 'manutencao' : 'ativo'
       ativo.value.status = novoStatus
@@ -211,7 +196,7 @@ export default defineComponent({
     const excluirAtivo = () => {
       if (confirm('Tem certeza que deseja excluir este ativo? Esta ação não pode ser desfeita.')) {
         alert('Ativo excluído com sucesso!')
-        router.push('/adm/gestao-ativo')
+        router.push('/adm/gestao-ativos')
       }
     }
 
@@ -222,7 +207,6 @@ export default defineComponent({
       statusClass,
       statusIcon,
       formatarStatus,
-      gerarQRCode,
       alterarStatus,
       excluirAtivo
     }
@@ -316,7 +300,7 @@ html, body, #app {
   color: #555;
 }
 
-/* Título (sem botão Editar) */
+/* Título com botão de excluir no canto direito */
 .title-container {
   display: flex;
   align-items: center;
@@ -332,14 +316,42 @@ html, body, #app {
   margin: 0;
 }
 
-/* Container dos Cards */
+/* Botão Excluir - Estilo igual ao botão Editar */
+.btn-excluir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid #dc2626;
+  background-color: transparent;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-excluir:hover {
+  background-color: #dc2626;
+  color: white;
+}
+
+.btn-excluir .material-icons {
+  font-size: 18px;
+  color: inherit;
+}
+
+/* Container dos Cards - ALTURAS ORIGINAIS */
 .cards-container {
   display: flex;
   gap: 30px;
   width: 100%;
   margin-bottom: 40px;
+  align-items: flex-start;
 }
 
+/* Card do ativo - MAIOR (flex: 2) */
 .card-form {
   flex: 2;
   background-color: #fff;
@@ -350,8 +362,10 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 500px;
 }
 
+/* Card de ações - MENOR (flex: 1) */
 .card-summary {
   flex: 1;
   background-color: #fff;
@@ -365,6 +379,7 @@ html, body, #app {
   text-align: left;
   gap: 24px;
   height: fit-content;
+  min-height: 400px;
 }
 
 /* Header do Card */
@@ -442,6 +457,7 @@ html, body, #app {
   justify-content: space-between;
   width: 100%;
   gap: 20px;
+  margin-top: auto;
 }
 
 .date-container {
@@ -454,30 +470,6 @@ html, body, #app {
 
 .date-container.right {
   text-align: right;
-}
-
-/* QR Code Display */
-.qr-code-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.qr-icon-large {
-  font-size: 80px;
-  color: #374151;
-}
-
-.qr-code-id {
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
 }
 
 /* Card Summary - Ações */
@@ -497,9 +489,7 @@ html, body, #app {
 }
 
 /* BOTÕES CONSISTENTES COM O DESIGN DO PROJETO */
-.btn-primary,
-.btn-secondary,
-.btn-danger {
+.btn-secondary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -513,41 +503,18 @@ html, body, #app {
   transition: all 0.2s;
   width: 100%;
   text-align: center;
-}
-
-.btn-primary {
-  background-color: #000;
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background-color: #333;
-}
-
-.btn-secondary {
-  background-color: #fff;
-  color: #000;
-  border: 2px solid #000;
+  background-color: #000000;
+  color: #fffefe;
+  border: 2px solid #ffffff;
 }
 
 .btn-secondary:hover {
-  background-color: #f8f9fa;
+  background-color: #585858;
 }
 
-.btn-danger {
-  background-color: #dc2626;
-  color: #fff;
-}
-
-.btn-danger:hover {
-  background-color: #b91c1c;
-}
-
-.btn-primary .material-icons,
-.btn-secondary .material-icons,
-.btn-danger .material-icons {
+.btn-secondary .material-icons {
   font-size: 18px;
-  color: inherit;
+  color: white;
 }
 
 /* Informações Rápidas */
@@ -555,6 +522,7 @@ html, body, #app {
   width: 100%;
   padding-top: 16px;
   border-top: 1px solid #e0e0e0;
+  margin-top: auto;
 }
 
 .info-rapida h3 {
@@ -601,6 +569,7 @@ html, body, #app {
   .card-summary {
     flex: none;
     width: 100%;
+    min-height: auto;
   }
 }
 
@@ -626,6 +595,16 @@ html, body, #app {
     font-size: 24px;
   }
   
+  .title-container {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .btn-excluir {
+    align-self: flex-start;
+  }
+  
   .date-info {
     flex-direction: column;
     gap: 15px;
@@ -635,8 +614,8 @@ html, body, #app {
     text-align: left;
   }
   
-  .qr-icon-large {
-    font-size: 60px;
+  .back-container {
+    padding: 30px 0 0 0;
   }
 }
 

@@ -301,18 +301,12 @@ export default defineComponent({
     const qrCodeValue = computed(() => {
       if (!ativoSelecionado.value) return ''
       
-      // Você pode personalizar o conteúdo do QR Code
-      return JSON.stringify({
-        id: ativoSelecionado.value.id,
-        nome: ativoSelecionado.value.nome,
-        descricao: ativoSelecionado.value.descricao,
-        ambiente: ativoSelecionado.value.ambiente.nome,
-        localizacao: ativoSelecionado.value.ambiente.localizacao,
-        status: ativoSelecionado.value.status,
-        sistema: 'DeskOps',
-        tipo: 'ativo'
-      })
+      // URL que aponta para a página de detalhes do ativo
+    const baseUrl = window.location.origin
+    
+    return `${baseUrl}/adm/detalhes-ativos?id=${ativoSelecionado.value.id}`
     })
+    
 
     const closeProfileMenu = () => {
       // Esta função será chamada no clique da página para fechar o menu de perfil
