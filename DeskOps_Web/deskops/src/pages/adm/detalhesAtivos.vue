@@ -21,7 +21,7 @@
           </button>
         </div>
 
-        <div class="cards-container">
+        <div class="cards-container"> 
           <!-- Card do ativo (MAIOR) -->
           <div class="card-form">
             <div class="header-info">
