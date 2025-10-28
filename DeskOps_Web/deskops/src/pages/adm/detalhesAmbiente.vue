@@ -7,7 +7,7 @@
     <main class="main-content">
       <div class="content-area">
         <!-- Botão Voltar -->
-        <div class="back-container" @click="$router.push('/adm/gestao-ambientes')">
+        <div class="back-container" @click="$router.push('/adm/gestao-ambiente')">
           <span class="material-icons back-icon">arrow_back</span>
           <span class="back-text">Voltar</span>
         </div>
