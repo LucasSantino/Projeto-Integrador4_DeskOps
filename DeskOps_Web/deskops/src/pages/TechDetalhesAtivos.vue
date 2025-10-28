@@ -91,7 +91,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
 interface Ambiente {
   id: number
@@ -112,8 +113,16 @@ interface Ativo {
 
 export default defineComponent({
   name: 'TechDetalhesAtivos',
-  setup() {
-    // Dados mockados - mesma estrutura do DetalhesAtivos.vue
+  props: {
+    id: {
+      type: String,
+      required: true
+    }
+  },
+  setup(props) {
+    const route = useRoute()
+    
+    // Dados mockados - em produção, buscar por ID
     const ativo = ref<Ativo>({
       id: 3001,
       nome: 'Notebook Dell Latitude 5420',
@@ -127,6 +136,13 @@ export default defineComponent({
       qrCode: 'QR001',
       criadoEm: '10/10/2025 - 14:22',
       atualizadoEm: '11/10/2025 - 09:10'
+    })
+
+    onMounted(() => {
+      console.log('ID recebido:', props.id)
+      console.log('Route params:', route.params)
+      // Aqui você pode buscar os dados reais do ativo baseado no ID
+      // buscarAtivo(props.id)
     })
 
     const statusClass = (status: string) => {
@@ -154,7 +170,6 @@ export default defineComponent({
     }
 
     const fecharPagina = () => {
-      // Fecha a aba ou volta para a página anterior
       if (window.history.length > 1) {
         window.history.back()
       } else {
