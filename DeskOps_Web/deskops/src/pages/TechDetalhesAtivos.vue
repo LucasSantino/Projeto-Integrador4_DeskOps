@@ -7,7 +7,7 @@
         <div class="tech-header">
           <div class="logo-section">
             <div class="logo">
-              <span class="material-icons">qr_code_2</span>
+              <img src="@/assets/images/iconedeskops.png" alt="Logo DeskOps" class="logo-image" />
               <span class="logo-text">DeskOps</span>
             </div>
             <p class="system-label">Consulta de Ativo via QR Code</p>
@@ -247,11 +247,17 @@ html, body, #app {
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-size: 24px;
   font-weight: bold;
   color: indigo;
   margin-bottom: 4px;
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .logo-text {
@@ -343,7 +349,7 @@ html, body, #app {
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  gap: 24px;
+  gap: 16px;
   height: fit-content;
   min-height: 400px;
 }
@@ -443,16 +449,16 @@ html, body, #app {
   color: #000;
   font-weight: bold;
   font-size: 18px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   width: 100%;
 }
 
-/* Informações Rápidas */
+/* Informações Rápidas - MAIS PRÓXIMAS DO TÍTULO */
 .info-rapida {
   width: 100%;
-  padding-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid #e0e0e0;
-  margin-top: auto;
+  margin-top: 0;
 }
 
 .info-rapida h3 {
@@ -466,7 +472,7 @@ html, body, #app {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .info-label {
@@ -526,6 +532,10 @@ html, body, #app {
     padding: 20px 0 0 0;
   }
   
+  .logo {
+    justify-content: center;
+  }
+  
   .date-info {
     flex-direction: column;
     gap: 15px;
@@ -550,12 +560,13 @@ html, body, #app {
     padding: 15px 0 0 0;
   }
   
-  .logo {
+  .logo-text {
     font-size: 20px;
   }
   
-  .logo-text {
-    font-size: 20px;
+  .logo-image {
+    width: 35px;
+    height: 35px;
   }
 }
 

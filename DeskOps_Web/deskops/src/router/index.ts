@@ -16,6 +16,7 @@ import NovoAmbiente from '@/pages/adm/novoAmbiente.vue'
 import GestaoAtivos from '@/pages/adm/gestaoAtivos.vue'
 import NovoAtivo from '@/pages/adm/novoAtivo.vue'
 import DetalhesAtivos from '@/pages/adm/detalhesAtivos.vue'
+import DetalhesAmbiente from '@/pages/adm/detalhesAmbiente.vue'
 
 // Cliente Pages
 import ChamadoDetalhado from '@/pages/cliente/chamadoDetalhado.vue'
@@ -48,6 +49,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/adm/gestao-ativos', name: 'GestaoAtivos', component: GestaoAtivos},
   { path: '/adm/novo-ativo', name: 'NovoAtivo', component: NovoAtivo},
   { path: '/adm/detalhes-ativos', name: 'DetalhesAtivos', component: DetalhesAtivos},
+  { path: '/adm/detalhes-ambiente', name: 'DetalhesAmbiente', component: DetalhesAmbiente}, // ADICIONAR ESTA ROTA
 
   // Cliente Routes
   { path: '/cliente/chamado-detalhado', name: 'ChamadoDetalhado', component: ChamadoDetalhado },

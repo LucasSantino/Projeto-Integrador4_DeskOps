@@ -53,7 +53,7 @@
               <tr
                 v-for="ambiente in ambientesOrdenados"
                 :key="ambiente.id"
-                @click="editarAmbiente(ambiente.id)"
+                @click="verDetalhesAmbiente(ambiente.id)"
                 class="clickable-row"
               >
                 <td>{{ ambiente.criadoEm }}</td>
@@ -210,10 +210,9 @@ export default defineComponent({
       router.push('/adm/novo-ambiente')
     }
 
-    const editarAmbiente = (id: number) => {
-      console.log('Editar ambiente:', id)
-      // Aqui você implementaria a lógica para editar um ambiente
-      // Por exemplo: router.push({ path: '/adm/editar-ambiente', query: { id: id.toString() } })
+    const verDetalhesAmbiente = (id: number) => {
+      // Redireciona para a página de detalhes do ambiente
+      router.push('/adm/detalhes-ambiente')
     }
 
     return { 
@@ -223,7 +222,7 @@ export default defineComponent({
       pesquisa, 
       ambientesOrdenados,
       cadastrarAmbiente,
-      editarAmbiente,
+      verDetalhesAmbiente,
       closeProfileMenu
     }
   },

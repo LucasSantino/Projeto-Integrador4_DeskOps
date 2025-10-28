@@ -304,7 +304,7 @@ export default defineComponent({
       // URL que aponta para a página de detalhes do ativo
     const baseUrl = window.location.origin
     
-    return `${baseUrl}/adm/detalhes-ativos?id=${ativoSelecionado.value.id}`
+    return `${baseUrl}/tech/ativo/${ativoSelecionado.value.id}`
     })
     
 
