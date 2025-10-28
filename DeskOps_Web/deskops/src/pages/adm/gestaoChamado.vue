@@ -65,7 +65,6 @@
               <tr
                 v-for="chamado in chamadosOrdenados"
                 :key="chamado.id"
-                @click="goToChamadoDetalhado(chamado.id)"
                 class="clickable-row"
               >
                 <td>{{ chamado.atualizado }}</td>
@@ -153,9 +152,7 @@ export default defineComponent({
       // Esta função será chamada no clique da página para fechar o menu de perfil
     }
 
-    const goToChamadoDetalhado = (id: number) => {
-      router.push({ path: '/adm/chamado-detalhado', query: { id: id.toString() } })
-    }
+    
 
     const chamados = ref<Chamado[]>([
       { id: 101, atualizado: '11/10/2025 10:30', titulo: 'Troca de cabo de rede', cliente: 'Lucas Santino', email:'lucas@email.com', tecnico: 'Victor Ribeiro', status: 'Aberto', prioridade: 'alta' },
@@ -274,7 +271,7 @@ export default defineComponent({
       formatarPrioridade,
       getTecnicoEmail,
       closeProfileMenu, 
-      goToChamadoDetalhado 
+    
     }
   },
 })
