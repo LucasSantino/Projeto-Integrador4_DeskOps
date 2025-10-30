@@ -11,6 +11,7 @@ class MeusChamados extends StatefulWidget {
 class _MeusChamadosState extends State<MeusChamados> {
   final TextEditingController searchController = TextEditingController();
   String statusFilter = 'Todos';
+  String prioridadeFilter = 'Todas'; // NOVO: filtro de prioridade
 
   final List<Map<String, String>> chamados = [
     {
@@ -19,42 +20,84 @@ class _MeusChamadosState extends State<MeusChamados> {
       'titulo':
           'Problema na Impressora muito grande que precisa de truncamento',
       'status': 'Aberto',
+      'prioridade': 'Alta', // NOVO: campo prioridade
     },
     {
       'atualizadoData': '24/09/2025',
       'atualizadoHora': '10:15',
       'titulo': 'Falha no Sistema',
       'status': 'Em Andamento',
+      'prioridade': 'Média', // NOVO: campo prioridade
     },
     {
       'atualizadoData': '22/09/2025',
       'atualizadoHora': '09:20',
       'titulo': 'Erro de Login',
       'status': 'Aguardando',
+      'prioridade': 'Baixa', // NOVO: campo prioridade
     },
     {
       'atualizadoData': '20/09/2025',
       'atualizadoHora': '15:10',
       'titulo': 'Instalação de Software',
       'status': 'Concluido',
+      'prioridade': 'Média', // NOVO: campo prioridade
     },
     {
       'atualizadoData': '19/09/2025',
       'atualizadoHora': '11:05',
       'titulo': 'Configuração de Rede',
       'status': 'Cancelado',
+      'prioridade': 'Alta', // NOVO: campo prioridade
     },
     {
       'atualizadoData': '18/09/2025',
       'atualizadoHora': '08:30',
       'titulo': 'Problema com Impressora',
       'status': 'Em Andamento',
+      'prioridade': 'Baixa', // NOVO: campo prioridade
     },
   ];
 
   String truncate(String text, [int maxLength = 25]) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength - 3)}...';
+  }
+
+  // Função para obter cor do status
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Colors.green;
+      case 'concluido':
+        return Colors.green.shade300;
+      case 'em andamento':
+        return Colors.blue;
+      case 'aguardando':
+        return Colors.amber.shade700; // NOVO: amarelo escuro
+      case 'cancelado':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Função para obter ícone do status
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Icons.error_outline;
+      case 'concluido':
+        return Icons.check_circle_outline;
+      case 'em andamento':
+        return Icons.autorenew;
+      case 'aguardando':
+        return Icons.hourglass_empty;
+      case 'cancelado':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.help_outline;
+    }
   }
 
   int? hoveredRowIndex;
@@ -65,17 +108,21 @@ class _MeusChamadosState extends State<MeusChamados> {
         chamados.where((chamado) {
           final titulo = chamado['titulo'] ?? '';
           final status = chamado['status'] ?? '';
+          final prioridade = chamado['prioridade'] ?? '';
 
           final matchesStatus =
               statusFilter == 'Todos' ||
               status.toLowerCase() == statusFilter.toLowerCase();
+          final matchesPrioridade =
+              prioridadeFilter == 'Todas' ||
+              prioridade.toLowerCase() == prioridadeFilter.toLowerCase();
           final matchesSearch =
               searchController.text.isEmpty ||
               titulo.toLowerCase().contains(
                 searchController.text.toLowerCase(),
               );
 
-          return matchesStatus && matchesSearch;
+          return matchesStatus && matchesPrioridade && matchesSearch;
         }).toList();
 
     return MainLayout(
@@ -92,15 +139,17 @@ class _MeusChamadosState extends State<MeusChamados> {
           ),
           const SizedBox(height: 20),
 
-          // Filtros
+          // Filtros - ATUALIZADO: 3 filtros lado a lado
           Row(
             children: [
+              // Filtro de Status
               Expanded(
+                flex: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButton<String>(
                     value: statusFilter,
@@ -118,7 +167,10 @@ class _MeusChamadosState extends State<MeusChamados> {
                         ].map((status) {
                           return DropdownMenuItem(
                             value: status,
-                            child: Text(status),
+                            child: Text(
+                              status,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                     onChanged: (value) {
@@ -129,16 +181,59 @@ class _MeusChamadosState extends State<MeusChamados> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
+
+              // NOVO: Filtro de Prioridade
               Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButton<String>(
+                    value: prioridadeFilter,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    dropdownColor: Colors.white,
+                    items:
+                        const ['Todas', 'Alta', 'Média', 'Baixa'].map((
+                          prioridade,
+                        ) {
+                          return DropdownMenuItem(
+                            value: prioridade,
+                            child: Text(
+                              prioridade,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        prioridadeFilter = value!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Campo de Pesquisa
+              Expanded(
+                flex: 3,
                 child: TextField(
                   controller: searchController,
                   decoration: InputDecoration(
                     hintText: 'Pesquisar...',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
                     ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    isDense: true,
                   ),
                   onChanged: (value) {
                     setState(() {});
@@ -162,7 +257,8 @@ class _MeusChamadosState extends State<MeusChamados> {
                   showCheckboxColumn: false,
                   columnSpacing: 20,
                   headingRowHeight: 40,
-                  dataRowHeight: 80,
+                  dataRowMinHeight: 80, // CORREÇÃO: substitui dataRowHeight
+                  dataRowMaxHeight: 80, // CORREÇÃO: substitui dataRowHeight
                   columns: const [
                     DataColumn(
                       label: SizedBox(width: 70, child: Text('Atualizado')),
@@ -172,37 +268,13 @@ class _MeusChamadosState extends State<MeusChamados> {
                   ],
                   rows: List.generate(filteredChamados.length, (index) {
                     final chamado = filteredChamados[index];
+                    final status = chamado['status'] ?? '';
 
-                    Color statusColor = Colors.grey;
-                    IconData statusIcon = Icons.help_outline;
-
-                    switch ((chamado['status'] ?? '').toLowerCase()) {
-                      case 'aberto':
-                        statusColor = Colors.red;
-                        statusIcon = Icons.error_outline;
-                        break;
-                      case 'aguardando':
-                        statusColor = Colors.orange;
-                        statusIcon = Icons.hourglass_empty;
-                        break;
-                      case 'em andamento':
-                        statusColor = Colors.blue;
-                        statusIcon = Icons.autorenew;
-                        break;
-                      case 'concluido':
-                        statusColor = Colors.green;
-                        statusIcon = Icons.check_circle_outline;
-                        break;
-                      case 'cancelado':
-                        statusColor = Colors.grey;
-                        statusIcon = Icons.cancel_outlined;
-                        break;
-                    }
+                    final statusColor = _getStatusColor(status);
+                    final statusIcon = _getStatusIcon(status);
 
                     return DataRow(
-                      color: WidgetStateProperty.resolveWith<Color?>((
-                        states,
-                      ) {
+                      color: WidgetStateProperty.resolveWith<Color?>((states) {
                         if (hoveredRowIndex == index)
                           return Colors.grey.shade200;
                         return null;
@@ -242,19 +314,23 @@ class _MeusChamadosState extends State<MeusChamados> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        // Coluna Status
+                        // Coluna Status - ATUALIZADO: com cores e ícones corrigidos
                         DataCell(
                           Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Icon(statusIcon, color: statusColor),
+                                Icon(statusIcon, color: statusColor, size: 20),
                                 const SizedBox(height: 4),
                                 Flexible(
                                   child: Text(
-                                    chamado['status'] ?? '',
-                                    style: TextStyle(color: statusColor),
+                                    status,
+                                    style: TextStyle(
+                                      color: statusColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),

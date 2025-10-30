@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/mainlayout.dart';
-import 'meus_chamados.dart';
+import 'chamado_detalhado.dart'; // NOVO: importar a tela de detalhes
 
 class EditarChamado extends StatefulWidget {
   final String tituloInicial;
   final String descricaoInicial;
   final String? categoriaInicial;
+  final String? prioridadeInicial;
   final File? imagemInicial;
 
   const EditarChamado({
@@ -15,6 +16,7 @@ class EditarChamado extends StatefulWidget {
     required this.tituloInicial,
     required this.descricaoInicial,
     this.categoriaInicial,
+    this.prioridadeInicial,
     this.imagemInicial,
   });
 
@@ -27,9 +29,20 @@ class _EditarChamadoState extends State<EditarChamado> {
   late TextEditingController descricaoController;
 
   String? categoriaSelecionada;
+  String? prioridadeSelecionada;
   File? imagemSelecionada;
 
   final ImagePicker _picker = ImagePicker();
+
+  // Listas para os dropdowns
+  final List<String> ambientes = [
+    "Sala de Reunião",
+    "Escritório",
+    "Área Comum",
+    "Laboratório",
+  ];
+
+  final List<String> prioridades = ["Alta", "Médio", "Baixo"];
 
   @override
   void initState() {
@@ -37,7 +50,22 @@ class _EditarChamadoState extends State<EditarChamado> {
     tituloController = TextEditingController(text: widget.tituloInicial);
     descricaoController = TextEditingController(text: widget.descricaoInicial);
     categoriaSelecionada = widget.categoriaInicial;
+    prioridadeSelecionada = widget.prioridadeInicial;
     imagemSelecionada = widget.imagemInicial;
+  }
+
+  // Função para obter cor baseada na prioridade
+  Color _getPrioridadeColor(String? prioridade) {
+    switch (prioridade?.toLowerCase()) {
+      case 'alta':
+        return Colors.red;
+      case 'médio':
+        return Colors.orange;
+      case 'baixo':
+        return Colors.green;
+      default:
+        return Colors.black54;
+    }
   }
 
   Future<void> selecionarImagem({required bool daCamera}) async {
@@ -88,13 +116,13 @@ class _EditarChamadoState extends State<EditarChamado> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Botão Voltar
+            // Botão Voltar - CORRIGIDO: volta para ChamadoDetalhado
             InkWell(
               onTap: () {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const MeusChamados(),
+                    builder: (context) => const ChamadoDetalhado(), // CORREÇÃO
                   ),
                 );
               },
@@ -178,29 +206,65 @@ class _EditarChamadoState extends State<EditarChamado> {
                   Divider(color: Colors.grey.shade300),
                   const SizedBox(height: 12),
 
-                  // Categoria
-                  const Text("Categoria de Serviço"),
-                  DropdownButtonFormField<String>(
-                    value: categoriaSelecionada,
-                    items: const [
-                      DropdownMenuItem(
-                          value: "Erro de Rede", child: Text("Erro de Rede")),
-                      DropdownMenuItem(
-                          value: "Problema em Impressora",
-                          child: Text("Problema em Impressora")),
-                      DropdownMenuItem(
-                          value: "Falha de Sistema",
-                          child: Text("Falha de Sistema")),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        categoriaSelecionada = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: "Selecione a categoria de atendimento",
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                  // Ambiente
+                  const Text("Ambiente"),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: categoriaSelecionada,
+                      items:
+                          ambientes.map((ambiente) {
+                            return DropdownMenuItem<String>(
+                              value: ambiente,
+                              child: Text(ambiente),
+                            );
+                          }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          categoriaSelecionada = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Selecione o ambiente",
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                      ),
+                      dropdownColor: Colors.white,
+                    ),
+                  ),
+                  Divider(color: Colors.grey.shade300),
+                  const SizedBox(height: 12),
+
+                  // Prioridade
+                  const Text("Prioridade"),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: prioridadeSelecionada,
+                      items:
+                          prioridades.map((prioridade) {
+                            return DropdownMenuItem<String>(
+                              value: prioridade,
+                              child: Text(prioridade),
+                            );
+                          }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          prioridadeSelecionada = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Selecione a prioridade",
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                      ),
+                      dropdownColor: Colors.white,
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
@@ -223,9 +287,10 @@ class _EditarChamadoState extends State<EditarChamado> {
                                   ? imagemSelecionada!.path.split('/').last
                                   : "Selecionar imagem",
                               style: TextStyle(
-                                color: imagemSelecionada != null
-                                    ? Colors.black
-                                    : Colors.grey.shade400,
+                                color:
+                                    imagemSelecionada != null
+                                        ? Colors.black
+                                        : Colors.grey.shade400,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -260,7 +325,7 @@ class _EditarChamadoState extends State<EditarChamado> {
                   const SizedBox(height: 12),
 
                   // Título
-                  const Text("Detalhes"),
+                  const Text("Título"),
                   Text(
                     tituloController.text.isEmpty
                         ? "Título do chamado"
@@ -279,11 +344,22 @@ class _EditarChamadoState extends State<EditarChamado> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Categoria
-                  const Text("Categoria de Serviço"),
+                  // Ambiente
+                  const Text("Ambiente"),
                   Text(
-                    categoriaSelecionada ?? "Nenhuma selecionada",
+                    categoriaSelecionada ?? "Nenhum selecionado",
                     style: const TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Prioridade
+                  const Text("Prioridade"),
+                  Text(
+                    prioridadeSelecionada ?? "Nenhuma selecionada",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getPrioridadeColor(prioridadeSelecionada),
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -314,7 +390,7 @@ class _EditarChamadoState extends State<EditarChamado> {
 
             const SizedBox(height: 20),
 
-            // Botão Salvar Alterações
+            // Botão Salvar Alterações - CORRIGIDO: volta para ChamadoDetalhado
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -323,7 +399,8 @@ class _EditarChamadoState extends State<EditarChamado> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const MeusChamados(),
+                      builder:
+                          (context) => const ChamadoDetalhado(), // CORREÇÃO
                     ),
                   );
                 },
@@ -331,7 +408,8 @@ class _EditarChamadoState extends State<EditarChamado> {
                   backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text(
                   "Salvar Alterações",

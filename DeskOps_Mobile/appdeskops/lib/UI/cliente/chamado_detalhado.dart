@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../widgets/mainLayout.dart';
 import 'meus_chamados.dart'; // tela de origem
-import 'editar_chamado.dart'; // tela de edição
+import 'editar_chamado.dart'; // NOVO: importar a tela de edição
 
 class ChamadoDetalhado extends StatefulWidget {
   const ChamadoDetalhado({super.key});
@@ -15,13 +15,96 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
   bool mostrarImagemFullscreen = false;
   String? imagemChamado;
 
+  // Função para obter cor baseada na prioridade
+  Color _getPrioridadeColor(String prioridade) {
+    switch (prioridade.toLowerCase()) {
+      case 'alta':
+        return Colors.red;
+      case 'médio':
+        return Colors.orange;
+      case 'baixo':
+        return Colors.green;
+      default:
+        return Colors.black54;
+    }
+  }
+
+  // Função para obter cor de fundo baseada na prioridade
+  Color _getPrioridadeBackgroundColor(String prioridade) {
+    switch (prioridade.toLowerCase()) {
+      case 'alta':
+        return Colors.red.shade100;
+      case 'médio':
+        return Colors.orange.shade100;
+      case 'baixo':
+        return Colors.green.shade100;
+      default:
+        return Colors.grey.shade100;
+    }
+  }
+
+  // Função para obter cor do status
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Colors.green;
+      case 'concluido':
+        return Colors.green.shade300; // verde claro
+      case 'em andamento':
+        return Colors.blue;
+      case 'aguardando':
+        return Colors.yellow;
+      case 'cancelado':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Função para obter cor de fundo do status
+  Color _getStatusBackgroundColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Colors.green.shade100;
+      case 'concluido':
+        return Colors.green.shade50; // verde bem claro
+      case 'em andamento':
+        return Colors.blue.shade100;
+      case 'aguardando':
+        return Colors.yellow.shade100;
+      case 'cancelado':
+        return Colors.red.shade100;
+      default:
+        return Colors.grey.shade100;
+    }
+  }
+
+  // Função para obter ícone do status
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Icons.error_outline;
+      case 'concluido':
+        return Icons.check_circle_outline;
+      case 'em andamento':
+        return Icons.autorenew;
+      case 'aguardando':
+        return Icons.hourglass_empty;
+      case 'cancelado':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final int id = 123;
     final String titulo = "Problema na Impressora";
     final String descricao =
         "A impressora não está imprimindo corretamente e apresenta falha de hardware.";
-    final String categoria = "Problema em Impressora";
+    final String ambiente = "Sala de Reunião";
+    final String prioridade = "Alta";
     final String status = "Aberto";
     final String criadoEm = "25/09/2025 14:30";
     final String atualizadoEm = "26/09/2025 10:15";
@@ -29,32 +112,6 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
     final String clienteEmail = "lucas.santino@email.com";
     final String tecnicoNome = "Carlos Silva";
     final String tecnicoEmail = "carlos.silva@email.com";
-
-    Color statusColor = Colors.grey;
-    IconData statusIcon = Icons.help_outline;
-
-    switch (status.toLowerCase()) {
-      case 'aberto':
-        statusColor = Colors.red;
-        statusIcon = Icons.error_outline;
-        break;
-      case 'aguardando':
-        statusColor = Colors.orange;
-        statusIcon = Icons.hourglass_empty;
-        break;
-      case 'em andamento':
-        statusColor = Colors.blue;
-        statusIcon = Icons.autorenew;
-        break;
-      case 'concluido':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
-        break;
-      case 'cancelado':
-        statusColor = Colors.grey;
-        statusIcon = Icons.cancel_outlined;
-        break;
-    }
 
     return MainLayout(
       child: Stack(
@@ -100,6 +157,7 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                     ),
                     TextButton.icon(
                       onPressed: () {
+                        // CORREÇÃO: Usando MaterialPageRoute com todos os parâmetros
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -107,7 +165,9 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                                 (context) => EditarChamado(
                                   tituloInicial: titulo,
                                   descricaoInicial: descricao,
-                                  categoriaInicial: categoria,
+                                  categoriaInicial: ambiente,
+                                  prioridadeInicial:
+                                      prioridade, // NOVO: passando a prioridade
                                   imagemInicial:
                                       imagemChamado != null
                                           ? File(imagemChamado!)
@@ -139,7 +199,7 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       ),
                     ),
                     child: const Text(
-                      "Encerrar",
+                      "Encerrar chamado",
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -169,18 +229,39 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                               fontSize: 16,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Icon(statusIcon, color: statusColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                status,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: statusColor,
+                          // Status com Stack
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusBackgroundColor(status),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Stack(
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _getStatusIcon(status),
+                                      color: _getStatusColor(status),
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      status,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: _getStatusColor(status),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -202,11 +283,53 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       Text(descricao),
                       const SizedBox(height: 12),
 
+                      // Ambiente
                       const Text(
-                        "Categoria",
+                        "Ambiente",
                         style: TextStyle(color: Colors.black54),
                       ),
-                      Text(categoria),
+                      Text(ambiente),
+                      const SizedBox(height: 12),
+
+                      // Prioridade com Stack
+                      const Text(
+                        "Prioridade",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getPrioridadeBackgroundColor(prioridade),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Stack(
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.arrow_upward,
+                                  color: _getPrioridadeColor(prioridade),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  prioridade,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _getPrioridadeColor(prioridade),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 12),
 
                       const Text(
@@ -308,7 +431,7 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
           if (mostrarImagemFullscreen && imagemChamado != null)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.9),
+                color: const Color(0xE6000000),
                 child: Stack(
                   children: [
                     Center(

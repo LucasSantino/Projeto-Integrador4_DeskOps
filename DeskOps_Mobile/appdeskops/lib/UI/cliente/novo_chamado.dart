@@ -16,6 +16,7 @@ class _NovoChamadoState extends State<NovoChamado> {
   final TextEditingController descricaoController = TextEditingController();
 
   String? categoriaSelecionada;
+  String? prioridadeSelecionada;
   File? imagemSelecionada;
 
   final ImagePicker _picker = ImagePicker();
@@ -73,9 +74,7 @@ class _NovoChamadoState extends State<NovoChamado> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const MeusChamados(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const MeusChamados()),
                 );
               },
               child: Row(
@@ -158,29 +157,74 @@ class _NovoChamadoState extends State<NovoChamado> {
                   Divider(color: Colors.grey.shade300),
                   const SizedBox(height: 12),
 
-                  // Categoria
-                  const Text("Categoria de Serviço"),
-                  DropdownButtonFormField<String>(
-                    value: categoriaSelecionada,
-                    items: const [
-                      DropdownMenuItem(
-                          value: "Erro de Rede", child: Text("Erro de Rede")),
-                      DropdownMenuItem(
-                          value: "Problema em Impressora",
-                          child: Text("Problema em Impressora")),
-                      DropdownMenuItem(
-                          value: "Falha de Sistema",
-                          child: Text("Falha de Sistema")),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        categoriaSelecionada = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: "Selecione a categoria de atendimento",
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                  // Ambiente (antiga Categoria)
+                  const Text("Ambiente"),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: categoriaSelecionada,
+                      items: const [
+                        DropdownMenuItem(
+                          value: "Sala de Reunião",
+                          child: Text("Sala de Reunião"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Escritório",
+                          child: Text("Escritório"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Área Comum",
+                          child: Text("Área Comum"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Laboratório",
+                          child: Text("Laboratório"),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          categoriaSelecionada = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Selecione o ambiente",
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                      ),
+                      dropdownColor: Colors.white,
+                    ),
+                  ),
+                  Divider(color: Colors.grey.shade300),
+                  const SizedBox(height: 12),
+
+                  // Prioridade (NOVO)
+                  const Text("Prioridade"),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: prioridadeSelecionada,
+                      items: const [
+                        DropdownMenuItem(value: "Alta", child: Text("Alta")),
+                        DropdownMenuItem(value: "Médio", child: Text("Médio")),
+                        DropdownMenuItem(value: "Baixo", child: Text("Baixo")),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          prioridadeSelecionada = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Selecione a prioridade",
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                      ),
+                      dropdownColor: Colors.white,
                     ),
                   ),
                   Divider(color: Colors.grey.shade300),
@@ -203,9 +247,10 @@ class _NovoChamadoState extends State<NovoChamado> {
                                   ? imagemSelecionada!.path.split('/').last
                                   : "Selecionar imagem",
                               style: TextStyle(
-                                color: imagemSelecionada != null
-                                    ? Colors.black
-                                    : Colors.grey.shade400,
+                                color:
+                                    imagemSelecionada != null
+                                        ? Colors.black
+                                        : Colors.grey.shade400,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -221,7 +266,7 @@ class _NovoChamadoState extends State<NovoChamado> {
 
             const SizedBox(height: 20),
 
-            // Card Resumo
+            // Card Resumo (ATUALIZADO)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -240,7 +285,7 @@ class _NovoChamadoState extends State<NovoChamado> {
                   const SizedBox(height: 12),
 
                   // Título
-                  const Text("Detalhes"),
+                  const Text("Título"),
                   Text(
                     tituloController.text.isEmpty
                         ? "Título do chamado"
@@ -259,11 +304,22 @@ class _NovoChamadoState extends State<NovoChamado> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Categoria
-                  const Text("Categoria de Serviço"),
+                  // Ambiente
+                  const Text("Ambiente"),
                   Text(
-                    categoriaSelecionada ?? "Nenhuma selecionada",
+                    categoriaSelecionada ?? "Nenhum selecionado",
                     style: const TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Prioridade (NOVO) - CORRIGIDO
+                  const Text("Prioridade"),
+                  Text(
+                    prioridadeSelecionada ?? "Nenhuma selecionada",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getPrioridadeColor(prioridadeSelecionada),
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -303,7 +359,8 @@ class _NovoChamadoState extends State<NovoChamado> {
                   backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text(
                   "Criar Chamado",
@@ -315,5 +372,19 @@ class _NovoChamadoState extends State<NovoChamado> {
         ),
       ),
     );
+  }
+
+  // Função para obter cor baseada na prioridade
+  Color _getPrioridadeColor(String? prioridade) {
+    switch (prioridade) {
+      case 'Alta':
+        return Colors.red;
+      case 'Médio':
+        return Colors.orange;
+      case 'Baixo':
+        return Colors.green;
+      default:
+        return Colors.black54;
+    }
   }
 }
