@@ -18,7 +18,7 @@ class _LoginState extends State<Login> {
     if (email == 'cliente@teste.com' && senha == 'cliente1234') {
       Navigator.pushReplacementNamed(context, '/meus_chamados');
     } else if (email == 'tecnico@teste.com' && senha == 'tecnico1234') {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacementNamed(context, '/lista_chamados');
     } else {
       // Caso credenciais inválidas
       showDialog(

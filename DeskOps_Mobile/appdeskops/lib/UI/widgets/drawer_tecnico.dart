@@ -29,8 +29,8 @@ class DrawerTecnico extends StatelessWidget {
             // Lista de itens com efeito visual
             _AnimatedDrawerItem(
               icon: Icons.dashboard,
-              label: 'Dashboard',
-              onTap: (context) => Navigator.pushNamed(context, '/dashboard'),
+              label: 'Lista de Chamados',
+              onTap: (context) => Navigator.pushNamed(context, '/lista_chamados'),
             ),
             _AnimatedDrawerItem(
               icon: Icons.list,

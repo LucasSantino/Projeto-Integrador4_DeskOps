@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../widgets/mainLayout.dart';
 import '../widgets/drawer_tecnico.dart';
 
-class MeusChamadosTecnico extends StatefulWidget {
-  const MeusChamadosTecnico({super.key});
+class ListaChamados extends StatefulWidget {
+  const ListaChamados({super.key});
 
   @override
-  State<MeusChamadosTecnico> createState() => _MeusChamadosTecnicoState();
+  State<ListaChamados> createState() => _ListaChamadosState();
 }
 
-class _MeusChamadosTecnicoState extends State<MeusChamadosTecnico> {
+class _ListaChamadosState extends State<ListaChamados> {
   final TextEditingController searchController = TextEditingController();
   String statusFilter = 'Todos';
 
@@ -84,32 +84,8 @@ class _MeusChamadosTecnicoState extends State<MeusChamadosTecnico> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Botão Voltar
-          GestureDetector(
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/lista_chamados');
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.arrow_back, color: Color.fromARGB(255, 0, 0, 0)),
-                SizedBox(width: 4),
-                Text(
-                  'Voltar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 0, 0, 0),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Título da página
           const Text(
-            'Meus Chamados',
+            'Lista de Chamados',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -175,7 +151,7 @@ class _MeusChamadosTecnicoState extends State<MeusChamadosTecnico> {
           ),
           const SizedBox(height: 20),
 
-          // Tabela de chamados
+          // Tabela de chamados - CORRIGIDO
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.vertical,
@@ -188,7 +164,8 @@ class _MeusChamadosTecnicoState extends State<MeusChamadosTecnico> {
                   showCheckboxColumn: false,
                   columnSpacing: 20,
                   headingRowHeight: 40,
-                  dataRowHeight: 80,
+                  dataRowMinHeight: 80, // CORREÇÃO
+                  dataRowMaxHeight: 80, // CORREÇÃO
                   columns: const [
                     DataColumn(
                       label: SizedBox(width: 70, child: Text('Atualizado')),
@@ -226,9 +203,7 @@ class _MeusChamadosTecnicoState extends State<MeusChamadosTecnico> {
                     }
 
                     return DataRow(
-                      color: WidgetStateProperty.resolveWith<Color?>((
-                        states,
-                      ) {
+                      color: WidgetStateProperty.resolveWith<Color?>((states) {
                         if (hoveredRowIndex == index)
                           return Colors.grey.shade200;
                         return null;

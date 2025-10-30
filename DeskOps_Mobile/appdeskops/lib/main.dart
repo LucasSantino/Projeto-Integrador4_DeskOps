@@ -17,6 +17,7 @@ import 'ui/tecnico/detalhes_ativos.dart';
 import 'ui/tecnico/chamadosTecnico.dart';
 import 'UI/tecnico/chamaDetalhaTecnico.dart';
 import 'ui/tecnico/leitor_qrcode.dart';
+import 'UI/tecnico/listaChamados.dart';
 
 // Importando telas genéricas (comuns a todos os usuários)
 import 'ui/genericas/perfil.dart' as perfilGenerico;
@@ -60,6 +61,7 @@ class MyApp extends StatelessWidget {
         '/chamado_detalhado_Tecnico':
             (context) => const ChamadoDetalhadoTecnico(),
         '/leitor_qrcode': (context) => const LeitorQrcode(),
+        '/lista_chamados': (context) => const ListaChamados(), 
 
         // Rotas genéricas (comuns a todos os usuários)
         '/editar_perfil':

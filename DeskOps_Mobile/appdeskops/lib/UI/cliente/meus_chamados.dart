@@ -200,7 +200,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                     }
 
                     return DataRow(
-                      color: MaterialStateProperty.resolveWith<Color?>((
+                      color: WidgetStateProperty.resolveWith<Color?>((
                         states,
                       ) {
                         if (hoveredRowIndex == index)
