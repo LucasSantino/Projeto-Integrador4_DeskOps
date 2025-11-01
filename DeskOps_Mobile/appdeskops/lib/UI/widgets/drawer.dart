@@ -3,6 +3,57 @@ import 'package:flutter/material.dart';
 class CustomDrawer extends StatelessWidget {
   CustomDrawer({super.key});
 
+  // Função para confirmar a saída
+  Future<void> _confirmarSaida(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              "Confirmar Saída",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.indigo,
+              ),
+            ),
+            content: const Text(
+              "Deseja realmente sair da aplicação?",
+              style: TextStyle(color: Colors.black87),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Sair",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -56,16 +107,11 @@ class CustomDrawer extends StatelessWidget {
 
             const Spacer(),
 
-            // Item Sair
+            // Item Sair - ATUALIZADO COM CONFIRMAÇÃO
             _AnimatedDrawerItem(
               icon: Icons.logout,
               label: 'Sair',
-              onTap:
-                  (context) => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (route) => false,
-                  ),
+              onTap: _confirmarSaida,
             ),
 
             // Rodapé

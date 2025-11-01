@@ -12,37 +12,91 @@ class DetalhesAtivos extends StatefulWidget {
 
 class _DetalhesAtivosState extends State<DetalhesAtivos> {
   bool mostrarImagemFullscreen = false;
-  String? imagemAtivo;
+  String? photo;
+
+  // Função para obter cor do status
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'ATIVO':
+        return Colors.green;
+      case 'EM_MANUTENCAO':
+        return Colors.orange;
+      case 'DESATIVADO':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Função para obter cor de fundo do status
+  Color _getStatusBackgroundColor(String status) {
+    switch (status) {
+      case 'ATIVO':
+        return Colors.green.shade100;
+      case 'EM_MANUTENCAO':
+        return Colors.orange.shade100;
+      case 'DESATIVADO':
+        return Colors.red.shade100;
+      default:
+        return Colors.grey.shade100;
+    }
+  }
+
+  // Função para obter ícone do status
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'ATIVO':
+        return Icons.check_circle_outline;
+      case 'EM_MANUTENCAO':
+        return Icons.build_circle_outlined;
+      case 'DESATIVADO':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
+  // Função para formatar o nome do status para exibição
+  String _formatStatus(String status) {
+    switch (status) {
+      case 'ATIVO':
+        return 'Ativo';
+      case 'EM_MANUTENCAO':
+        return 'Em Manutenção';
+      case 'DESATIVADO':
+        return 'Desativado';
+      default:
+        return status;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Dados normalizados seguindo o modelo Ativo
     final int id = 101;
-    final String nomeAtivo = "Ar Condicionado Central";
-    final String descricao =
+    final String name = "Ar Condicionado Central";
+    final String description =
         "Manutenção preventiva realizada, verificado compressor, sistema elétrico e filtros. Observações técnicas anotadas.";
-    final String categoria = "Ambiente: Escritório Central";
-    final String status = "Ativo";
-    final String criadoEm = "01/10/2025 09:00";
-    final String atualizadoEm = "05/10/2025 15:30";
-    final String responsavel = "Equipe de Manutenção";
+    final String status = "ATIVO"; // Usando os valores do enum status_ativos
+    final String qrCode = "QR123456789"; // Adicionando QR Code
+    final DateTime dtCriacao = DateTime(2025, 10, 1, 9, 0);
+    final DateTime updateDate = DateTime(2025, 10, 5, 15, 30);
 
-    Color statusColor = Colors.grey;
-    IconData statusIcon = Icons.help_outline;
+    // Dados do Environment (ambiente)
+    final String environmentName = "Escritório Central";
+    final String environmentDescription =
+        "Ambiente climatizado para trabalho em equipe";
 
-    switch (status.toLowerCase()) {
-      case 'ativo':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
-        break;
-      case 'inativo':
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel_outlined;
-        break;
-      case 'manutenção':
-        statusColor = Colors.orange;
-        statusIcon = Icons.build_circle_outlined;
-        break;
-    }
+    // Dados do Employee (responsável)
+    final String employeeName = "Carlos Silva";
+    final String employeeEmail = "carlos.silva@email.com";
+    final String employeeCargo = "Técnico de Manutenção";
+
+    // Formatando datas para exibição
+    final String criadoEm =
+        "${dtCriacao.day.toString().padLeft(2, '0')}/${dtCriacao.month.toString().padLeft(2, '0')}/${dtCriacao.year} ${dtCriacao.hour.toString().padLeft(2, '0')}:${dtCriacao.minute.toString().padLeft(2, '0')}";
+    final String atualizadoEm =
+        "${updateDate.day.toString().padLeft(2, '0')}/${updateDate.month.toString().padLeft(2, '0')}/${updateDate.year} ${updateDate.hour.toString().padLeft(2, '0')}:${updateDate.minute.toString().padLeft(2, '0')}";
 
     return MainLayout(
       drawer: const DrawerTecnico(),
@@ -104,25 +158,42 @@ class _DetalhesAtivosState extends State<DetalhesAtivos> {
                               fontSize: 16,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Icon(statusIcon, color: statusColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                status,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: statusColor,
+                          // Status com Stack - seguindo padrão dos chamados
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusBackgroundColor(status),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getStatusIcon(status),
+                                  color: _getStatusColor(status),
+                                  size: 16,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatStatus(status),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _getStatusColor(status),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
 
                       Text(
-                        nomeAtivo,
+                        name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -131,24 +202,39 @@ class _DetalhesAtivosState extends State<DetalhesAtivos> {
                       const SizedBox(height: 12),
 
                       const Text(
-                        "Descrição Técnica",
+                        "Descrição",
                         style: TextStyle(color: Colors.black54),
                       ),
-                      Text(descricao),
+                      Text(description),
                       const SizedBox(height: 12),
 
+                      // Ambiente
                       const Text(
-                        "Categoria / Ambiente",
+                        "Ambiente",
                         style: TextStyle(color: Colors.black54),
                       ),
-                      Text(categoria),
+                      Text(environmentName),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Descrição do Ambiente",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      Text(environmentDescription),
+                      const SizedBox(height: 12),
+
+                      // QR Code
+                      const Text(
+                        "QR Code",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      Text(qrCode),
                       const SizedBox(height: 12),
 
                       const Text(
                         "Imagem",
                         style: TextStyle(color: Colors.black54),
                       ),
-                      if (imagemAtivo != null) ...[
+                      if (photo != null) ...[
                         const SizedBox(height: 8),
                         GestureDetector(
                           onTap: () {
@@ -159,7 +245,7 @@ class _DetalhesAtivosState extends State<DetalhesAtivos> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.file(
-                              File(imagemAtivo!),
+                              File(photo!),
                               height: 120,
                               fit: BoxFit.cover,
                             ),
@@ -172,13 +258,17 @@ class _DetalhesAtivosState extends State<DetalhesAtivos> {
                         ),
                       const SizedBox(height: 12),
 
+                      // Responsável pelo Ambiente
                       const Text(
-                        "Responsável",
+                        "Responsável pelo Ambiente",
                         style: TextStyle(color: Colors.black54),
                       ),
-                      Text(responsavel),
+                      Text(employeeName),
+                      Text(employeeEmail),
+                      Text(employeeCargo),
                       const SizedBox(height: 12),
 
+                      // Datas
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -212,17 +302,14 @@ class _DetalhesAtivosState extends State<DetalhesAtivos> {
           ),
 
           // Overlay imagem fullscreen
-          if (mostrarImagemFullscreen && imagemAtivo != null)
+          if (mostrarImagemFullscreen && photo != null)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.9),
+                color: const Color(0xE6000000),
                 child: Stack(
                   children: [
                     Center(
-                      child: Image.file(
-                        File(imagemAtivo!),
-                        fit: BoxFit.contain,
-                      ),
+                      child: Image.file(File(photo!), fit: BoxFit.contain),
                     ),
                     Positioned(
                       top: 40,

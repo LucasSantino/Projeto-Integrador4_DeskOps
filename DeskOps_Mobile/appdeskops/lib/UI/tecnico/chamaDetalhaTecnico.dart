@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../widgets/mainLayout.dart';
 import '../widgets/drawer_tecnico.dart';
-import '../tecnico/chamadosTecnico.dart'; 
+import '../tecnico/chamadosTecnico.dart';
 
 class ChamadoDetalhadoTecnico extends StatefulWidget {
   const ChamadoDetalhadoTecnico({super.key});
@@ -17,13 +17,128 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
   String? imagemChamado;
   String status = "Aguardando"; // status inicial controlado pelo sistema
 
-  void atualizarStatus(String novoStatus) {
-    setState(() {
-      status = novoStatus;
-    });
+  // Função para obter cor baseada na prioridade
+  Color _getPrioridadeColor(String prioridade) {
+    switch (prioridade.toLowerCase()) {
+      case 'alta':
+        return Colors.red;
+      case 'médio':
+        return Colors.orange;
+      case 'baixo':
+        return Colors.green;
+      default:
+        return Colors.black54;
+    }
   }
 
-  Future<void> confirmarEncerramento() async {
+  // Função para obter cor de fundo baseada na prioridade
+  Color _getPrioridadeBackgroundColor(String prioridade) {
+    switch (prioridade.toLowerCase()) {
+      case 'alta':
+        return Colors.red.shade100;
+      case 'médio':
+        return Colors.orange.shade100;
+      case 'baixo':
+        return Colors.green.shade100;
+      default:
+        return Colors.grey.shade100;
+    }
+  }
+
+  // Função para obter cor do status
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Colors.green;
+      case 'concluido':
+        return Colors.green.shade300;
+      case 'em andamento':
+        return Colors.blue;
+      case 'aguardando':
+        return Colors.amber.shade700;
+      case 'cancelado':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Função para obter cor de fundo do status
+  Color _getStatusBackgroundColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Colors.green.shade100;
+      case 'concluido':
+        return Colors.green.shade50;
+      case 'em andamento':
+        return Colors.blue.shade100;
+      case 'aguardando':
+        return Colors.yellow.shade100;
+      case 'cancelado':
+        return Colors.red.shade100;
+      default:
+        return Colors.grey.shade100;
+    }
+  }
+
+  // Função para obter ícone do status
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'aberto':
+        return Icons.error_outline;
+      case 'concluido':
+        return Icons.check_circle_outline;
+      case 'em andamento':
+        return Icons.autorenew;
+      case 'aguardando':
+        return Icons.hourglass_empty;
+      case 'cancelado':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
+  void atribuirChamado() {
+    setState(() {
+      status = "Em andamento";
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Chamado atribuído com sucesso!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void concluirChamado() {
+    setState(() {
+      status = "Concluido";
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Chamado marcado como concluído!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void reabrirChamado() {
+    setState(() {
+      status = "Em andamento";
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Chamado reaberto com sucesso!"),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  Future<void> confirmarConclusao() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
@@ -33,14 +148,14 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
               borderRadius: BorderRadius.circular(12),
             ),
             title: const Text(
-              "Encerrar Chamado",
+              "Concluir Chamado",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.indigo,
               ),
             ),
             content: const Text(
-              "Deseja realmente encerrar este chamado? Essa ação marcará o chamado como concluído.",
+              "Deseja realmente marcar este chamado como concluído?",
               style: TextStyle(color: Colors.black87),
             ),
             actions: [
@@ -54,13 +169,13 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color(0xFF065f46),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 child: const Text(
-                  "Encerrar",
+                  "Concluir",
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -69,13 +184,7 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
     );
 
     if (confirm == true) {
-      atualizarStatus("Concluído");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Chamado marcado como concluído com sucesso!"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      concluirChamado();
     }
   }
 
@@ -86,31 +195,13 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
     final String descricao =
         "A impressora não está imprimindo corretamente e apresenta falha de hardware.";
     final String categoria = "Problema em Impressora";
+    final String prioridade = "Alta";
     final String criadoEm = "25/09/2025 14:30";
     final String atualizadoEm = "26/09/2025 10:15";
     final String cliente = "Lucas Santino";
     final String clienteEmail = "lucas.santino@email.com";
     final String tecnicoNome = "Carlos Silva";
     final String tecnicoEmail = "carlos.silva@email.com";
-
-    // Cores e ícones de status
-    Color statusColor = Colors.grey;
-    IconData statusIcon = Icons.help_outline;
-
-    switch (status.toLowerCase()) {
-      case 'aguardando':
-        statusColor = Colors.orange;
-        statusIcon = Icons.hourglass_empty;
-        break;
-      case 'em andamento':
-        statusColor = Colors.blue;
-        statusIcon = Icons.autorenew;
-        break;
-      case 'concluído':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
-        break;
-    }
 
     return MainLayout(
       drawer: const DrawerTecnico(),
@@ -156,44 +247,200 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Alterar Status (exceto aguardando)
-                  if (status != "Concluído")
+                  // BOTÕES DE AÇÃO - SUBSTITUINDO O ANTIGO SELETOR DE STATUS
+                  if (status == "Aguardando") ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Atualizar Status:",
+                            "Atribuir Chamado",
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          DropdownButton<String>(
-                            value: status == "Aguardando" ? null : status,
-                            hint: const Text("Selecione"),
-                            underline: const SizedBox(),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Este chamado está aguardando atribuição",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: atribuirChamado,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.person_add,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              label: const Text(
+                                "Atribuir para Mim",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Seção para chamado em andamento
+                  if (status == "Em andamento") ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Gerenciar Chamado",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Chamado em andamento",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Botão Concluir
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: confirmarConclusao,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF065f46),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              label: const Text(
+                                "Marcar como Concluído",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Dropdown para alterar status - ATUALIZADO COM FUNDO BRANCO E BORDA CINZA
+                          DropdownButtonFormField<String>(
+                            value: status,
+                            decoration: InputDecoration(
+                              labelText: "Alterar Status",
+                              labelStyle: const TextStyle(
+                                color: Colors.black54,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white, // Fundo branco
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade400,
+                                ), // Borda cinza
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade400,
+                                ), // Borda cinza quando normal
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                borderSide: const BorderSide(
+                                  color: Colors.indigo,
+                                ), // Borda roxa quando focado
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            dropdownColor:
+                                Colors.white, // Fundo branco do dropdown
+                            icon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.black,
+                            ),
+                            style: const TextStyle(
+                              color: Colors.black, // Texto preto
+                              fontSize: 14,
+                            ),
                             items:
-                                ["Em andamento", "Concluído"]
+                                [
+                                      "Aguardando",
+                                      "Em andamento",
+                                      "Concluido",
+                                      "Cancelado",
+                                    ]
                                     .map(
-                                      (s) => DropdownMenuItem(
-                                        value: s,
-                                        child: Text(s),
+                                      (status) => DropdownMenuItem(
+                                        value: status,
+                                        child: Text(
+                                          status,
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                          ),
+                                        ),
                                       ),
                                     )
                                     .toList(),
                             onChanged: (novoStatus) {
                               if (novoStatus != null) {
-                                if (novoStatus == "Concluído") {
-                                  confirmarEncerramento();
+                                if (novoStatus == "Concluido") {
+                                  confirmarConclusao();
                                 } else {
-                                  atualizarStatus(novoStatus);
+                                  setState(() {
+                                    status = novoStatus;
+                                  });
                                 }
                               }
                             },
@@ -201,9 +448,73 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
                         ],
                       ),
                     ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
+                  ],
 
-                  // Card Chamado
+                  // Seção para chamado concluído
+                  if (status == "Concluido") ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Chamado Concluído",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Este chamado foi finalizado",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: reabrirChamado,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF856404),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.refresh,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              label: const Text(
+                                "Reabrir Chamado",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Card Chamado (MANTIDO ORIGINAL)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -226,18 +537,34 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
                                 fontSize: 16,
                               ),
                             ),
-                            Row(
-                              children: [
-                                Icon(statusIcon, color: statusColor),
-                                const SizedBox(width: 4),
-                                Text(
-                                  status,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: statusColor,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusBackgroundColor(status),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getStatusIcon(status),
+                                    color: _getStatusColor(status),
+                                    size: 16,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    status,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _getStatusColor(status),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -264,6 +591,42 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
                           style: TextStyle(color: Colors.black54),
                         ),
                         Text(categoria),
+                        const SizedBox(height: 12),
+
+                        const Text(
+                          "Prioridade",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getPrioridadeBackgroundColor(prioridade),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.arrow_upward,
+                                color: _getPrioridadeColor(prioridade),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                prioridade,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _getPrioridadeColor(prioridade),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 12),
 
                         const Text(
@@ -366,7 +729,7 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
           if (mostrarImagemFullscreen && imagemChamado != null)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.9),
+                color: const Color(0xE6000000),
                 child: Stack(
                   children: [
                     Center(

@@ -14,6 +14,7 @@ class ChamadoDetalhado extends StatefulWidget {
 class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
   bool mostrarImagemFullscreen = false;
   String? imagemChamado;
+  String status = "Aberto"; // Mudamos para variável de estado
 
   // Função para obter cor baseada na prioridade
   Color _getPrioridadeColor(String prioridade) {
@@ -97,6 +98,66 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
     }
   }
 
+  // Função para confirmar o encerramento do chamado
+  Future<void> _confirmarEncerramento() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              "Encerrar Chamado",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.indigo,
+              ),
+            ),
+            content: const Text(
+              "Deseja realmente encerrar este chamado? Esta ação marcará o chamado como cancelado.",
+              style: TextStyle(color: Colors.black87),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Encerrar",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      setState(() {
+        status = "Cancelado";
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Chamado encerrado com sucesso!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final int id = 123;
@@ -105,7 +166,6 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
         "A impressora não está imprimindo corretamente e apresenta falha de hardware.";
     final String ambiente = "Sala de Reunião";
     final String prioridade = "Alta";
-    final String status = "Aberto";
     final String criadoEm = "25/09/2025 14:30";
     final String atualizadoEm = "26/09/2025 10:15";
     final String cliente = "Lucas Santino";
@@ -186,11 +246,13 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                 ),
                 const SizedBox(height: 16),
 
-                // Botão Encerrar
+                // Botão Encerrar - ATUALIZADO COM FUNCIONALIDADE
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _confirmarEncerramento();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 16),

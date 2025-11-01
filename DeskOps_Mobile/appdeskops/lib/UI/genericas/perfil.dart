@@ -25,14 +25,35 @@ class Perfil extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // Título
-              const Text(
-                'Meu perfil',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
+              // Título com botão Editar
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Meu perfil',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed:
+                        () => Navigator.pushNamed(context, '/editar_perfil'),
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Colors.indigo,
+                      size: 18,
+                    ),
+                    label: const Text(
+                      "Editar",
+                      style: TextStyle(
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),
@@ -49,7 +70,9 @@ class Perfil extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade300, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.15),
+                      color: const Color(
+                        0x269E9E9E,
+                      ), // CORREÇÃO: substitui withOpacity
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -66,13 +89,26 @@ class Perfil extends StatelessWidget {
                           backgroundImage: AssetImage('assets/images/user.jpg'),
                         ),
                         const SizedBox(width: 18),
-                        const Expanded(
-                          child: Text(
-                            "Lucas Santino da Silva",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Lucas Santino da Silva",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Desenvolvedor", // EXEMPLO: cargo do usuário
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -80,37 +116,15 @@ class Perfil extends StatelessWidget {
 
                     const SizedBox(height: 28),
 
-                    // Informações do usuário
+                    // Informações do usuário - ATUALIZADO com cargo
                     _info("Email", "usuario@email.com"),
                     _info("Data de Nascimento", "01/01/2000"),
                     _info("CPF", "000.000.000-00"),
                     _info("Telefone", "(00) 00000-0000"),
+                    _info("Cargo", "Desenvolvedor"), // NOVO CAMPO: cargo
                     _info("Endereço", "Rua Exemplo, 123"),
-                    _info("Senha", "********"),
 
                     const SizedBox(height: 28),
-
-                    // Botão Editar
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed:
-                            () =>
-                                Navigator.pushNamed(context, '/editar_perfil'),
-                        icon: const Icon(Icons.edit, color: Colors.white),
-                        label: const Text(
-                          "Editar Informações",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
