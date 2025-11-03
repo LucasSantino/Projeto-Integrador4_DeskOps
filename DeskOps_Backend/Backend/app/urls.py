@@ -3,7 +3,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     UsersView, EnvironmentView, AtivoView, ChamadoViewSet, NotificateView,
-    RegisterView, aprovar_usuario, CustomTokenObtainPairView, LogoutView, get_me, 
+    RegisterView, aprovar_usuario, CustomTokenObtainPairView, LogoutView, get_me,
     editar_perfil, editar_chamado, encerrar_chamado,
     alterar_status_usuario, alterar_role_usuario, listar_usuarios
 )
@@ -42,7 +42,7 @@ urlpatterns = [
     path('editar-chamado/<int:pk>/', editar_chamado, name='editar_chamado'),
     path('chamado/<int:pk>/encerrar/', encerrar_chamado, name='encerrar_chamado'),
 
-    # Endpoints administrativos
+    # Endpoints administrativos - usuários
     path('usuario/<int:pk>/alterar-status/', alterar_status_usuario, name='alterar_status_usuario'),
     path('usuario/<int:pk>/alterar-role/', alterar_role_usuario, name='alterar_role_usuario'),
     path('usuarios/', listar_usuarios, name='listar_usuarios'),

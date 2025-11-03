@@ -1,6 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -129,7 +129,7 @@ def editar_perfil(request):
 
 
 # ============================================================
-# ENDPOINTS EXCLUSIVOS PARA ADMIN
+# ENDPOINTS EXCLUSIVOS PARA ADMIN - USUÁRIOS
 # ============================================================
 
 @api_view(['PATCH'])
@@ -184,11 +184,9 @@ def listar_usuarios(request):
     """Retorna todos os usuários cadastrados com filtros opcionais para admin"""
     users = Users.objects.all()
 
-    # Filtros via query params
-    role = request.query_params.get('role')  # admin, tecnico, usuario
-    is_active = request.query_params.get('is_active')  # true ou false
-    order = request.query_params.get('order')  # recent/old
-    search = request.query_params.get('search')  # pesquisa por nome ou email
+    role = request.query_params.get('role')
+    is_active = request.query_params.get('is_active')
+    search = request.query_params.get('search')
 
     if role in ["usuario", "tecnico", "admin"]:
         users = users.filter(role=role)
@@ -202,17 +200,12 @@ def listar_usuarios(request):
     if search:
         users = users.filter(name__icontains=search) | users.filter(email__icontains=search)
 
-    if order == "recent":
-        users = users.order_by("-date_joined")
-    elif order == "old":
-        users = users.order_by("date_joined")
-
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
 
 
 # ============================================================
-# CRUDS PRINCIPAIS
+# CRUDS PRINCIPAIS + FILTROS DE AMBIENTES
 # ============================================================
 
 class UsersView(ModelViewSet):
@@ -225,6 +218,21 @@ class EnvironmentView(ModelViewSet):
     queryset = Environment.objects.all()
     serializer_class = EnvironmentSerializer
     permission_classes = [IsAuthenticated]
+
+    # 🔹 Filtro por responsável (employee)
+    @action(detail=False, methods=['get'], url_path='filter-by-employee/(?P<employee_id>[^/.]+)')
+    def filter_by_employee(self, request, employee_id=None):
+        ambientes = self.queryset.filter(employee__id=employee_id)
+        serializer = self.get_serializer(ambientes, many=True)
+        return Response(serializer.data)
+
+    # 🔹 Filtro por nome (search)
+    @action(detail=False, methods=['get'], url_path='search')
+    def search(self, request):
+        query = request.query_params.get('q', '')
+        ambientes = self.queryset.filter(name__icontains=query)
+        serializer = self.get_serializer(ambientes, many=True)
+        return Response(serializer.data)
 
 
 class AtivoView(ModelViewSet):
@@ -250,7 +258,6 @@ class ChamadoViewSet(ModelViewSet):
         else:
             queryset = Chamado.objects.filter(creator=user)
 
-        # Filtros via query params
         status_param = self.request.query_params.get('status')
         prioridade_param = self.request.query_params.get('prioridade')
         order_param = self.request.query_params.get('order')
@@ -275,13 +282,12 @@ class ChamadoViewSet(ModelViewSet):
 
 
 # ============================================================
-# EDITAR CHAMADO (ENDPOINT PERSONALIZADO)
+# OUTROS ENDPOINTS (editar chamado, encerrar, notificações)
 # ============================================================
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def editar_chamado(request, pk):
-    """Permite editar as informações de um chamado existente conforme o perfil do usuário"""
     try:
         chamado = Chamado.objects.get(pk=pk)
     except Chamado.DoesNotExist:
@@ -309,14 +315,9 @@ def editar_chamado(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ============================================================
-# ENCERRAR CHAMADO
-# ============================================================
-
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def encerrar_chamado(request, pk):
-    """Permite que usuário, técnico ou admin encerre um chamado (status = CANCELADO)"""
     try:
         chamado = Chamado.objects.get(pk=pk)
     except Chamado.DoesNotExist:
@@ -333,10 +334,6 @@ def encerrar_chamado(request, pk):
     serializer = ChamadoSerializer(chamado, context={'request': request})
     return Response({"message": "Chamado encerrado com sucesso!", "chamado": serializer.data}, status=status.HTTP_200_OK)
 
-
-# ============================================================
-# NOTIFICAÇÕES
-# ============================================================
 
 class NotificateView(ModelViewSet):
     queryset = Notificate.objects.all()

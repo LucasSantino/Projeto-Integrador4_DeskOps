@@ -27,6 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class EnvironmentSerializer(serializers.ModelSerializer):
+    # Mostra informações do responsável (funcionário)
+    employee_name = serializers.CharField(source='employee.name', read_only=True)
     class Meta:
         model = Environment
         fields = '__all__'
