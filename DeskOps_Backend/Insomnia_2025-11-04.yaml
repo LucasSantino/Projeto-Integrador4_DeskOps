@@ -115,7 +115,7 @@ collection:
         meta:
           id: req_98f77b9f6db24b889c3a318369645669
           created: 1761756675316
-          modified: 1762105520980
+          modified: 1762278139114
           isPrivate: false
           sortKey: -1762100002204
         method: GET
@@ -125,7 +125,7 @@ collection:
             id: pair_5efcbc5af3924b918c7d151de40f0b2a
           - name: Authorization
             value: Bearer
-              eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMTA3Mjg1LCJpYXQiOjE3NjIxMDU0ODUsImp0aSI6ImU1YTljNTliMjA2YTQ2OWU4ODUyYWYwMzMzNjA1NzU3IiwidXNlcl9pZCI6IjIwIn0.QR6MUCB3IlC3zbdRBgTEy8c9nHgV7CnhE5VV3vglrZU
+              eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjc5OTI1LCJpYXQiOjE3NjIyNzgxMjUsImp0aSI6Ijk4ZTNlYzMzNWI4OTQ3ZGE5ZGIxOTIxOWEwY2ZiN2E1IiwidXNlcl9pZCI6IjE5In0.VMMaZu2GXHcsAk4IYLNX3bgJWxM0Lxq91X_lb0ZybhI
             id: pair_18da3ff98dbb4895be440d160f7e70d9
         settings:
           renderRequestBody: true
@@ -956,6 +956,339 @@ collection:
           created: 1762138694136
           modified: 1762138699378
           sortKey: -1762129896952
+        children:
+          - name: Filtros
+            meta:
+              id: fld_20fe9c7a36454d1cba910f5c5c43f213
+              created: 1762279086007
+              modified: 1762279086007
+              sortKey: -1762279086007
+            children:
+              - url: http://127.0.0.1:8000/api/ativo/filter-by-environment/1/
+                name: Filtrar por Ambiente
+                meta:
+                  id: req_e6322178f58b418fb78a6a9ef1c0b9ad
+                  created: 1762279112469
+                  modified: 1762280630943
+                  isPrivate: false
+                  sortKey: -1762279112469
+                method: GET
+                headers:
+                  - name: User-Agent
+                    value: insomnia/11.0.2
+                    id: pair_1ee635dd263245a09e27a510d67c0eb9
+                  - id: pair_bbc6c209cf7d4ce49275f453e99a1bc1
+                    name: Authorization
+                    value: Bearer
+                      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjgyMTQ1LCJpYXQiOjE3NjIyODAzNDUsImp0aSI6IjY5YjI1M2NlOWIwNDQ0NmI5MDMyZTA3YTY0NjZlNDBmIiwidXNlcl9pZCI6IjcifQ.Eh9yF9zlyutIhdqT2b_PdY7OzRHwoaQymQICYQXxsH8
+                    disabled: false
+                settings:
+                  renderRequestBody: true
+                  encodeUrl: true
+                  followRedirects: global
+                  cookies:
+                    send: true
+                    store: true
+                  rebuildPath: true
+              - url: http://127.0.0.1:8000/api/ativo/filter-by-status/?status=EM_MANUTENCAO
+                name: Filtrar por Status
+                meta:
+                  id: req_ae510df246cf45379bc35ddf2f86c255
+                  created: 1762279130787
+                  modified: 1762280538131
+                  isPrivate: false
+                  sortKey: -1762279130787
+                method: GET
+                headers:
+                  - name: User-Agent
+                    value: insomnia/11.0.2
+                    id: pair_72b1eac7e9f140d187d539e6b7284d99
+                  - id: pair_a4b0e6edd8704b5ea24e0d10d75b8ee9
+                    name: Authorization
+                    value: Bearer
+                      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjgyMTQ1LCJpYXQiOjE3NjIyODAzNDUsImp0aSI6IjY5YjI1M2NlOWIwNDQ0NmI5MDMyZTA3YTY0NjZlNDBmIiwidXNlcl9pZCI6IjcifQ.Eh9yF9zlyutIhdqT2b_PdY7OzRHwoaQymQICYQXxsH8
+                    disabled: false
+                settings:
+                  renderRequestBody: true
+                  encodeUrl: true
+                  followRedirects: global
+                  cookies:
+                    send: true
+                    store: true
+                  rebuildPath: true
+              - url: http://127.0.0.1:8000/api/ativo/search/?q=notebook
+                name: Filtrar por pesquisa
+                meta:
+                  id: req_e629c43d615f4d7aa1f8b47be401718e
+                  created: 1762279155394
+                  modified: 1762280514247
+                  isPrivate: false
+                  sortKey: -1762279155394
+                method: GET
+                headers:
+                  - name: User-Agent
+                    value: insomnia/11.0.2
+                    id: pair_4c0a730379614f2a8c14eefeb46bbd79
+                  - id: pair_8b8c0b0d800343b9806a678d769aea19
+                    name: Authorization
+                    value: Bearer
+                      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjgyMTQ1LCJpYXQiOjE3NjIyODAzNDUsImp0aSI6IjY5YjI1M2NlOWIwNDQ0NmI5MDMyZTA3YTY0NjZlNDBmIiwidXNlcl9pZCI6IjcifQ.Eh9yF9zlyutIhdqT2b_PdY7OzRHwoaQymQICYQXxsH8
+                    disabled: false
+                settings:
+                  renderRequestBody: true
+                  encodeUrl: true
+                  followRedirects: global
+                  cookies:
+                    send: true
+                    store: true
+                  rebuildPath: true
+          - url: http://127.0.0.1:8000/api/ativos/admin/
+            name: Criar um novo ativo
+            meta:
+              id: req_eab5a2362e694153830630a86b0f89eb
+              created: 1762274906244
+              modified: 1762278839247
+              isPrivate: false
+              sortKey: -1762274906244
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "name": "Teste de criação de ativo 440",
+                  "description": "Projetor instalado na sala de reuniões",
+                  "environment_FK": 2,
+                  "ativo_status": "ativo"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_2e4e4a80a3734864a2a68ef4b0385f52
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_c0ee2245f07045b89ec4b794903078e1
+              - id: pair_9c53461c1d7047939f4b73a33c3acbc0
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjgwMTEzLCJpYXQiOjE3NjIyNzgzMTMsImp0aSI6ImEzZDdmN2Q5Nzc1YTRiOTE4NGMyMzk2YWIwMmEzOGM5IiwidXNlcl9pZCI6IjcifQ.9j5m6xWFOmROLlpwdYHEqUlBhFvhBwnkRDQl0b0TmGc
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:8000/api/ativo/
+            name: Listar todos os ativos
+            meta:
+              id: req_33d20d23f521420bb908dccadea3d06e
+              created: 1762275525926
+              modified: 1762282565520
+              isPrivate: false
+              sortKey: -1762275525926
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_74d9f523f07140f38bc255c7e4652bd8
+              - id: pair_554afcf955554a1e8a170f9d07b238f5
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjg0MzUyLCJpYXQiOjE3NjIyODI1NTIsImp0aSI6IjY5M2QwNWJlYmUxODRlNGRiOTlkM2FjNzE3ZDQ5ZTE3IiwidXNlcl9pZCI6IjcifQ.06SVcdvBIKtk84E5_WCiEPw42bXU7sM0D__sx6xrxRo
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:8000/api/ativos/admin/5/
+            name: Listar ativo específico
+            meta:
+              id: req_6dc24440792146bcb72a9df23cdf7b32
+              created: 1762276079560
+              modified: 1762278811304
+              isPrivate: false
+              sortKey: -1762276079560
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_8d952ebdb0f147a1bec4a8a2e21f0f44
+              - id: pair_e7a7b183332b4390af924822f05e512d
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjc3MzgxLCJpYXQiOjE3NjIyNzU1ODEsImp0aSI6ImEwNzk0OTNmNTVhYTRlZWZhM2NhNWUzMTA0NzhkNGM5IiwidXNlcl9pZCI6IjcifQ.PRhwyj3B41_PgMBbKyD1J7q5Cuf_C3AJRaOD42zJ9d4
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:8000/api/ativos/admin/1/
+            name: Editar ativo
+            meta:
+              id: req_c723381fcea94f69b21b55fc75c22a4c
+              created: 1762276187572
+              modified: 1762278346319
+              isPrivate: false
+              sortKey: -1762276187572
+            method: PATCH
+            body:
+              mimeType: application/json
+              text: |
+                {
+                	"name": "Notebook Dell G5",
+                	"description": "Pc da sala 101",
+                	"environment_FK": 1
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_9c6c9f02a3ad44e48487021c27ab8d09
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_95812f883ea8402d9baf8dbbcd22018b
+              - id: pair_d29ea79afeb64b208a790514d40e5075
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjgwMTEzLCJpYXQiOjE3NjIyNzgzMTMsImp0aSI6ImEzZDdmN2Q5Nzc1YTRiOTE4NGMyMzk2YWIwMmEzOGM5IiwidXNlcl9pZCI6IjcifQ.9j5m6xWFOmROLlpwdYHEqUlBhFvhBwnkRDQl0b0TmGc
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:8000/api/ativos/admin/2/alterar-status/
+            name: "Alterar status "
+            meta:
+              id: req_497c0df0e9e24fbfb8aec9e15e7d1b7f
+              created: 1762276873005
+              modified: 1762278768424
+              isPrivate: false
+              sortKey: -1762276873005
+            method: PATCH
+            body:
+              mimeType: application/json
+              text: |
+                {
+                  "status": "EM_MANUTENCAO"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_47eb3ee7810c4e29824877c7783f0f64
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_92dec753b5cd42af951efdbe33ada1b5
+              - id: pair_a08a7ba7715e40aab81284ca99bf54e9
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjc3MzgxLCJpYXQiOjE3NjIyNzU1ODEsImp0aSI6ImEwNzk0OTNmNTVhYTRlZWZhM2NhNWUzMTA0NzhkNGM5IiwidXNlcl9pZCI6IjcifQ.PRhwyj3B41_PgMBbKyD1J7q5Cuf_C3AJRaOD42zJ9d4
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:8000/api/ativos/admin/7/
+            name: Excluir Ativo
+            meta:
+              id: req_4d080554d77f431e8354f116e23cb47f
+              created: 1762276995975
+              modified: 1762278638392
+              isPrivate: false
+              sortKey: -1762276995975
+            method: DELETE
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_9b20e2ed3165462aac951c542f715d5d
+              - id: pair_9464d8c074bd4185bcd8438597da4322
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjgwMTEzLCJpYXQiOjE3NjIyNzgzMTMsImp0aSI6ImEzZDdmN2Q5Nzc1YTRiOTE4NGMyMzk2YWIwMmEzOGM5IiwidXNlcl9pZCI6IjcifQ.9j5m6xWFOmROLlpwdYHEqUlBhFvhBwnkRDQl0b0TmGc
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Dashboard
+        meta:
+          id: fld_3d5defffc78742b286f820bed0b05c92
+          created: 1762282441843
+          modified: 1762282806422
+          sortKey: -1762282441843
+        children:
+          - url: http://127.0.0.1:8000/api/dashboard/totais/
+            name: Totais do dashboard
+            meta:
+              id: req_8c08bf4bfcf8479ebb8a9478754d3802
+              created: 1762282445854
+              modified: 1762282790490
+              isPrivate: false
+              sortKey: -1762282445854
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_29e3803092f34fe0bc742e52c083aa60
+              - id: pair_9d62897d99f3487c92fbd1503eda8ef2
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjg0MzUyLCJpYXQiOjE3NjIyODI1NTIsImp0aSI6IjY5M2QwNWJlYmUxODRlNGRiOTlkM2FjNzE3ZDQ5ZTE3IiwidXNlcl9pZCI6IjcifQ.06SVcdvBIKtk84E5_WCiEPw42bXU7sM0D__sx6xrxRo
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:8000/api/dashboard/chamados-ultimo-mes/
+            name: Chamados do último mês
+            meta:
+              id: req_143dc71cdb4941ada651527b3c84879a
+              created: 1762282793370
+              modified: 1762282853565
+              isPrivate: false
+              sortKey: -1762282793370
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_4db861af2e684d408b40fd23fdd55878
+              - id: pair_e614fbd636314c6881372de10a53a733
+                name: Authorization
+                value: Bearer
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMjg0MzUyLCJpYXQiOjE3NjIyODI1NTIsImp0aSI6IjY5M2QwNWJlYmUxODRlNGRiOTlkM2FjNzE3ZDQ5ZTE3IiwidXNlcl9pZCI6IjcifQ.06SVcdvBIKtk84E5_WCiEPw42bXU7sM0D__sx6xrxRo
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
   - url: http://127.0.0.1:8000/api/aprovar_usuario/20/
     name: Admin_aprovação de usario
     meta:

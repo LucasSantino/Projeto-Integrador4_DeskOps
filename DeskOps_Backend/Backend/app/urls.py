@@ -5,9 +5,12 @@ from .views import (
     UsersView, EnvironmentView, AtivoView, ChamadoViewSet, NotificateView,
     RegisterView, aprovar_usuario, CustomTokenObtainPairView, LogoutView, get_me,
     editar_perfil, editar_chamado, encerrar_chamado,
-    alterar_status_usuario, alterar_role_usuario, listar_usuarios
+    alterar_status_usuario, alterar_role_usuario, listar_usuarios,
+    ativos_admin, ativo_admin_detalhe, alterar_status_ativo,
+    dashboard_totais, dashboard_chamados_ultimo_mes
 )
 from rest_framework_simplejwt.views import TokenRefreshView
+
 
 # Criação do router
 router = DefaultRouter()
@@ -16,11 +19,12 @@ router = DefaultRouter()
 router.register(r'chamados', ChamadoViewSet, basename='chamado')
 router.register(r'users', UsersView)
 router.register(r'environment', EnvironmentView)
-router.register(r'ativo', AtivoView)
+router.register(r'ativo', AtivoView)  # Inclui filtros via actions: status, environment e search
 router.register(r'notificate', NotificateView)
 
 # Definindo as URLs
 urlpatterns = [
+    # Registro e aprovação de usuários
     path('register/', RegisterView.as_view(), name='register'),
     path('aprovar_usuario/<int:pk>/', aprovar_usuario, name='aprovar_usuario'),
 
@@ -35,7 +39,8 @@ urlpatterns = [
     path('me/', get_me, name='get_me'),
     path('editar-perfil/', editar_perfil, name='editar_perfil'),
 
-    # Não precisa mais dessa linha
+    
+ # Não precisa mais dessa linha
     # path('chamados/', views.ChamadoView.as_view(), name='chamados-list')
 
     # Endpoints personalizados de chamado
@@ -47,6 +52,15 @@ urlpatterns = [
     path('usuario/<int:pk>/alterar-role/', alterar_role_usuario, name='alterar_role_usuario'),
     path('usuarios/', listar_usuarios, name='listar_usuarios'),
 
-    # Incluindo todas as rotas do router
+    # Endpoints administrativos - gestão de ativos
+    path('ativos/admin/', ativos_admin, name='ativos_admin'),
+    path('ativos/admin/<int:pk>/', ativo_admin_detalhe, name='ativo_admin_detalhe'),
+    path('ativos/admin/<int:pk>/alterar-status/', alterar_status_ativo, name='alterar_status_ativo'),
+
+    # Dashboard admin
+    path('dashboard/totais/', dashboard_totais, name='dashboard_totais'),
+    path('dashboard/chamados-ultimo-mes/', dashboard_chamados_ultimo_mes, name='dashboard_chamados_ultimo_mes'),
+
+    # Incluindo todas as rotas do router (ViewSets)
     path('', include(router.urls)),
 ]

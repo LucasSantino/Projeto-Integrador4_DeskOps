@@ -1,4 +1,8 @@
 from django.contrib.auth.hashers import make_password
+from django.db.models import Count
+from django.utils import timezone
+from datetime import timedelta
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -232,7 +236,7 @@ class EnvironmentView(ModelViewSet):
         query = request.query_params.get('q', '')
         ambientes = self.queryset.filter(name__icontains=query)
         serializer = self.get_serializer(ambientes, many=True)
-        return Response(serializer.data)
+        return Response(ambientes.data)
 
 
 class AtivoView(ModelViewSet):
@@ -240,6 +244,115 @@ class AtivoView(ModelViewSet):
     serializer_class = AtivoSerializer
     permission_classes = [IsAuthenticated]
 
+    # 🔹 Filtro por status
+    @action(detail=False, methods=['get'], url_path='filter-by-status')
+    def filter_by_status(self, request):
+        status_param = request.query_params.get('status', None)
+        if not status_param:
+            return Response({"error": "Informe o parâmetro 'status' na URL."}, status=400)
+        
+        ativos = self.queryset.filter(status=status_param)
+        serializer = self.get_serializer(ativos, many=True)
+        return Response(serializer.data)
+
+    # 🔹 Filtro por ambiente
+    @action(detail=False, methods=['get'], url_path='filter-by-environment/(?P<environment_id>[^/.]+)')
+    def filter_by_environment(self, request, environment_id=None):
+        ativos = self.queryset.filter(environment_FK__id=environment_id)
+        serializer = self.get_serializer(ativos, many=True)
+        return Response(serializer.data)
+
+    # 🔹 Filtro por nome do ativo
+    @action(detail=False, methods=['get'], url_path='search')
+    def search(self, request):
+        query = request.query_params.get('q', '')
+        ativos = self.queryset.filter(name__icontains=query)
+        serializer = self.get_serializer(ativos, many=True)
+        return Response(serializer.data)
+
+    # 🔹 Filtro para frontend do usuário (ativos disponíveis)
+    @action(detail=False, methods=['get'], url_path='ativos-disponiveis')
+    def ativos_disponiveis(self, request):
+        ativos = self.queryset.filter(status='ATIVO')
+        serializer = self.get_serializer(ativos, many=True)
+        return Response(serializer.data)
+
+
+# ============================================================
+# ENDPOINTS ADMINISTRATIVOS - GESTÃO DE ATIVOS
+# ============================================================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
+def ativos_admin(request):
+    """Admin pode listar e cadastrar ativos"""
+    if request.method == 'GET':
+        ativos = Ativo.objects.all().select_related('environment_FK')
+        serializer = AtivoSerializer(ativos, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = AtivoSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Ativo cadastrado com sucesso!", "ativo": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH', 'DELETE'])
+@permission_classes([IsAdminUser])
+def ativo_admin_detalhe(request, pk):
+    """Admin pode editar ou excluir um ativo"""
+    try:
+        ativo = Ativo.objects.get(pk=pk)
+    except Ativo.DoesNotExist:
+        return Response({"error": "Ativo não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PATCH':
+        serializer = AtivoSerializer(ativo, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Ativo atualizado com sucesso!", "ativo": serializer.data},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        serializer = AtivoSerializer(ativo)
+        ativo_data = serializer.data
+        ativo.delete()
+        return Response(
+            {"message": "Ativo excluído com sucesso!", "ativo_deletado": ativo_data},
+            status=status.HTTP_200_OK
+        )
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAdminUser])
+def alterar_status_ativo(request, pk):
+    """Permite que o admin altere o status de um ativo"""
+    try:
+        ativo = Ativo.objects.get(pk=pk)
+    except Ativo.DoesNotExist:
+        return Response({"error": "Ativo não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    novo_status = request.data.get("status")
+    if novo_status not in ["ATIVO", "EM_MANUTENCAO", "DESATIVADO"]:
+        return Response({"error": "Status inválido. Use 'ATIVO', 'EM_MANUTENCAO' ou 'DESATIVADO'."}, status=status.HTTP_400_BAD_REQUEST)
+
+    ativo.status = novo_status
+    ativo.save()
+    serializer = AtivoSerializer(ativo)
+    return Response({"message": f"Status do ativo '{ativo.name}' alterado para {novo_status}.", "ativo": serializer.data})
+
+
+# ============================================================
+# CHAMADOS E NOTIFICAÇÕES
+# ============================================================
 
 class ChamadoViewSet(ModelViewSet):
     queryset = Chamado.objects.all()
@@ -280,10 +393,6 @@ class ChamadoViewSet(ModelViewSet):
 
         return queryset
 
-
-# ============================================================
-# OUTROS ENDPOINTS (editar chamado, encerrar, notificações)
-# ============================================================
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
@@ -339,3 +448,53 @@ class NotificateView(ModelViewSet):
     queryset = Notificate.objects.all()
     serializer_class = NotificateSerializer
     permission_classes = [IsAuthenticated]
+
+
+# ============================================================
+# DASHBOARD ADMIN
+# ============================================================
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def dashboard_totais(request):
+    """Retorna os totais de usuários, ativos, ambientes e chamados por status"""
+    total_usuarios = Users.objects.count()
+    total_usuarios_ativos = Users.objects.filter(is_active=True).count()
+    total_usuarios_inativos = Users.objects.filter(is_active=False).count()
+    
+    total_ativos = Ativo.objects.count()
+    total_ambientes = Environment.objects.count()
+    
+    chamados_por_status = Chamado.objects.values('status').annotate(total=Count('id'))
+    chamados_status_dict = {item['status']: item['total'] for item in chamados_por_status}
+    
+    data = {
+        "usuarios": {
+            "total": total_usuarios,
+            "ativos": total_usuarios_ativos,
+            "inativos": total_usuarios_inativos
+        },
+        "ativos": total_ativos,
+        "ambientes": total_ambientes,
+        "chamados_por_status": chamados_status_dict
+    }
+    return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def dashboard_chamados_ultimo_mes(request):
+    """Retorna a quantidade de chamados por dia do último mês"""
+    hoje = timezone.now().date()
+    inicio_mes = hoje - timedelta(days=30)
+    
+    chamados_ultimo_mes = (
+        Chamado.objects.filter(dt_criacao__date__gte=inicio_mes)
+        .extra({'dia': "date(dt_criacao)"})
+        .values('dia')
+        .annotate(quantidade=Count('id'))
+        .order_by('dia')
+    )
+    
+    data = [{"data": item['dia'], "quantidade": item['quantidade']} for item in chamados_ultimo_mes]
+    return Response(data)
