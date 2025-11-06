@@ -194,7 +194,9 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
     final String titulo = "Problema na Impressora";
     final String descricao =
         "A impressora não está imprimindo corretamente e apresenta falha de hardware.";
-    final String categoria = "Problema em Impressora";
+    final String ambiente = "Sala de contabilidade";
+    final String ativo =
+        "Impressora HP Deskjet 1585"; // NOVO: informação do ativo
     final String prioridade = "Alta";
     final String criadoEm = "25/09/2025 14:30";
     final String atualizadoEm = "26/09/2025 10:15";
@@ -514,7 +516,7 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
                     const SizedBox(height: 20),
                   ],
 
-                  // Card Chamado (MANTIDO ORIGINAL)
+                  // Card Chamado (ATUALIZADO com campo Ativo)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -587,10 +589,28 @@ class _ChamadoDetalhadoTecnicoState extends State<ChamadoDetalhadoTecnico> {
                         const SizedBox(height: 12),
 
                         const Text(
-                          "Categoria",
+                          "Ambiente",
                           style: TextStyle(color: Colors.black54),
                         ),
-                        Text(categoria),
+                        Text(ambiente),
+                        const SizedBox(height: 12),
+
+                        // NOVO: Campo Ativo adicionado
+                        const Text(
+                          "Ativo",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.devices,
+                              color: Colors.grey.shade600,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(ativo),
+                          ],
+                        ),
                         const SizedBox(height: 12),
 
                         const Text(

@@ -165,6 +165,8 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
     final String descricao =
         "A impressora não está imprimindo corretamente e apresenta falha de hardware.";
     final String ambiente = "Sala de Reunião";
+    final String ativo =
+        "Impressora HP - ESCRITORIO"; // NOVO: informação do ativo
     final String prioridade = "Alta";
     final String criadoEm = "25/09/2025 14:30";
     final String atualizadoEm = "26/09/2025 10:15";
@@ -261,7 +263,7 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                       ),
                     ),
                     child: const Text(
-                      "Encerrar chamado",
+                      "Cancelar Chamado",
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -351,6 +353,24 @@ class _ChamadoDetalhadoState extends State<ChamadoDetalhado> {
                         style: TextStyle(color: Colors.black54),
                       ),
                       Text(ambiente),
+                      const SizedBox(height: 12),
+
+                      // NOVO: Ativo
+                      const Text(
+                        "Ativo",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.devices,
+                            color: Colors.grey.shade600,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(ativo),
+                        ],
+                      ),
                       const SizedBox(height: 12),
 
                       // Prioridade com Stack
