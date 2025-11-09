@@ -1,9 +1,7 @@
 <template>
   <div class="gestao-ativos-page" @click="closeProfileMenu">
-    <!-- Sidebar do Admin -->
-    <adm-sidebar :usuario="usuario" />
+    <adm-sidebar />
 
-    <!-- Conteúdo principal -->
     <main class="main-content">
       <div class="content-area">
         <h1 class="page-title">Gestão de Ativos</h1>
@@ -12,21 +10,19 @@
         <div class="filters">
           <select v-model="filtroStatus" class="filter-select">
             <option value="todos">Todos os Status</option>
-            <option value="ativo">Ativo</option>
-            <option value="manutencao">Em Manutenção</option>
+            <option value="ATIVO">Ativo</option>
+            <option value="EM_MANUTENCAO">Em Manutenção</option>
           </select>
 
           <select v-model="filtroAmbiente" class="filter-select">
             <option value="todos">Todos os Ambientes</option>
-            <option v-for="ambiente in ambientes" :key="ambiente.id" :value="ambiente.id">
+            <option
+              v-for="ambiente in ambientes"
+              :key="ambiente.id"
+              :value="ambiente.id"
+            >
               {{ ambiente.nome }}
             </option>
-          </select>
-
-          <select v-model="ordemExibicao" class="filter-select">
-            <option value="recente">Mais recente</option>
-            <option value="antigo">Mais antigo</option>
-            <option value="nome">Por nome</option>
           </select>
 
           <input
@@ -36,20 +32,19 @@
             class="filter-search"
           />
 
-          <!-- Botão Cadastrar Ativo -->
           <button class="btn-cadastrar" @click="cadastrarAtivo">
             <span class="material-icons">add</span>
             Cadastrar Ativo
           </button>
         </div>
 
-        <!-- Tabela de ativos -->
+        <!-- Tabela -->
         <div class="table-container">
           <table class="ativos-table">
             <thead>
               <tr>
                 <th class="col-id">ID</th>
-                <th class="col-nome">Nome do Ativo</th>
+                <th class="col-nome">Nome</th>
                 <th class="col-descricao">Descrição</th>
                 <th class="col-ambiente">Ambiente</th>
                 <th class="col-status">Status</th>
@@ -58,24 +53,15 @@
             </thead>
             <tbody>
               <tr
-                v-for="ativo in ativosOrdenados"
+                v-for="ativo in ativosFiltradosOrdenados"
                 :key="ativo.id"
-                @click="goToAtivoDetalhado(ativo.id)"
                 class="clickable-row"
+                @click="verDetalhesAtivo(ativo.id)"
               >
                 <td>{{ ativo.id }}</td>
-                <td>
-                  <p class="ativo-nome">{{ ativo.nome }}</p>
-                </td>
-                <td>
-                  <p class="ativo-descricao">{{ ativo.descricao }}</p>
-                </td>
-                <td>
-                  <div class="ambiente-info">
-                    <p class="ambiente-nome">{{ ativo.ambiente.nome }}</p>
-                    <p class="ambiente-local">{{ ativo.ambiente.localizacao }}</p>
-                  </div>
-                </td>
+                <td>{{ ativo.nome }}</td>
+                <td>{{ ativo.descricao }}</td>
+                <td>{{ ativo.ambiente.nome }}</td>
                 <td>
                   <span :class="['status', statusClass(ativo.status)]">
                     <span class="material-icons status-icon">
@@ -132,12 +118,11 @@
                 <span class="info-value">{{ ativoSelecionado?.ambiente.nome }}</span>
               </div>
               <div class="info-item">
-                <span class="info-label">Localização:</span>
-                <span class="info-value">{{ ativoSelecionado?.ambiente.localizacao }}</span>
-              </div>
-              <div class="info-item">
                 <span class="info-label">Status:</span>
                 <span :class="['info-value', statusClass(ativoSelecionado?.status || '')]">
+                  <span class="material-icons status-icon">
+                    {{ statusIcon(ativoSelecionado?.status || '') }}
+                  </span>
                   {{ formatarStatus(ativoSelecionado?.status || '') }}
                 </span>
               </div>
@@ -177,149 +162,134 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
 import QrcodeVue from 'qrcode.vue'
+import api from '@/services/api'
+import { useAuthStore } from '@/stores/authStore'
 
 interface Ambiente {
   id: number
   nome: string
-  localizacao: string
 }
 
 interface Ativo {
   id: number
   nome: string
   descricao: string
-  ambiente: Ambiente
   status: string
-  qrCode: string
+  ambiente: Ambiente
 }
 
 export default defineComponent({
   name: 'GestaoAtivos',
-  components: {
+  components: { 
     AdmSidebar,
-    QrcodeVue
+    QrcodeVue 
   },
+
   setup() {
+    const auth = useAuthStore()
     const router = useRouter()
-    const filtroStatus = ref('todos')
-    const filtroAmbiente = ref('todos')
-    const ordemExibicao = ref('recente')
-    const pesquisa = ref('')
+    const token = auth.access
+
+    const ativos = ref<Ativo[]>([])
+    const ambientes = ref<Ambiente[]>([])
     const modalAberto = ref(false)
     const ativoSelecionado = ref<Ativo | null>(null)
 
-    const usuario = ref({
-      nome: 'Administrador',
-      email: 'admin@deskops.com',
-      dataNascimento: '10/05/1980',
-      cpf: '111.222.333-44',
-      endereco: 'Av. Principal, 1000, São Paulo, SP',
-      tipoUsuario: 'Administrador',
-      foto: '', 
-    })
+    const filtroStatus = ref('todos')
+    const filtroAmbiente = ref('todos')
+    const pesquisa = ref('')
 
-    const ambientes = ref<Ambiente[]>([
-      { id: 1, nome: 'Sala de Reuniões - Matriz', localizacao: 'Andar 1' },
-      { id: 2, nome: 'Laboratório de TI', localizacao: 'Andar 2' },
-      { id: 3, nome: 'Data Center', localizacao: 'Andar Térreo' },
-      { id: 4, nome: 'Escritório - Andar 3', localizacao: 'Andar 3' },
-      { id: 5, nome: 'Sala de Treinamento', localizacao: 'Andar 2' },
-    ])
-
-    const ativos = ref<Ativo[]>([
-      { 
-        id: 3001, 
-        nome: 'Notebook Dell Latitude 5420', 
-        descricao: 'Notebook corporativo para desenvolvimento',
-        ambiente: ambientes.value[1],
-        status: 'ativo',
-        qrCode: 'QR001'
-      },
-      { 
-        id: 3002, 
-        nome: 'Projetor Epson PowerLite', 
-        descricao: 'Projetor para apresentações e reuniões',
-        ambiente: ambientes.value[0],
-        status: 'ativo',
-        qrCode: 'QR002'
-      },
-      { 
-        id: 3003, 
-        nome: 'Servidor HP ProLiant', 
-        descricao: 'Servidor principal do data center',
-        ambiente: ambientes.value[2],
-        status: 'manutencao',
-        qrCode: 'QR003'
-      },
-      { 
-        id: 3004, 
-        nome: 'Switch Cisco Catalyst', 
-        descricao: 'Switch de rede 48 portas',
-        ambiente: ambientes.value[2],
-        status: 'ativo',
-        qrCode: 'QR004'
-      },
-      { 
-        id: 3005, 
-        nome: 'Impressora Multifuncional', 
-        descricao: 'Impressora laser colorida A3',
-        ambiente: ambientes.value[3],
-        status: 'manutencao',
-        qrCode: 'QR005'
-      },
-      { 
-        id: 3006, 
-        nome: 'Tablet Samsung Galaxy Tab', 
-        descricao: 'Tablet para demonstrações',
-        ambiente: ambientes.value[4],
-        status: 'ativo',
-        qrCode: 'QR006'
-      },
-      { 
-        id: 3007, 
-        nome: 'Monitor LG UltraWide', 
-        descricao: 'Monitor 34 polegadas para design',
-        ambiente: ambientes.value[1],
-        status: 'ativo',
-        qrCode: 'QR007'
-      },
-      { 
-        id: 3008, 
-        nome: 'Access Point Ubiquiti', 
-        descricao: 'Access point para cobertura Wi-Fi',
-        ambiente: ambientes.value[3],
-        status: 'ativo',
-        qrCode: 'QR008'
-      },
-    ])
-
-    // Computed para gerar o valor do QR Code
+    // Computed para gerar o valor do QR Code - ROTA PÚBLICA
     const qrCodeValue = computed(() => {
       if (!ativoSelecionado.value) return ''
       
-      // URL que aponta para a página de detalhes do ativo
-    const baseUrl = window.location.origin
-    
-    return `${baseUrl}/tech/ativo/${ativoSelecionado.value.id}`
+      // URL que aponta para a página pública de detalhes do ativo
+      const baseUrl = window.location.origin
+      return `${baseUrl}/tech/ativo/${ativoSelecionado.value.id}`
     })
-    
 
-    const closeProfileMenu = () => {
-      // Esta função será chamada no clique da página para fechar o menu de perfil
+    // 🔹 Buscar ativos da API
+    const carregarAtivos = async () => {
+      try {
+        const response = await api.get('/ativo/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        console.log('✅ Ativos recebidos:', response.data)
+
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data.results
+
+        ativos.value = data.map((a: any) => ({
+          id: a.id,
+          nome: a.name,
+          descricao: a.description || 'Sem descrição',
+          status: a.status || 'ATIVO',
+          ambiente: {
+            id: a.environment_FK || 0,
+            nome: `Ambiente ${a.environment_FK || 'N/D'}`,
+          },
+        }))
+      } catch (error) {
+        console.error('❌ Erro ao carregar ativos:', error)
+      }
     }
 
+    // 🔹 Buscar ambientes da API
+    const carregarAmbientes = async () => {
+      try {
+        const response = await api.get('/environment/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data.results
+
+        ambientes.value = data.map((a: any) => ({
+          id: a.id,
+          nome: a.name,
+        }))
+      } catch (error) {
+        console.error('❌ Erro ao carregar ambientes:', error)
+      }
+    }
+
+    // 🔹 Filtragem
+    const ativosFiltrados = computed(() => {
+      return ativos.value.filter((a) => {
+        const matchStatus =
+          filtroStatus.value === 'todos' || a.status === filtroStatus.value
+        const matchAmbiente =
+          filtroAmbiente.value === 'todos' ||
+          a.ambiente.id === Number(filtroAmbiente.value)
+        const matchPesquisa =
+          a.nome.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
+          a.descricao.toLowerCase().includes(pesquisa.value.toLowerCase())
+
+        return matchStatus && matchAmbiente && matchPesquisa
+      })
+    })
+
+    const ativosFiltradosOrdenados = computed(() =>
+      [...ativosFiltrados.value].sort((a, b) => a.nome.localeCompare(b.nome))
+    )
+
+    // ✅ Redirecionar para o cadastro
     const cadastrarAtivo = () => {
       router.push('/adm/novo-ativo')
     }
 
-    const goToAtivoDetalhado = (id: number) => {
-      router.push({ path: '/adm/detalhes-ativos', query: { id: id.toString() } })
+    const verDetalhesAtivo = (id: number) => {
+      router.push(`/adm/detalhes-ativo/${id}`)
     }
 
+    // Funções do Modal QR Code
     const abrirModalQRCode = (ativo: Ativo) => {
       ativoSelecionado.value = ativo
       modalAberto.value = true
@@ -348,76 +318,49 @@ export default defineComponent({
       window.print()
     }
 
-    const filtrados = computed(() => {
-      return ativos.value.filter((a) => {
-        const matchStatus = filtroStatus.value === 'todos' || a.status === filtroStatus.value
-        const matchAmbiente = filtroAmbiente.value === 'todos' || a.ambiente.id.toString() === filtroAmbiente.value
-        const matchPesquisa =
-          a.nome.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          a.descricao.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          a.ambiente.nome.toLowerCase().includes(pesquisa.value.toLowerCase())
-        return matchStatus && matchAmbiente && matchPesquisa
-      })
-    })
+    const closeProfileMenu = () => {}
 
-    const ativosOrdenados = computed(() => {
-      const ativosFiltrados = [...filtrados.value]
-      
-      if (ordemExibicao.value === 'recente') {
-        return ativosFiltrados.sort((a, b) => b.id - a.id)
-      } else if (ordemExibicao.value === 'antigo') {
-        return ativosFiltrados.sort((a, b) => a.id - b.id)
-      } else {
-        // Ordenação por nome
-        return ativosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome))
-      }
-    })
+    // Função para determinar a classe do status
+    const statusClass = (status: string) =>
+      status === 'ATIVO' ? 'status-ativo' : 'status-manutencao'
 
-    const statusClass = (status: string) => {
-      switch (status) {
-        case 'ativo': return 'status-ativo'
-        case 'manutencao': return 'status-manutencao'
-        default: return ''
-      }
-    }
-
+    // Função para determinar o ícone do status
     const statusIcon = (status: string) => {
       switch (status) {
-        case 'ativo': return 'check_circle'
-        case 'manutencao': return 'build'
+        case 'ATIVO': return 'check_circle'
+        case 'EM_MANUTENCAO': return 'build'
         default: return ''
       }
     }
 
-    const formatarStatus = (status: string) => {
-      switch (status) {
-        case 'ativo': return 'Ativo'
-        case 'manutencao': return 'Em Manutenção'
-        default: return status
-      }
-    }
+    const formatarStatus = (status: string) =>
+      status === 'ATIVO' ? 'Ativo' : 'Em Manutenção'
 
-    return { 
-      usuario,
+    onMounted(() => {
+      carregarAtivos()
+      carregarAmbientes()
+    })
+
+    return {
+      ativos,
+      ambientes,
       filtroStatus,
       filtroAmbiente,
-      ordemExibicao,
       pesquisa,
-      ambientes,
-      ativosOrdenados,
+      ativosFiltradosOrdenados,
       modalAberto,
       ativoSelecionado,
       qrCodeValue,
-      statusClass,
-      statusIcon,
-      formatarStatus,
-      closeProfileMenu,
       cadastrarAtivo,
-      goToAtivoDetalhado,
+      verDetalhesAtivo,
       abrirModalQRCode,
       fecharModal,
       downloadQRCode,
-      imprimirQRCode
+      imprimirQRCode,
+      closeProfileMenu,
+      statusClass,
+      statusIcon,
+      formatarStatus,
     }
   },
 })
@@ -679,7 +622,7 @@ html, body, #app {
   line-height: 1.2;
 }
 
-/* Status - ESTILO COMPACTO */
+/* Status - ESTILO COMPACTO COM ÍCONE */
 .status {
   display: inline-flex;
   align-items: center;
@@ -769,7 +712,7 @@ html, body, #app {
   background: #a8a8a8;
 }
 
-/* MODAL STYLES */
+/* MODAL STYLES - CORRIGIDOS */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -850,30 +793,46 @@ html, body, #app {
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 16px 0;
+  text-align: center;
 }
 
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
+  align-items: center;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 8px;
 }
 
 .info-label {
   font-size: 12px;
   color: #666;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .info-value {
   font-size: 14px;
   color: #000;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.info-value .status-icon {
+  font-size: 16px;
 }
 
 .qr-section {
@@ -885,6 +844,7 @@ html, body, #app {
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 16px 0;
+  text-align: center;
 }
 
 .qr-container {
@@ -898,29 +858,25 @@ html, body, #app {
   align-items: center;
 }
 
-.qr-placeholder {
+.qr-code-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
 }
 
-.qr-icon {
-  font-size: 80px;
-  color: #d1d5db;
-}
-
-.qr-text {
-  color: #374151;
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
+.qr-code {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px;
+  background: white;
 }
 
 .qr-subtext {
   color: #6b7280;
   font-size: 12px;
   margin: 0;
+  font-weight: 500;
 }
 
 .qr-actions {
@@ -962,29 +918,6 @@ html, body, #app {
   background-color: #e5e7eb;
 }
 
-/* QR Code */
-.qr-code-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.qr-code {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 8px;
-  background: white;
-}
-
-.qr-subtext {
-  color: #6b7280;
-  font-size: 12px;
-  margin: 0;
-  font-weight: 500;
-}
-
-
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {
   .main-content {
@@ -1016,6 +949,7 @@ html, body, #app {
 
   .info-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .qr-actions {
@@ -1082,8 +1016,8 @@ html, body, #app {
     padding: 20px;
   }
 
-  .qr-icon {
-    font-size: 60px;
+  .info-item {
+    padding: 6px;
   }
 }
 

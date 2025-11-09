@@ -1,24 +1,19 @@
 <template>
   <div class="novo-chamado-page" @click="closeProfileMenu">
-    <!-- Sidebar do Cliente como componente -->
-    <ClienteSidebar 
-      :user-name="userName" 
-      :user-email="userEmail"
-      @close-profile-menu="closeProfileMenu"
-    />
+    <!-- Sidebar do Cliente -->
+   <cliente-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
       <div class="content-area">
         <h1 class="page-title">Novo Chamado</h1>
 
-        <!-- Cards -->
         <div class="cards-container">
           <!-- Formulário -->
           <div class="card-form">
             <div class="card-header">
               <h2 class="card-title">Informações</h2>
-              <p class="card-subtitle">Insira as informações abaixo para realizar o cadastro</p>
+              <p class="card-subtitle">Preencha as informações para criar um novo chamado</p>
             </div>
 
             <div class="form-section">
@@ -35,7 +30,7 @@
               <h3 class="section-title">Descrição</h3>
               <textarea
                 v-model="descricao"
-                placeholder="Descreva o que está acontecendo"
+                placeholder="Descreva o problema"
                 :maxlength="maxDescricaoChars"
                 class="form-textarea"
               ></textarea>
@@ -45,21 +40,30 @@
             </div>
 
             <div class="form-section">
-              <h3 class="section-title">Categoria de Serviço</h3>
-              <select v-model="categoria" class="form-select">
-                <option value="" disabled>Selecione a categoria de Serviço</option>
-                <option v-for="cat in categorias" :key="cat" :value="cat">{{ cat }}</option>
+              <h3 class="section-title">Ativo</h3>
+              <select v-model="ativoSelecionado" class="form-select">
+                <option value="" disabled>Selecione um ativo</option>
+                <option v-for="a in ativos" :key="a.id" :value="a.id">
+                  {{ a.name || a.nome || `Ativo #${a.id}` }}
+                </option>
               </select>
             </div>
 
-            <!-- Seletor de Prioridade Adicionado -->
+            <div class="form-section">
+              <h3 class="section-title">Ambiente</h3>
+              <select v-model="ambienteSelecionado" class="form-select">
+                <option value="" disabled>Selecione um ambiente</option>
+                <option v-for="amb in ambientes" :key="amb.id" :value="amb.id">
+                  {{ amb.nome || amb.name || `Ambiente #${amb.id}` }}
+                </option>
+              </select>
+            </div>
+
             <div class="form-section">
               <h3 class="section-title">Prioridade</h3>
               <select v-model="prioridade" class="form-select">
                 <option value="" disabled>Selecione a prioridade</option>
-                <option v-for="prioridadeOption in prioridades" :key="prioridadeOption.value" :value="prioridadeOption.value">
-                  {{ prioridadeOption.label }}
-                </option>
+                <option v-for="p in prioridades" :key="p.value" :value="p.value">{{ p.label }}</option>
               </select>
             </div>
 
@@ -75,12 +79,12 @@
             </div>
           </div>
 
-          <!-- Card Resumo -->
+          <!-- Resumo -->
           <div class="card-summary">
             <h2 class="summary-title">Resumo</h2>
-            
+
             <div class="summary-section">
-              <p class="summary-label">Título do chamado</p>
+              <p class="summary-label">Título</p>
               <p class="summary-value">{{ titulo || 'Nenhum título' }}</p>
             </div>
 
@@ -90,15 +94,19 @@
             </div>
 
             <div class="summary-section">
-              <p class="summary-label">Categoria do Serviço</p>
-              <p class="summary-value">{{ categoria || 'Nenhuma selecionada' }}</p>
+              <p class="summary-label">Ativo</p>
+              <p class="summary-value">{{ obterNomeAtivo(ativoSelecionado) || 'Nenhum selecionado' }}</p>
             </div>
 
-            <!-- Prioridade no Resumo Adicionada -->
+            <div class="summary-section">
+              <p class="summary-label">Ambiente</p>
+              <p class="summary-value">{{ obterNomeAmbiente(ambienteSelecionado) || 'Nenhum selecionado' }}</p>
+            </div>
+
             <div class="summary-section">
               <p class="summary-label">Prioridade</p>
               <p class="summary-value">
-                <span :class="['prioridade-badge', prioridadeClass(prioridade)]" v-if="prioridade">
+                <span v-if="prioridade" :class="['prioridade-badge', prioridadeClass(prioridade)]">
                   <span class="material-icons prioridade-icon">{{ prioridadeIcon(prioridade) }}</span>
                   {{ formatarPrioridade(prioridade) }}
                 </span>
@@ -108,16 +116,62 @@
 
             <div class="summary-section">
               <p class="summary-label">Imagem</p>
-              <p class="summary-value">Nenhuma imagem selecionada</p>
+              <p class="summary-value">
+                <img v-if="imagemURL" :src="imagemURL" alt="Imagem" style="max-width: 100px; max-height: 100px;">
+                <span v-else>Nenhuma imagem</span>
+              </p>
             </div>
 
             <div class="create-btn-container">
-              <button class="create-btn" @click="submitChamado">Criar Chamado</button>
+              <button class="create-btn" @click="confirmarCriacao" :disabled="isLoading">
+                {{ isLoading ? 'Criando...' : 'Criar Chamado' }}
+              </button>
             </div>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- Popup de Confirmação -->
+    <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="material-icons popup-icon" :class="popupType">
+            {{ popupIcon }}
+          </span>
+          <h3 class="popup-title">{{ popupTitle }}</h3>
+        </div>
+        
+        <div class="popup-content">
+          <p class="popup-message">{{ popupMessage }}</p>
+        </div>
+
+        <div class="popup-actions">
+          <button 
+            v-if="popupType === 'confirm'"
+            class="popup-btn popup-btn-cancel" 
+            @click="closePopup"
+            :disabled="isLoading"
+          >
+            Cancelar
+          </button>
+          <button 
+            class="popup-btn popup-btn-confirm" 
+            :class="popupType"
+            @click="handlePopupConfirm"
+            :disabled="isLoading"
+          >
+            {{ isLoading ? 'Processando...' : popupConfirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">{{ loadingText }}</p>
+    </div>
   </div>
 </template>
 
@@ -125,75 +179,251 @@
 import { defineComponent, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
+import api from '@/services/api'
+import { useAuthStore } from '@/stores/authStore'
+
+// Interfaces para tipagem
+interface Ativo {
+  id: string;
+  name?: string;
+  nome?: string;
+}
+
+interface Ambiente {
+  id: string;
+  name?: string;
+  nome?: string;
+}
+
+interface Prioridade {
+  value: string;
+  label: string;
+}
 
 export default defineComponent({
   name: 'NovoChamado',
-  components: {
-    ClienteSidebar
-  },
+  components: { ClienteSidebar },
+
   setup() {
     const router = useRouter()
-    
+    const auth = useAuthStore()
+
+    // 🔹 Campos do formulário
     const titulo = ref('')
     const descricao = ref('')
-    const categoria = ref('')
     const prioridade = ref('')
+    const ativos = ref<Ativo[]>([])                
+    const ativoSelecionado = ref('') 
+    const ambientes = ref<Ambiente[]>([])              
+    const ambienteSelecionado = ref('')
     const imagemURL = ref<string | null>(null)
-    const categorias = ref(['Manutenção', 'Suporte', 'Instalação', 'Rede', 'Software', 'Hardware'])
-    const prioridades = ref([
+    const imagem = ref<File | null>(null)
+    const isLoading = ref(false)
+    const loadingText = ref('Processando...')
+
+    // 🔹 Estados para o popup
+    const showPopup = ref(false)
+    const popupType = ref<'success' | 'error' | 'confirm'>('confirm')
+    const popupTitle = ref('')
+    const popupMessage = ref('')
+    const popupConfirmText = ref('')
+    const popupAction = ref<(() => void) | null>(null)
+
+    // 🔹 Opções fixas
+    const prioridades = ref<Prioridade[]>([
       { value: 'alta', label: 'Alta' },
       { value: 'media', label: 'Média' },
-      { value: 'baixa', label: 'Baixa' }
+      { value: 'baixa', label: 'Baixa' },
     ])
     const maxDescricaoChars = 2830
-    
-    // Dados do usuário - você pode obter isso de um store ou API
-    const userName = ref('Lucas Santino')
-    const userEmail = ref('lucas@email.com')
 
-    const descricaoLimitada = computed(() => {
-      if (!descricao.value) return 'Nenhuma descrição'
-      return descricao.value.length > 100
-        ? descricao.value.substring(0, 100) + '...'
-        : descricao.value
-    })
-
-    const closeProfileMenu = () => {
-      // Esta função será chamada quando clicar fora do menu
-      // Você pode emitir um evento do componente sidebar se necessário
-    }
-
-    const submitChamado = () => {
-      console.log({
-        titulo: titulo.value,
-        descricao: descricao.value,
-        categoria: categoria.value,
-        prioridade: prioridade.value,
-        imagemURL: imagemURL.value,
-      })
-      alert('Chamado enviado com sucesso!')
-      // Limpar formulário
-      titulo.value = ''
-      descricao.value = ''
-      categoria.value = ''
-      prioridade.value = ''
-      imagemURL.value = null
-      // Redirecionar para meus chamados
-      router.push('/cliente/meus-chamados')
-    }
-
-    const onFileChange = (event: Event) => {
-      const target = event.target as HTMLInputElement
-      if (target.files && target.files[0]) {
-        imagemURL.value = URL.createObjectURL(target.files[0])
-      } else {
-        imagemURL.value = null
+    const carregarAtivos = async () => {
+      try {
+        const token = auth.access
+        const response = await api.get('/ativo/', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        ativos.value = response.data.results || response.data
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar ativos:', error.response?.data || error)
       }
     }
 
-    // Funções para prioridade
-    const prioridadeClass = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const carregarAmbientes = async () => {
+      try {
+        const token = auth.access
+        const response = await api.get('/environment/', { 
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        ambientes.value = response.data.results || response.data
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar ambientes:', error.response?.data || error)
+      }
+    }
+
+    // ✅ Função para mostrar popup personalizado
+    const showCustomPopup = (
+      type: 'success' | 'error' | 'confirm',
+      title: string,
+      message: string,
+      confirmText: string,
+      action?: () => void
+    ) => {
+      popupType.value = type
+      popupTitle.value = title
+      popupMessage.value = message
+      popupConfirmText.value = confirmText
+      popupAction.value = action || null
+      showPopup.value = true
+    }
+
+    const closePopup = () => {
+      showPopup.value = false
+      popupAction.value = null
+    }
+
+    const handlePopupConfirm = () => {
+      if (popupAction.value) {
+        popupAction.value()
+      }
+      closePopup()
+    }
+
+    const popupIcon = computed(() => {
+      switch (popupType.value) {
+        case 'success': return 'check_circle'
+        case 'error': return 'error'
+        case 'confirm': return 'help'
+        default: return 'info'
+      }
+    })
+
+    // ✅ Obter nome do ativo para exibição no resumo
+    const obterNomeAtivo = (ativoId: string) => {
+      const ativo = ativos.value.find((a: Ativo) => a.id === ativoId)
+      return ativo ? (ativo.name || ativo.nome || `Ativo #${ativo.id}`) : ''
+    }
+
+    // ✅ Obter nome do ambiente para exibição no resumo
+    const obterNomeAmbiente = (ambienteId: string) => {
+      const ambiente = ambientes.value.find((a: Ambiente) => a.id === ambienteId)
+      return ambiente ? (ambiente.nome || ambiente.name || `Ambiente #${ambiente.id}`) : ''
+    }
+
+    // ✅ Confirmar criação do chamado
+    const confirmarCriacao = () => {
+      // Validações básicas
+      if (!titulo.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe o título do chamado.', 'OK')
+        return
+      }
+      if (!descricao.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe a descrição do problema.', 'OK')
+        return
+      }
+      if (!ativoSelecionado.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione um ativo.', 'OK')
+        return
+      }
+      if (!ambienteSelecionado.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione um ambiente.', 'OK')
+        return
+      }
+      if (!prioridade.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione a prioridade.', 'OK')
+        return
+      }
+
+      showCustomPopup(
+        'confirm',
+        'Confirmar Criação',
+        'Tem certeza que deseja criar este chamado? Esta ação não pode ser desfeita.',
+        'Criar Chamado',
+        submitChamado
+      )
+    }
+
+    // ✅ Criação de um novo chamado
+    const submitChamado = async () => {
+      try {
+        const token = auth.access
+        if (!token) {
+          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+          return
+        }
+
+        isLoading.value = true
+        loadingText.value = 'Criando chamado...'
+
+        const formData = new FormData()
+        formData.append('title', titulo.value)
+        formData.append('description', descricao.value)
+        formData.append('prioridade', prioridade.value.toUpperCase())
+        formData.append('status', 'AGUARDANDO_ATENDIMENTO')
+        formData.append('asset', ativoSelecionado.value)
+        formData.append('environment_id', ambienteSelecionado.value)
+
+        if (imagem.value) {
+          formData.append('photo', imagem.value)
+        }
+
+        const response = await api.post('/chamados/', formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+
+        console.log('✅ Chamado criado:', response.data)
+        
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          'Chamado criado com sucesso! Você será redirecionado para a lista de chamados.',
+          'OK',
+          () => {
+            router.push('/cliente/meus-chamados')
+          }
+        )
+      } catch (error: any) {
+        console.error('❌ Erro ao criar chamado:', error.response?.data || error)
+        
+        let errorMessage = 'Erro ao criar chamado. Verifique os campos e tente novamente.'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            errorMessage = Object.values(error.response.data).flat().join('\n')
+          } else {
+            errorMessage = error.response.data
+          }
+        }
+
+        showCustomPopup('error', 'Erro', errorMessage, 'OK')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // ✅ Manipulação da imagem selecionada
+    const onFileChange = (event: Event) => {
+      const target = event.target as HTMLInputElement
+      if (target.files && target.files[0]) {
+        imagem.value = target.files[0]
+        imagemURL.value = URL.createObjectURL(target.files[0])
+        const fileText = document.querySelector('.file-text')
+        if (fileText) fileText.textContent = target.files[0].name
+      } else {
+        imagem.value = null
+        imagemURL.value = null
+        const fileText = document.querySelector('.file-text')
+        if (fileText) fileText.textContent = 'Nenhum arquivo escolhido'
+      }
+    }
+
+    // ✅ Estilos e ícones de prioridade
+    const prioridadeClass = (p: string) => {
+      switch (p.toLowerCase()) {
         case 'alta': return 'prioridade-alta'
         case 'media': return 'prioridade-media'
         case 'baixa': return 'prioridade-baixa'
@@ -201,8 +431,8 @@ export default defineComponent({
       }
     }
 
-    const prioridadeIcon = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const prioridadeIcon = (p: string) => {
+      switch (p.toLowerCase()) {
         case 'alta': return 'arrow_upward'
         case 'media': return 'remove'
         case 'baixa': return 'arrow_downward'
@@ -210,42 +440,53 @@ export default defineComponent({
       }
     }
 
-    const formatarPrioridade = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const formatarPrioridade = (p: string) => {
+      switch (p.toLowerCase()) {
         case 'alta': return 'Alta'
         case 'media': return 'Média'
         case 'baixa': return 'Baixa'
-        default: return prioridade
+        default: return p
       }
     }
+
+    carregarAtivos()
+    carregarAmbientes()
 
     return {
       titulo,
       descricao,
-      categoria,
       prioridade,
       imagemURL,
-      categorias,
       prioridades,
-      userName,
-      userEmail,
+      isLoading,
+      showPopup,
+      popupType,
+      popupTitle,
+      popupMessage,
+      popupConfirmText,
+      popupIcon,
+      loadingText,
+      confirmarCriacao,
       submitChamado,
       onFileChange,
-      descricaoLimitada,
       maxDescricaoChars,
-      closeProfileMenu,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
+      ativos,
+      ativoSelecionado,
+      ambientes,
+      ambienteSelecionado,
+      obterNomeAtivo,
+      obterNomeAmbiente,
+      closePopup,
+      handlePopupConfirm
     }
   },
 })
 </script>
 
 <style scoped>
-/* Mantenha todos os estilos CSS existentes da página novoChamado.vue */
-/* Apenas remova os estilos relacionados à sidebar que agora estão no componente separado */
-
 /* RESET COMPLETO E FULLSCREEN */
 * {
   margin: 0;
@@ -562,8 +803,200 @@ html, body, #app {
   max-width: 300px;
 }
 
-.create-btn:hover {
+.create-btn:hover:not(:disabled) {
   background-color: #333;
+}
+
+.create-btn:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* POPUP STYLES */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-icon {
+  font-size: 28px;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.popup-icon.success {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.popup-icon.error {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.popup-icon.confirm {
+  color: #084298;
+  background-color: #cfe2ff;
+}
+
+.popup-title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.popup-content {
+  padding: 20px 24px;
+}
+
+.popup-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 15px 0;
+  text-align: left;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.popup-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.popup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.popup-btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.popup-btn-cancel:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.popup-btn-confirm {
+  background-color: #000;
+  color: #fff;
+}
+
+.popup-btn-confirm:hover:not(:disabled) {
+  background-color: #333;
+}
+
+.popup-btn-confirm.success {
+  background-color: #065f46;
+}
+
+.popup-btn-confirm.success:hover:not(:disabled) {
+  background-color: #054c38;
+}
+
+.popup-btn-confirm.error {
+  background-color: #842029;
+}
+
+.popup-btn-confirm.error:hover:not(:disabled) {
+  background-color: #6a1a21;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* RESPONSIVIDADE */
@@ -627,6 +1060,19 @@ html, body, #app {
   .form-textarea {
     min-height: 120px;
     max-height: 200px;
+  }
+
+  .popup-container {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
+
+  .popup-btn {
+    width: 100%;
   }
 }
 

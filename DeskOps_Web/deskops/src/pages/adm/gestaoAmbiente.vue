@@ -1,7 +1,7 @@
 <template>
   <div class="gestao-ambientes-page" @click="closeProfileMenu">
     <!-- Sidebar do Admin -->
-    <adm-sidebar :usuario="usuario" />
+    <adm-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
@@ -53,7 +53,7 @@
               <tr
                 v-for="ambiente in ambientesOrdenados"
                 :key="ambiente.id"
-                @click="verDetalhesAmbiente(ambiente.id)"
+                @click="$router.push(`/adm/detalhes-ambiente/${ambiente.id}`)"
                 class="clickable-row"
               >
                 <td>{{ ambiente.criadoEm }}</td>
@@ -82,9 +82,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
 
 interface Responsavel {
   nome: string
@@ -93,141 +95,108 @@ interface Responsavel {
 
 interface Ambiente {
   id: number
-  criadoEm: string
   nome: string
   descricao: string
   responsavel: Responsavel
+  criadoEm: string
 }
 
 export default defineComponent({
-  name: 'GestaoAmbiente',
-  components: {
-    AdmSidebar
-  },
+  name: 'GestaoAmbientes',
+  components: { AdmSidebar },
+
   setup() {
     const router = useRouter()
+    const auth = useAuthStore()
+    const token = auth.access
+
+    const ambientes = ref<Ambiente[]>([])
     const filtroResponsavel = ref('todos')
     const ordemExibicao = ref('recente')
     const pesquisa = ref('')
 
-    const usuario = ref({
-      nome: 'Administrador',
-      email: 'admin@deskops.com',
-      dataNascimento: '10/05/1980',
-      cpf: '111.222.333-44',
-      endereco: 'Av. Principal, 1000, São Paulo, SP',
-      tipoUsuario: 'Administrador',
-      foto: '', 
-    })
+    // 🔹 Buscar ambientes reais da API
+    const carregarAmbientes = async () => {
+      try {
+        const response = await api.get('/environment/', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
 
-    const closeProfileMenu = () => {
-      // Esta função será chamada no clique da página para fechar o menu de perfil
+        console.log('✅ Dados recebidos:', response.data)
+
+        const data = Array.isArray(response.data)
+      ? response.data
+      : response.data.results
+
+    ambientes.value = data.map((a: any) => ({
+      id: a.id,
+      nome: a.name,
+      descricao: a.description || 'Sem descrição',
+      responsavel: {
+        nome: a.responsible?.name || 'Não definido',
+        email: a.responsible?.email || '---',
+   
+      },
+     
+      criadoEm: a.created_at
+        ? new Date(a.created_at).toLocaleString('pt-BR')
+        : '---',
+        }))
+      } catch (error) {
+        console.error('❌ Erro ao carregar ambientes:', error)
+         
+      }
     }
-
-    const ambientes = ref<Ambiente[]>([
-      { 
-        id: 2001, 
-        criadoEm: '11/10/2025 10:30', 
-        nome: 'Sala de Reuniões - Matriz', 
-        descricao: 'Sala de reuniões principal com capacidade para 20 pessoas, equipada com projetor e sistema de videoconferência.',
-        responsavel: { nome: 'Lucas Santino', email: 'lucas@email.com' }
-      },
-      { 
-        id: 2002, 
-        criadoEm: '10/10/2025 14:20', 
-        nome: 'Laboratório de TI', 
-        descricao: 'Laboratório equipado com computadores de última geração para desenvolvimento e testes.',
-        responsavel: { nome: 'Maria Silva', email: 'maria@email.com' }
-      },
-      { 
-        id: 2003, 
-        criadoEm: '09/10/2025 09:50', 
-        nome: 'Data Center', 
-        descricao: 'Sala de servidores com controle de temperatura e redundância de energia.',
-        responsavel: { nome: 'Carlos Santos', email: 'carlos@email.com' }
-      },
-      { 
-        id: 2004, 
-        criadoEm: '08/10/2025 11:10', 
-        nome: 'Escritório - Andar 3', 
-        descricao: 'Área de trabalho colaborativa com 30 estações e salas de reunião menores.',
-        responsavel: { nome: 'Ana Oliveira', email: 'ana@email.com' }
-      },
-      { 
-        id: 2005, 
-        criadoEm: '07/10/2025 16:00', 
-        nome: 'Recepção', 
-        descricao: 'Área de recepção com balcão de atendimento e sala de espera.',
-        responsavel: { nome: 'Lucas Santino', email: 'lucas@email.com' }
-      },
-      { 
-        id: 2006, 
-        criadoEm: '06/10/2025 13:45', 
-        nome: 'Sala de Treinamento', 
-        descricao: 'Ambiente para capacitações e treinamentos corporativos.',
-        responsavel: { nome: 'Maria Silva', email: 'maria@email.com' }
-      },
-      { 
-        id: 2007, 
-        criadoEm: '05/10/2025 08:20', 
-        nome: 'Copa e Cozinha', 
-        descricao: 'Área de convivência com cozinha equipada e espaço para refeições.',
-        responsavel: { nome: 'Carlos Santos', email: 'carlos@email.com' }
-      },
-    ])
 
     const filtrados = computed(() => {
       return ambientes.value.filter((a) => {
-        const matchResponsavel = filtroResponsavel.value === 'todos' || 
+        const matchResponsavel =
+          filtroResponsavel.value === 'todos' ||
           a.responsavel.nome.toLowerCase().includes(filtroResponsavel.value.toLowerCase())
+
         const matchPesquisa =
           a.nome.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          a.descricao.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          a.responsavel.nome.toLowerCase().includes(pesquisa.value.toLowerCase())
+          a.descricao.toLowerCase().includes(pesquisa.value.toLowerCase())
+
         return matchResponsavel && matchPesquisa
       })
     })
 
     const ambientesOrdenados = computed(() => {
-      const ambientesFiltrados = [...filtrados.value]
-      
-      if (ordemExibicao.value === 'recente') {
-        return ambientesFiltrados.sort((a, b) => {
-          // Ordenação por data mais recente primeiro
-          return new Date(b.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(a.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
-      } else {
-        return ambientesFiltrados.sort((a, b) => {
-          // Ordenação por data mais antiga primeiro
-          return new Date(a.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(b.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
-      }
+      const lista = [...filtrados.value]
+      return lista.sort((a, b) => {
+        const dataA = new Date(a.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime()
+        const dataB = new Date(b.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime()
+        return ordemExibicao.value === 'recente' ? dataB - dataA : dataA - dataB
+      })
     })
+
+    const verDetalhesAmbiente = (id: number) => {
+      router.push(`/adm/detalhes-ambiente/${id}`)
+    }
 
     const cadastrarAmbiente = () => {
       router.push('/adm/novo-ambiente')
     }
 
-    const verDetalhesAmbiente = (id: number) => {
-      // Redireciona para a página de detalhes do ambiente
-      router.push('/adm/detalhes-ambiente')
-    }
+    const closeProfileMenu = () => {}
 
-    return { 
-      usuario,
+    onMounted(() => carregarAmbientes())
+
+    return {
+      ambientes,
       filtroResponsavel,
       ordemExibicao,
-      pesquisa, 
+      pesquisa,
       ambientesOrdenados,
-      cadastrarAmbiente,
       verDetalhesAmbiente,
+      cadastrarAmbiente,
       closeProfileMenu
     }
-  },
+  }
 })
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');

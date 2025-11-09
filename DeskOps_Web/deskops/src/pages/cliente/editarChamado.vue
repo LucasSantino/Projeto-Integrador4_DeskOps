@@ -1,13 +1,13 @@
 <template>
   <div class="editar-chamado-page">
     <!-- Sidebar como componente -->
-    <cliente-sidebar :usuario="usuario" />
+    <cliente-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
       <div class="content-area">
         <!-- Botão Voltar -->
-        <div class="back-container" @click="$router.push('/cliente/chamado-detalhado')">
+        <div class="back-container" @click="voltarParaDetalhes">
           <span class="material-icons back-icon">arrow_back</span>
           <span class="back-text">Voltar</span>
         </div>
@@ -71,8 +71,11 @@
                 <label class="file-label">
                   <input type="file" @change="onFileChange" class="file-input" />
                   <span class="file-button">Escolher arquivo</span>
-                  <span class="file-text">Nenhum arquivo escolhido</span>
+                  <span class="file-text">{{ imagem ? imagem.name : 'Nenhum arquivo escolhido' }}</span>
                 </label>
+              </div>
+              <div v-if="imagemURL" class="image-preview">
+                <img :src="imagemURL" alt="Prévia da imagem" class="preview-image" />
               </div>
             </div>
           </div>
@@ -92,8 +95,8 @@
             </div>
 
             <div class="summary-section">
-              <p class="summary-label">Categoria do Serviço</p>
-              <p class="summary-value">{{ categoria || 'Nenhuma selecionada' }}</p>
+              <p class="summary-label">Ambiente</p>
+              <p class="summary-value">{{ categoria || 'Nenhum selecionado' }}</p>
             </div>
 
             <!-- Prioridade no Resumo Adicionada -->
@@ -110,76 +113,291 @@
 
             <div class="summary-section">
               <p class="summary-label">Imagem</p>
-              <p class="summary-value">Nenhuma imagem selecionada</p>
+              <p class="summary-value">
+                <span v-if="imagem || imagemOriginal">{{ (imagem ? imagem.name : 'Imagem existente') || 'Nenhuma imagem' }}</span>
+                <span v-else>Nenhuma imagem</span>
+              </p>
             </div>
 
             <div class="save-btn-container">
-              <button class="save-btn" @click="salvarChamado">Salvar Alterações</button>
+              <button class="save-btn" @click="confirmarSalvamento" :disabled="isLoading">
+                {{ isLoading ? 'Salvando...' : 'Salvar Alterações' }}
+              </button>
             </div>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- Popup de Confirmação -->
+    <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="material-icons popup-icon" :class="popupType">
+            {{ popupIcon }}
+          </span>
+          <h3 class="popup-title">{{ popupTitle }}</h3>
+        </div>
+        
+        <div class="popup-content">
+          <p class="popup-message">{{ popupMessage }}</p>
+        </div>
+
+        <div class="popup-actions">
+          <button 
+            v-if="popupType === 'confirm'"
+            class="popup-btn popup-btn-cancel" 
+            @click="closePopup"
+            :disabled="isLoading"
+          >
+            Cancelar
+          </button>
+          <button 
+            class="popup-btn popup-btn-confirm" 
+            :class="popupType"
+            @click="handlePopupConfirm"
+            :disabled="isLoading"
+          >
+            {{ isLoading ? 'Processando...' : popupConfirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">{{ loadingText }}</p>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { defineComponent, ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
+import api from '@/services/api'
+import { useAuthStore } from '@/stores/authStore'
 
 export default defineComponent({
   name: 'EditarChamado',
-  components: {
-    ClienteSidebar
-  },
+  components: { ClienteSidebar },
+
   setup() {
     const router = useRouter()
-    
-    // Dados simulados do chamado existente
-    const titulo = ref('Erro ao acessar o painel administrativo')
-    const descricao = ref(
-      'Usuário relata que ao tentar acessar o painel, uma tela de erro 500 é exibida. Foi realizado teste em diferentes navegadores e o problema persiste.'
-    )
-    const categoria = ref('Suporte')
-    const prioridade = ref('media') // Valor padrão para prioridade
+    const route = useRoute()
+    const auth = useAuthStore()
+
+    // ✅ Campos do chamado
+    const titulo = ref('')
+    const descricao = ref('')
+    const categoria = ref('')
+    const prioridade = ref('')
     const imagemURL = ref<string | null>(null)
+    const imagem = ref<File | null>(null)
+    const imagemOriginal = ref<string | null>(null)
+    const isLoading = ref(false)
+    const loadingText = ref('Processando...')
 
-    const usuario = ref({
-      nome: 'Lucas Santino',
-      email: 'lucas@email.com'
-    })
+    // ✅ Estados para o popup
+    const showPopup = ref(false)
+    const popupType = ref<'success' | 'error' | 'confirm'>('confirm')
+    const popupTitle = ref('')
+    const popupMessage = ref('')
+    const popupConfirmText = ref('')
+    const popupAction = ref<(() => void) | null>(null)
 
+    // ✅ Opções fixas
     const categorias = ref(['Manutenção', 'Suporte', 'Instalação', 'Rede', 'Software', 'Hardware'])
     const prioridades = ref([
       { value: 'alta', label: 'Alta' },
       { value: 'media', label: 'Média' },
-      { value: 'baixa', label: 'Baixa' }
+      { value: 'baixa', label: 'Baixa' },
     ])
+
     const maxDescricaoChars = 2830
 
-    const salvarChamado = () => {
-      console.log({
-        titulo: titulo.value,
-        descricao: descricao.value,
-        categoria: categoria.value,
-        prioridade: prioridade.value,
-        imagemURL: imagemURL.value,
-      })
-      alert('Chamado atualizado com sucesso!')
-      router.push('/cliente/chamado-detalhado')
+    // ✅ Função para mostrar popup personalizado
+    const showCustomPopup = (
+      type: 'success' | 'error' | 'confirm',
+      title: string,
+      message: string,
+      confirmText: string,
+      action?: () => void
+    ) => {
+      popupType.value = type
+      popupTitle.value = title
+      popupMessage.value = message
+      popupConfirmText.value = confirmText
+      popupAction.value = action || null
+      showPopup.value = true
     }
 
-    const onFileChange = (event: Event) => {
-      const target = event.target as HTMLInputElement
-      if (target.files && target.files[0]) {
-        imagemURL.value = URL.createObjectURL(target.files[0])
-      } else {
-        imagemURL.value = null
+    const closePopup = () => {
+      showPopup.value = false
+      popupAction.value = null
+    }
+
+    const handlePopupConfirm = () => {
+      if (popupAction.value) {
+        popupAction.value()
+      }
+      closePopup()
+    }
+
+    const popupIcon = computed(() => {
+      switch (popupType.value) {
+        case 'success': return 'check_circle'
+        case 'error': return 'error'
+        case 'confirm': return 'help'
+        default: return 'info'
+      }
+    })
+
+    // ✅ Voltar para página de detalhes do chamado
+    const voltarParaDetalhes = () => {
+      router.push(`/cliente/chamado/${route.params.id}`)
+    }
+
+    // ✅ Carregar dados do chamado
+    const carregarChamado = async () => {
+      try {
+        const id = route.params.id
+        const token = auth.access
+
+        if (!token) {
+          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+          return
+        }
+
+        const response = await api.get(`/chamados/${id}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const data = response.data
+        titulo.value = data.title || ''
+        descricao.value = data.description || ''
+        categoria.value = data.environment || ''
+        prioridade.value = data.prioridade?.toLowerCase() || ''
+        imagemOriginal.value = data.photo || null
+        
+        if (data.photo) {
+          imagemURL.value = data.photo
+        }
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar chamado:', error.response?.data || error)
+        showCustomPopup('error', 'Erro', 'Erro ao carregar informações do chamado.', 'OK')
       }
     }
 
-    // Funções para prioridade
+    onMounted(() => carregarChamado())
+
+    // ✅ Confirmar salvamento
+    const confirmarSalvamento = () => {
+      // Validações básicas
+      if (!titulo.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe o título do chamado.', 'OK')
+        return
+      }
+      if (!descricao.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe a descrição do problema.', 'OK')
+        return
+      }
+      if (!categoria.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione um ambiente.', 'OK')
+        return
+      }
+      if (!prioridade.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione a prioridade.', 'OK')
+        return
+      }
+
+      showCustomPopup(
+        'confirm',
+        'Confirmar Alterações',
+        'Tem certeza que deseja salvar as alterações deste chamado?',
+        'Salvar',
+        salvarChamado
+      )
+    }
+
+    // ✅ Atualizar chamado
+    const salvarChamado = async () => {
+      try {
+        const id = route.params.id
+        const token = auth.access
+
+        if (!token) {
+          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+          return
+        }
+
+        isLoading.value = true
+        loadingText.value = 'Salvando alterações...'
+
+        const formData = new FormData()
+        formData.append('title', titulo.value)
+        formData.append('description', descricao.value)
+        formData.append('prioridade', prioridade.value.toUpperCase())
+        formData.append('environment', categoria.value)
+
+        if (imagem.value) {
+          formData.append('photo', imagem.value)
+        }
+
+        const response = await api.patch(`/chamados/${id}/`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+
+        console.log('✅ Chamado atualizado:', response.data)
+        
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          'Chamado atualizado com sucesso! Você será redirecionado para os detalhes do chamado.',
+          'OK',
+          () => {
+            router.push(`/cliente/chamado/${id}`)
+          }
+        )
+      } catch (error: any) {
+        console.error('❌ Erro ao atualizar chamado:', error.response?.data || error)
+        
+        let errorMessage = 'Erro ao salvar alterações. Verifique os dados e tente novamente.'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            errorMessage = Object.values(error.response.data).flat().join('\n')
+          } else {
+            errorMessage = error.response.data
+          }
+        }
+
+        showCustomPopup('error', 'Erro', errorMessage, 'OK')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // ✅ Upload de imagem
+    const onFileChange = (event: Event) => {
+      const target = event.target as HTMLInputElement
+      if (target.files && target.files[0]) {
+        imagem.value = target.files[0]
+        imagemURL.value = URL.createObjectURL(target.files[0])
+      } else {
+        imagem.value = null
+        imagemURL.value = imagemOriginal.value
+      }
+    }
+
+    // ✅ Funções auxiliares de prioridade
     const prioridadeClass = (prioridade: string) => {
       switch (prioridade.toLowerCase()) {
         case 'alta': return 'prioridade-alta'
@@ -208,20 +426,33 @@ export default defineComponent({
     }
 
     return {
-      usuario,
       titulo,
       descricao,
       categoria,
       prioridade,
       imagemURL,
+      imagem,
+      imagemOriginal,
       categorias,
       prioridades,
+      isLoading,
+      showPopup,
+      popupType,
+      popupTitle,
+      popupMessage,
+      popupConfirmText,
+      popupIcon,
+      loadingText,
+      voltarParaDetalhes,
+      confirmarSalvamento,
       salvarChamado,
       onFileChange,
       maxDescricaoChars,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
+      closePopup,
+      handlePopupConfirm,
     }
   },
 })
@@ -295,7 +526,7 @@ html, body, #app {
   align-items: center;
   cursor: pointer;
   color: #000;
-  padding: 40px 0 0 0; /* REDUZIDO de 50px para 40px */
+  padding: 40px 0 0 0;
   margin-bottom: 10px;
   width: 100%;
 }
@@ -324,7 +555,7 @@ html, body, #app {
   color: indigo;
   font-size: 28px;
   font-weight: bold;
-  margin: 0 0 25px 0; /* REDUZIDO de 30px para 25px */
+  margin: 0 0 25px 0;
   width: 100%;
   text-align: left;
 }
@@ -334,8 +565,8 @@ html, body, #app {
   display: flex;
   gap: 30px;
   width: 100%;
-  margin-bottom: 30px; /* REDUZIDO de 40px para 30px */
-  max-height: calc(100vh - 200px); /* ADICIONADO para limitar altura máxima */
+  margin-bottom: 30px;
+  max-height: calc(100vh - 200px);
   overflow: hidden;
 }
 
@@ -349,13 +580,13 @@ html, body, #app {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  max-height: 100%; /* ADICIONADO para limitar altura */
-  overflow-y: auto; /* ADICIONADO para scroll interno se necessário */
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 /* REMOVIDA A UNDERLINE DO CARD HEADER */
 .card-header {
-  padding: 20px 24px; /* REDUZIDO padding vertical de 24px para 20px */
+  padding: 20px 24px;
 }
 
 .card-title {
@@ -375,19 +606,19 @@ html, body, #app {
 
 /* Seções do Formulário - ESTILO EXATO DA IMAGEM */
 .form-section {
-  padding: 16px 24px; /* REDUZIDO de 20px para 16px */
+  padding: 16px 24px;
 }
 
 /* REDUZIDA A ALTURA DO TEXTAREA */
 .form-textarea {
-  min-height: 100px; /* REDUZIDO de 150px para 100px */
+  min-height: 100px;
 }
 
 .section-title {
   color: #000;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 10px; /* REDUZIDO de 12px para 10px */
+  margin-bottom: 10px;
   text-align: left;
 }
 
@@ -415,7 +646,7 @@ html, body, #app {
 .form-textarea {
   resize: vertical;
   font-family: inherit;
-  max-height: 200px; /* ADICIONADO para limitar altura máxima */
+  max-height: 200px;
 }
 
 .form-select {
@@ -432,13 +663,13 @@ html, body, #app {
   font-size: 12px;
   color: #666;
   text-align: right;
-  margin-top: 6px; /* REDUZIDO de 8px para 6px */
+  margin-top: 6px;
 }
 
 /* ADICIONADA UNDERLINE NA SEÇÃO DE IMAGEM */
 .file-section {
   border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 16px; /* REDUZIDO de 20px para 16px */
+  padding-bottom: 16px;
 }
 
 /* Upload de Arquivo - ESTILO EXATO DA IMAGEM */
@@ -481,11 +712,23 @@ html, body, #app {
   color: #666;
 }
 
+/* Prévia da imagem */
+.image-preview {
+  margin-top: 12px;
+}
+
+.preview-image {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
 /* Card Resumo - ESTILO EXATO DA IMAGEM */
 .card-summary {
   flex: 1;
   background-color: #fff;
-  padding: 20px; /* REDUZIDO de 24px para 20px */
+  padding: 20px;
   border: 1px solid #d0d0d0;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -493,25 +736,25 @@ html, body, #app {
   flex-direction: column;
   height: fit-content;
   min-width: 300px;
-  max-height: 100%; /* ADICIONADO para limitar altura */
+  max-height: 100%;
 }
 
 .summary-title {
   color: #000;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 16px; /* REDUZIDO de 20px para 16px */
-  padding-bottom: 10px; /* REDUZIDO de 12px para 10px */
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #e0e0e0;
   text-align: left;
 }
 
 .summary-section {
-  margin-bottom: 14px; /* REDUZIDO de 16px para 14px */
+  margin-bottom: 14px;
 }
 
 .summary-section:last-of-type {
-  margin-bottom: 20px; /* REDUZIDO de 24px para 20px */
+  margin-bottom: 20px;
 }
 
 .summary-label {
@@ -586,8 +829,200 @@ html, body, #app {
   max-width: 280px;
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   background-color: #333;
+}
+
+.save-btn:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* POPUP STYLES */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-icon {
+  font-size: 28px;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.popup-icon.success {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.popup-icon.error {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.popup-icon.confirm {
+  color: #084298;
+  background-color: #cfe2ff;
+}
+
+.popup-title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.popup-content {
+  padding: 20px 24px;
+}
+
+.popup-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 15px 0;
+  text-align: left;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.popup-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.popup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.popup-btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.popup-btn-cancel:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.popup-btn-confirm {
+  background-color: #000;
+  color: #fff;
+}
+
+.popup-btn-confirm:hover:not(:disabled) {
+  background-color: #333;
+}
+
+.popup-btn-confirm.success {
+  background-color: #065f46;
+}
+
+.popup-btn-confirm.success:hover:not(:disabled) {
+  background-color: #054c38;
+}
+
+.popup-btn-confirm.error {
+  background-color: #842029;
+}
+
+.popup-btn-confirm.error:hover:not(:disabled) {
+  background-color: #6a1a21;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* RESPONSIVIDADE */
@@ -603,14 +1038,14 @@ html, body, #app {
   
   .cards-container {
     flex-direction: column;
-    max-height: none; /* REMOVIDO em telas menores */
+    max-height: none;
   }
   
   .card-form,
   .card-summary {
     flex: none;
     width: 100%;
-    max-height: none; /* REMOVIDO em telas menores */
+    max-height: none;
   }
   
   .card-summary {
@@ -647,6 +1082,19 @@ html, body, #app {
   .card-form,
   .card-summary {
     padding: 0;
+  }
+
+  .popup-container {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
+
+  .popup-btn {
+    width: 100%;
   }
 }
 

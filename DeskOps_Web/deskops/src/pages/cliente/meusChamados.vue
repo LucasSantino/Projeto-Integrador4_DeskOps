@@ -1,9 +1,6 @@
 <template>
   <div class="meus-chamados-page" @click="closeProfileMenu">
-    <!-- Sidebar como componente -->
     <cliente-sidebar :usuario="usuario" />
-
-    <!-- Conteúdo principal -->
     <main class="main-content">
       <div class="content-area">
         <h1 class="page-title">Meus Chamados</h1>
@@ -19,7 +16,7 @@
             <option value="cancelado">Cancelado</option>
           </select>
 
-          <!-- Filtro de Prioridade Adicionado -->
+          <!-- Filtro de Prioridade -->
           <select v-model="filtroPrioridade" class="filter-select">
             <option value="todos">Todas as Prioridades</option>
             <option value="alta">Alta</option>
@@ -27,7 +24,7 @@
             <option value="baixa">Baixa</option>
           </select>
 
-          <!-- Filtro de Ordenação Adicionado -->
+          <!-- Filtro de Ordenação -->
           <select v-model="ordemExibicao" class="filter-select">
             <option value="recente">Mais recente</option>
             <option value="antigo">Mais antigo</option>
@@ -41,8 +38,13 @@
           />
         </div>
 
+        <!-- Loading State -->
+        <div v-if="carregando" class="loading">
+          Carregando chamados...
+        </div>
+
         <!-- Tabela de chamados -->
-        <div class="table-container">
+        <div v-else class="table-container">
           <table class="chamados-table">
             <thead>
               <tr>
@@ -61,21 +63,23 @@
                 @click="goToChamadoDetalhado(chamado.id)"
                 class="clickable-row"
               >
-                <td>{{ chamado.atualizado }}</td>
+                <td>{{ formatarData(chamado.update_date) }}</td>
                 <td>{{ chamado.id }}</td>
-                <td>{{ chamado.titulo }}</td>
+                <td>{{ chamado.title }}</td>
                 <td>
                   <div class="tecnico-info">
-                    <p>{{ chamado.tecnico }}</p>
-                    <p class="tecnico-email">{{ chamado.email || chamado.tecnico.toLowerCase() + '@email.com' }}</p>
+                    <p>{{ getTecnicoNome(chamado) }}</p>
+                    <p class="tecnico-email">
+                      {{ getTecnicoEmail(chamado) }}
+                    </p>
                   </div>
                 </td>
                 <td>
-                  <span :class="['prioridade', prioridadeClass(chamado.prioridade)]">
+                  <span :class="['prioridade', prioridadeClass(chamado.priority || chamado.prioridade)]">
                     <span class="material-icons prioridade-icon">
-                      {{ prioridadeIcon(chamado.prioridade) }}
+                      {{ prioridadeIcon(chamado.priority || chamado.prioridade) }}
                     </span>
-                    {{ formatarPrioridade(chamado.prioridade) }}
+                    {{ formatarPrioridade(chamado.priority || chamado.prioridade) }}
                   </span>
                 </td>
                 <td>
@@ -83,8 +87,13 @@
                     <span class="material-icons status-icon">
                       {{ statusIcon(chamado.status) }}
                     </span>
-                    {{ chamado.status }}
+                    {{ formatarStatus(chamado.status) }}
                   </span>
+                </td>
+              </tr>
+              <tr v-if="chamadosOrdenados.length === 0">
+                <td colspan="6" class="no-data">
+                  Nenhum chamado encontrado
                 </td>
               </tr>
             </tbody>
@@ -96,86 +105,184 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
+
+interface Creator {
+  id: number
+  name: string
+  email: string
+  cargo: string
+  cpf: string
+}
+
+interface Tecnico {
+  id: number
+  name: string
+  email: string
+}
 
 interface Chamado {
   id: number
-  atualizado: string
-  titulo: string
-  tecnico: string
-  email?: string
+  title: string
   status: string
-  prioridade: string
+  priority?: string
+  prioridade?: string
+  update_date: string
+  employee?: Tecnico[] | null
+  creator?: Creator | null
+  created_by?: number
 }
 
 export default defineComponent({
   name: 'MeusChamados',
-  components: {
-    ClienteSidebar
-  },
+  components: { ClienteSidebar },
+
   setup() {
     const router = useRouter()
+    const auth = useAuthStore()
+
+    // Filtros
     const filtroStatus = ref('todos')
     const filtroPrioridade = ref('todos')
     const ordemExibicao = ref('recente')
     const pesquisa = ref('')
+    const carregando = ref(true)
 
     const usuario = ref({
-      nome: 'Lucas Santino',
-      email: 'lucas@email.com'
+      nome: auth.user?.name || 'Usuário',
+      email: auth.user?.email || 'sem@email.com'
     })
 
-    const closeProfileMenu = () => {
-      // Esta função será chamada no clique da página para fechar o menu de perfil
+    const chamados = ref<Chamado[]>([])
+
+    // Carrega chamados do usuário logado
+    const carregarChamados = async () => {
+      try {
+        carregando.value = true
+        const token = auth.access
+        if (!token) {
+          console.warn('⚠️ Nenhum token encontrado. Redirecionando para login...')
+          router.push('/')
+          return
+        }
+
+        const response = await api.get('chamados/', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+
+        const todosChamados = response.data.results || response.data
+
+        // Filtro corrigido: suporta diferentes nomes de campo de criador
+        const meusChamados = todosChamados.filter((c: any) => {
+          const creatorId = c.creator?.id || c.creator_id || c.created_by
+          const userId = auth.user?.id
+          return creatorId === userId
+        })
+
+        chamados.value = meusChamados
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar chamados:', error.response?.data || error)
+        if (error.response?.status === 401) {
+          alert('Sessão expirada. Faça login novamente.')
+          router.push('/')
+        }
+      } finally {
+        carregando.value = false
+      }
     }
+
+    onMounted(() => {
+      carregarChamados()
+    })
+
+    const closeProfileMenu = () => {}
 
     const goToChamadoDetalhado = (id: number) => {
-      router.push({ path: '/cliente/chamado-detalhado', query: { id: id.toString() } })
+      router.push({ name: 'ChamadoDetalhado', params: { id } })
     }
 
-    const chamados = ref<Chamado[]>([
-      { id: 101, atualizado: '11/10/2025 10:30', titulo: 'Troca de cabo', tecnico: 'João', email:'joao@email.com', status: 'Aberto', prioridade: 'alta' },
-      { id: 102, atualizado: '10/10/2025 14:20', titulo: 'Atualização sistema', tecnico: 'Maria', email:'maria@email.com', status: 'Concluído', prioridade: 'media' },
-      { id: 103, atualizado: '09/10/2025 09:50', titulo: 'Manutenção impressora', tecnico: 'Pedro', email:'pedro@email.com', status: 'Em Andamento', prioridade: 'alta' },
-      { id: 104, atualizado: '08/10/2025 11:10', titulo: 'Configuração rede', tecnico: 'Ana', email:'ana@email.com', status: 'Aguardando', prioridade: 'baixa' },
-      { id: 105, atualizado: '07/10/2025 16:00', titulo: 'Backup servidor', tecnico: 'Lucas', email:'lucas@email.com', status: 'Cancelado', prioridade: 'media' },
-      { id: 106, atualizado: '12/10/2025 08:15', titulo: 'Instalação software', tecnico: 'Carlos', email:'carlos@email.com', status: 'Em Andamento', prioridade: 'alta' },
-      { id: 107, atualizado: '06/10/2025 13:45', titulo: 'Reparo computador', tecnico: 'Fernanda', email:'fernanda@email.com', status: 'Concluído', prioridade: 'baixa' },
-    ])
+    // Protegidas contra employee undefined
+        const getTecnicoNome = (chamado: Chamado) => {
+        if (!chamado || !chamado.employee) return 'Sem técnico'
+        return chamado.employee.name || 'Sem técnico'
+      }
+
+      const getTecnicoEmail = (chamado: Chamado) => {
+        if (!chamado || !chamado.employee) return 'sem-tecnico@email.com'
+        return chamado.employee.email || 'sem-tecnico@email.com'
+      }
+
+
+    const formatarData = (dataString: string) => {
+      if (!dataString) return '--/--/---- --:--'
+      const data = new Date(dataString)
+      return data.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+
+    const formatarStatus = (status: string) => {
+      const s = status?.toUpperCase() || ''
+      switch (s) {
+        case 'AGUARDANDO_ATENDIMENTO': return 'Aguardando'
+        case 'EM_ANDAMENTO': return 'Em Andamento'
+        case 'CONCLUIDO': return 'Concluído'
+        case 'CANCELADO': return 'Cancelado'
+        case 'ABERTO': return 'Aberto'
+        default: return status || 'Desconhecido'
+      }
+    }
 
     const filtrados = computed(() => {
       return chamados.value.filter((c) => {
-        const matchStatus = filtroStatus.value === 'todos' || c.status.toLowerCase() === filtroStatus.value.toLowerCase()
-        const matchPrioridade = filtroPrioridade.value === 'todos' || c.prioridade.toLowerCase() === filtroPrioridade.value.toLowerCase()
+        const statusFormatado = formatarStatus(c.status).toLowerCase()
+        const filtroStatusLower = filtroStatus.value.toLowerCase()
+
+        const matchStatus =
+          filtroStatus.value === 'todos' ||
+          statusFormatado === filtroStatusLower ||
+          (filtroStatusLower === 'aguardando' && statusFormatado === 'aguardando') ||
+          (filtroStatusLower === 'andamento' && statusFormatado === 'em andamento')
+
+        const prioridade = c.priority || c.prioridade || ''
+        const matchPrioridade =
+          filtroPrioridade.value === 'todos' ||
+          prioridade.toLowerCase() === filtroPrioridade.value.toLowerCase()
+
+        const titulo = c.title || ''
+        const tecnicoNome = getTecnicoNome(c) || ''
         const matchPesquisa =
-          c.titulo.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          c.tecnico.toLowerCase().includes(pesquisa.value.toLowerCase())
+          titulo.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
+          tecnicoNome.toLowerCase().includes(pesquisa.value.toLowerCase())
+
         return matchStatus && matchPrioridade && matchPesquisa
       })
     })
 
     const chamadosOrdenados = computed(() => {
-      const chamadosFiltrados = [...filtrados.value]
-      
+      const lista = [...filtrados.value]
       if (ordemExibicao.value === 'recente') {
-        return chamadosFiltrados.sort((a, b) => {
-          // Ordenação por data mais recente primeiro
-          return new Date(b.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(a.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
+        return lista.sort(
+          (a, b) => new Date(b.update_date).getTime() - new Date(a.update_date).getTime()
+        )
       } else {
-        return chamadosFiltrados.sort((a, b) => {
-          // Ordenação por data mais antiga primeiro
-          return new Date(a.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(b.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
+        return lista.sort(
+          (a, b) => new Date(a.update_date).getTime() - new Date(b.update_date).getTime()
+        )
       }
     })
 
     const statusClass = (status: string) => {
-      switch (status.toLowerCase()) {
+      const s = formatarStatus(status).toLowerCase()
+      switch (s) {
         case 'concluído': return 'status-concluido'
         case 'aberto': return 'status-aberto'
         case 'aguardando': return 'status-aguardando'
@@ -186,60 +293,71 @@ export default defineComponent({
     }
 
     const statusIcon = (status: string) => {
-      switch (status.toLowerCase()) {
+      const s = formatarStatus(status).toLowerCase()
+      switch (s) {
         case 'concluído': return 'check_circle'
         case 'aberto': return 'circle'
         case 'aguardando': return 'hourglass_top'
         case 'em andamento': return 'autorenew'
         case 'cancelado': return 'cancel'
+        default: return 'help_outline'
+      }
+    }
+
+    const prioridadeClass = (prioridade?: string) => {
+      const p = prioridade?.toUpperCase() || ''
+      switch (p) {
+        case 'ALTA': return 'prioridade-alta'
+        case 'MEDIA': return 'prioridade-media'
+        case 'BAIXA': return 'prioridade-baixa'
         default: return ''
       }
     }
 
-    // Funções para prioridade
-    const prioridadeClass = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
-        case 'alta': return 'prioridade-alta'
-        case 'media': return 'prioridade-media'
-        case 'baixa': return 'prioridade-baixa'
+    const prioridadeIcon = (prioridade?: string) => {
+      const p = prioridade?.toUpperCase() || ''
+      switch (p) {
+        case 'ALTA': return 'arrow_upward'
+        case 'MEDIA': return 'remove'
+        case 'BAIXA': return 'arrow_downward'
         default: return ''
       }
     }
 
-    const prioridadeIcon = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
-        case 'alta': return 'arrow_upward'
-        case 'media': return 'remove'
-        case 'baixa': return 'arrow_downward'
-        default: return ''
+    const formatarPrioridade = (prioridade?: string) => {
+      const p = prioridade?.toUpperCase() || ''
+      switch (p) {
+        case 'ALTA': return 'Alta'
+        case 'MEDIA': return 'Média'
+        case 'BAIXA': return 'Baixa'
+        default: return prioridade || 'Não definida'
       }
     }
 
-    const formatarPrioridade = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
-        case 'alta': return 'Alta'
-        case 'media': return 'Média'
-        case 'baixa': return 'Baixa'
-        default: return prioridade
-      }
-    }
-
-    return { 
-      usuario,
-      filtroStatus, 
+    return {
+      filtroStatus,
       filtroPrioridade,
       ordemExibicao,
-      pesquisa, 
-      chamadosOrdenados, 
-      statusClass, 
+      pesquisa,
+      usuario,
+      chamados,
+      carregando,
+      carregarChamados,
+      closeProfileMenu,
+      goToChamadoDetalhado,
+      filtrados,
+      chamadosOrdenados,
+      statusClass,
       statusIcon,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
-      closeProfileMenu, 
-      goToChamadoDetalhado 
+      formatarData,
+      formatarStatus,
+      getTecnicoNome,
+      getTecnicoEmail
     }
-  },
+  }
 })
 </script>
 
@@ -527,6 +645,21 @@ html, body, #app {
 
 .clickable-row:hover {
   background-color: #f8f9fa;
+}
+
+/* Loading e estados vazios */
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-style: italic;
 }
 
 /* SCROLLBAR PERSONALIZADA */

@@ -1,7 +1,7 @@
 <template>
   <div class="gestao-usuarios-page" @click="closeProfileMenu">
     <!-- Sidebar do Admin -->
-    <adm-sidebar :usuario="usuario" />
+    <adm-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
@@ -12,9 +12,9 @@
         <div class="filters">
           <select v-model="filtroNivel" class="filter-select">
             <option value="todos">Todos os Níveis</option>
-            <option value="cliente">Cliente</option>
+            <option value="usuario">Usuário</option>
             <option value="tecnico">Técnico</option>
-            <option value="administrador">Administrador</option>
+            <option value="admin">Administrador</option>
           </select>
 
           <select v-model="filtroStatus" class="filter-select">
@@ -37,16 +37,16 @@
         </div>
 
         <!-- Tabela de usuários -->
-        <div class="table-container">
+        <div class="table-container" v-if="usuariosOrdenados.length">
           <table class="usuarios-table">
             <thead>
               <tr>
-                <th class="col-criado">Criado em</th>
-                <th class="col-id">ID</th>
-                <th class="col-nome">Nome</th>
-                <th class="col-email">Email</th>
-                <th class="col-nivel">Nível</th>
-                <th class="col-status">Status</th>
+                <th>Criado em</th>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Nível</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -60,21 +60,23 @@
                 <td>
                   <div class="usuario-info">
                     <p>{{ usuario.nome }}</p>
-                    <p class="usuario-cpf">{{ usuario.cpf }}</p>
+                    <p class="usuario-cpf">{{ usuario.cpf || '---' }}</p>
                   </div>
                 </td>
                 <td>{{ usuario.email }}</td>
+
                 <td>
                   <select 
                     v-model="usuario.nivel" 
                     class="nivel-select"
                     @change="atualizarNivelUsuario(usuario)"
                   >
-                    <option value="cliente">Cliente</option>
+                    <option value="usuario">Usuário</option>
                     <option value="tecnico">Técnico</option>
-                    <option value="administrador">Administrador</option>
+                    <option value="admin">Administrador</option>
                   </select>
                 </td>
+
                 <td>
                   <select 
                     v-model="usuario.status" 
@@ -89,15 +91,18 @@
             </tbody>
           </table>
         </div>
+        <p v-else class="loading-msg">Carregando usuários...</p>
       </div>
     </main>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdmSidebar from '@/components/layouts/admSidebar.vue'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
 
 interface Usuario {
   id: number
@@ -111,103 +116,177 @@ interface Usuario {
 
 export default defineComponent({
   name: 'GestaoUsuarios',
-  components: {
-    AdmSidebar
-  },
+  components: { AdmSidebar },
   setup() {
     const router = useRouter()
+    const auth = useAuthStore()
+
     const filtroNivel = ref('todos')
     const filtroStatus = ref('todos')
     const ordemExibicao = ref('recente')
     const pesquisa = ref('')
+    const usuarios = ref<Usuario[]>([])
 
-    const usuario = ref({
-      nome: 'Administrador',
-      email: 'admin@deskops.com',
-      dataNascimento: '10/05/1980',
-      cpf: '111.222.333-44',
-      endereco: 'Av. Principal, 1000, São Paulo, SP',
-      tipoUsuario: 'Administrador',
-      foto: '', 
-    })
+    // ✅ Buscar usuários da API
+    const carregarUsuarios = async () => {
+      try {
+        const token = auth.access
+        if (!token) {
+          alert('Sessão expirada. Faça login novamente.')
+          router.push('/')
+          return
+        }
 
-    const closeProfileMenu = () => {
-      // Esta função será chamada no clique da página para fechar o menu de perfil
+        const response = await api.get('/usuarios/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data.results || []
+
+        console.log('🔍 Estrutura real dos usuários:', data)
+
+        usuarios.value = data.map((u: any) => ({
+          id: u.id ?? 0,
+          criadoEm: u.created_at
+          ? new Date(u.created_at).toLocaleString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : '---',
+          nome: u.name || '---',
+          email: u.email || '---',
+          cpf: u.cpf || '---',
+          nivel: (u.cargo || '').toLowerCase().replace('adm', 'admin') || 'usuario',
+          status: u.is_active ? 'ativo' : 'inativo',
+        }))
+
+        console.log('✅ Usuários carregados formatados:', usuarios.value)
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar usuários:', error)
+        if (error.response?.status === 401) {
+          alert('Sessão expirada. Faça login novamente.')
+          router.push('/')
+        }
+      }
     }
 
-    const usuarios = ref<Usuario[]>([
-      { id: 1001, criadoEm: '11/10/2025 10:30', nome: 'Lucas Santino', email: 'lucas@email.com', cpf: '123.456.789-00', nivel: 'cliente', status: 'ativo' },
-      { id: 1002, criadoEm: '10/10/2025 14:20', nome: 'Maria Silva', email: 'maria@email.com', cpf: '234.567.890-11', nivel: 'cliente', status: 'ativo' },
-      { id: 1003, criadoEm: '09/10/2025 09:50', nome: 'Victor Ribeiro', email: 'victor@email.com', cpf: '345.678.901-22', nivel: 'tecnico', status: 'ativo' },
-      { id: 1004, criadoEm: '08/10/2025 11:10', nome: 'Ana Oliveira', email: 'ana@email.com', cpf: '456.789.012-33', nivel: 'cliente', status: 'inativo' },
-      { id: 1005, criadoEm: '07/10/2025 16:00', nome: 'Carlos Santos', email: 'carlos@email.com', cpf: '567.890.123-44', nivel: 'administrador', status: 'ativo' },
-      { id: 1006, criadoEm: '06/10/2025 13:45', nome: 'Fernanda Lima', email: 'fernanda@email.com', cpf: '678.901.234-55', nivel: 'cliente', status: 'ativo' },
-      { id: 1007, criadoEm: '05/10/2025 08:20', nome: 'Roberto Alves', email: 'roberto@email.com', cpf: '789.012.345-66', nivel: 'tecnico', status: 'ativo' },
-      { id: 1008, criadoEm: '04/10/2025 15:30', nome: 'Patrícia Costa', email: 'patricia@email.com', cpf: '890.123.456-77', nivel: 'cliente', status: 'inativo' },
-    ])
+    onMounted(() => {
+      carregarUsuarios()
+    })
 
+    // ✅ Atualizar Nível (envia cargo)
+    const atualizarNivelUsuario = async (usuario: Usuario) => {
+      try {
+        const token = auth.access
+        if (!token) return
+
+        const payload = { cargo: usuario.nivel }
+
+        await api.patch(`/usuarios/${usuario.id}/`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        alert(`✅ Nível de ${usuario.nome} atualizado para ${usuario.nivel}`)
+      } catch (error: any) {
+        console.error('❌ Erro ao atualizar nível:', error.response?.data || error)
+        alert('Erro ao atualizar nível do usuário.')
+      }
+    }
+
+   // ✅ Atualizar Status
+const atualizarStatusUsuario = async (usuario: Usuario) => {
+  try {
+    const token = auth.access
+    if (!token) return
+
+    const ativo = usuario.status === 'ativo'
+
+    // Ativa/desativa também o is_staff
+    const payload = {
+      is_active: ativo,
+      is_staff: ativo
+    }
+
+    // ⚠️ Use o endpoint correto e formatação certa
+    await api.patch(`/usuarios/${usuario.id}/`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    alert(`✅ Status de ${usuario.nome} alterado para ${usuario.status}`)
+  } catch (error: any) {
+    console.error('❌ Erro ao atualizar status:', error.response?.data || error)
+    alert('Erro ao atualizar status do usuário.')
+  }
+}
+
+
+    // ✅ Filtros e ordenação
     const filtrados = computed(() => {
       return usuarios.value.filter((u) => {
-        const matchNivel = filtroNivel.value === 'todos' || u.nivel.toLowerCase() === filtroNivel.value.toLowerCase()
-        const matchStatus = filtroStatus.value === 'todos' || u.status.toLowerCase() === filtroStatus.value.toLowerCase()
+        const matchNivel =
+          filtroNivel.value === 'todos' ||
+          u.nivel.toLowerCase() === filtroNivel.value.toLowerCase()
+
+        const matchStatus =
+          filtroStatus.value === 'todos' ||
+          u.status.toLowerCase() === filtroStatus.value.toLowerCase()
+
         const matchPesquisa =
           u.nome.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
           u.email.toLowerCase().includes(pesquisa.value.toLowerCase())
+
         return matchNivel && matchStatus && matchPesquisa
       })
     })
 
     const usuariosOrdenados = computed(() => {
-      const usuariosFiltrados = [...filtrados.value]
-      
+      const lista = [...filtrados.value]
       if (ordemExibicao.value === 'recente') {
-        return usuariosFiltrados.sort((a, b) => {
-          // Ordenação por data mais recente primeiro
-          return new Date(b.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(a.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
+        return lista.sort(
+          (a, b) =>
+            new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()
+        )
       } else {
-        return usuariosFiltrados.sort((a, b) => {
-          // Ordenação por data mais antiga primeiro
-          return new Date(a.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(b.criadoEm.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
+        return lista.sort(
+          (a, b) =>
+            new Date(a.criadoEm).getTime() - new Date(b.criadoEm).getTime()
+        )
       }
     })
 
     const statusClass = (status: string) => {
       switch (status.toLowerCase()) {
-        case 'ativo': return 'status-ativo'
-        case 'inativo': return 'status-inativo'
-        default: return ''
+        case 'ativo':
+          return 'status-ativo'
+        case 'inativo':
+          return 'status-inativo'
+        default:
+          return ''
       }
     }
 
-    const atualizarNivelUsuario = (usuario: Usuario) => {
-      console.log('Atualizando nível do usuário:', usuario.id, 'para:', usuario.nivel)
-      // Aqui você faria a chamada à API para atualizar o nível do usuário
-    }
+    const closeProfileMenu = () => {}
 
-    const atualizarStatusUsuario = (usuario: Usuario) => {
-      console.log('Atualizando status do usuário:', usuario.id, 'para:', usuario.status)
-      // Aqui você faria a chamada à API para atualizar o status do usuário
-    }
-
-    return { 
-      usuario,
+    return {
+      usuariosOrdenados,
       filtroNivel,
       filtroStatus,
       ordemExibicao,
-      pesquisa, 
-      usuariosOrdenados,
+      pesquisa,
       statusClass,
       atualizarNivelUsuario,
       atualizarStatusUsuario,
-      closeProfileMenu
+      closeProfileMenu,
     }
   },
 })
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');

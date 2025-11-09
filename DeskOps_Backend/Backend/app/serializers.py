@@ -1,6 +1,7 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from .models import Users, Environment, Ativo, Chamado, Notificate 
+from rest_framework import generics
 
 
 class ReadWriteSerializer(object):
@@ -22,13 +23,14 @@ class ReadWriteSerializer(object):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = '__all__'
-        read_only_fields = ['is_active', 'is_staff', 'role']
+        fields = ['id', 'name', 'email', 'cargo', 'cpf', 'dt_nascimento', 'endereco', 'foto_user', 'is_active', 'is_staff',  'created_at','role']
+        read_only_fields = ['role']
 
 
 class EnvironmentSerializer(serializers.ModelSerializer):
     # Mostra informações do responsável (funcionário)
-    employee_name = serializers.CharField(source='employee.name', read_only=True)
+    employee = serializers.CharField(source='employee.name', read_only=True)
+    
     class Meta:
         model = Environment
         fields = '__all__'
@@ -42,54 +44,61 @@ class AtivoSerializer(serializers.ModelSerializer):
 
 
 class ChamadoSerializer(serializers.ModelSerializer):
-    environment = serializers.PrimaryKeyRelatedField(
+    environment = EnvironmentSerializer(read_only=True)  
+    environment_id = serializers.PrimaryKeyRelatedField(  
+        source='environment',
         queryset=Environment.objects.all(),
         write_only=True,
         required=False
     )
-
     asset = serializers.PrimaryKeyRelatedField(
         queryset=Ativo.objects.all(),
         required=False
     )
+    photo = serializers.ImageField(required=False, allow_null=True)
+    creator = UserSerializer(read_only=True)
+    employee = UserSerializer(read_only=True)
+    employee_id = serializers.PrimaryKeyRelatedField(
+        source='employee', queryset=Users.objects.all(), write_only=True, required=False
+    )
+    ultima_acao = serializers.CharField(read_only=True)
+    data_ultima_acao = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Chamado
         fields = '__all__'
         read_only_fields = ['creator', 'dt_criacao', 'update_date']
 
-    def validate(self, attrs):
-        environment = attrs.get('environment', None)
-        asset = attrs.get('asset', None)
-
-        if environment and asset:
-            if asset.environment_FK != environment:
-                raise serializers.ValidationError(
-                    {"asset": "O ativo selecionado não pertence ao ambiente escolhido."}
-                )
-        self.context['environment'] = environment
-        return attrs
+    def validate_status(self, value):
+        mapa = {
+            'aguardando': 'AGUARDANDO_ATENDIMENTO',
+            'aguardando atendimento': 'AGUARDANDO_ATENDIMENTO',
+            'em andamento': 'EM_ANDAMENTO',
+            'concluído': 'CONCLUIDO',
+            'concluido': 'CONCLUIDO',
+            'cancelado': 'CANCELADO',
+            'aberto': 'ABERTO',
+        }
+        if isinstance(value, str):
+            value = mapa.get(value.lower().strip(), value)
+        return value
 
     def update(self, instance, validated_data):
         request = self.context.get('request')
         user = request.user if request else None
 
-        if user:
-            if user.role == 'usuario':
-                allowed_fields = ['title', 'descricao', 'environment', 'asset', 'imagem']
-                for field in list(validated_data.keys()):
-                    if field not in allowed_fields:
-                        validated_data.pop(field)
+        # Atualiza campos passados no request
+        if 'employee' in self.initial_data:
+            instance.employee_id = self.initial_data.get('employee')
+        if 'status' in self.initial_data:
+            instance.status = self.initial_data.get('status')
 
-            elif user.role == 'tecnico':
-                # Técnico só pode alterar o status
-                allowed_fields = ['status']
-                for field in list(validated_data.keys()):
-                    if field not in allowed_fields:
-                        validated_data.pop(field)
-            # Admin pode alterar todos os campos
+        # Atualiza demais campos automaticamente
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
-        return super().update(instance, validated_data)
+        instance.save()
+        return instance  # ✅ sempre retorne a instância
 
     def create(self, validated_data):
         request = self.context.get('request')

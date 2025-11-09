@@ -1,7 +1,7 @@
 <template>
   <div class="chamado-detalhado-page" @click="closeProfileMenu">
     <!-- Sidebar como componente -->
-    <cliente-sidebar :usuario="usuario" />
+    <cliente-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
@@ -15,13 +15,18 @@
         <!-- Título com botão Editar -->
         <div class="title-edit-container">
           <h1 class="page-title">Chamado Detalhado</h1>
-          <button class="btn-editar" @click="$router.push('/cliente/editar-chamado')">
+          <button
+            class="btn-editar"
+            v-if="chamado"
+            @click="$router.push(`/cliente/editar-chamado/${chamado.id}`)"
+          >
             <span class="material-icons">edit</span>
             Editar
           </button>
         </div>
 
-        <div class="cards-container">
+        <!-- Mostrar conteúdo apenas quando o chamado for carregado -->
+        <div v-if="chamado" class="cards-container">
           <!-- Card do chamado -->
           <div class="card-form">
             <div class="header-info">
@@ -41,14 +46,15 @@
 
             <div class="info-section">
               <h3>Ambiente</h3>
-              <p class="info-text">{{ chamado.Ambiente }}</p>
+              <p class="info-text">{{ chamado.ambiente || '---' }}</p>
             </div>
 
-            <!-- Campo de Prioridade Adicionado -->
             <div class="info-section">
               <h3>Prioridade</h3>
               <span :class="['prioridade-badge', prioridadeClass(chamado.prioridade)]">
-                <span class="material-icons prioridade-icon">{{ prioridadeIcon(chamado.prioridade) }}</span>
+                <span class="material-icons prioridade-icon">
+                  {{ prioridadeIcon(chamado.prioridade) }}
+                </span>
                 {{ formatarPrioridade(chamado.prioridade) }}
               </span>
             </div>
@@ -82,61 +88,199 @@
           <!-- Card do técnico -->
           <div class="card-summary">
             <h2 class="card-title">Técnico Responsável</h2>
-            <p class="summary-item">Nome<br /><span class="summary-text tecnico-text">{{ tecnico.nome }}</span></p>
-            <p class="summary-item">E-mail<br /><span class="summary-text tecnico-text">{{ tecnico.email }}</span></p>
+            <p class="summary-item">
+              Nome<br />
+              <span class="summary-text tecnico-text">{{ tecnico?.name || '---' }}</span>
+            </p>
+            <p class="summary-item">
+              E-mail<br />
+              <span class="summary-text tecnico-text">{{ tecnico?.email || '---' }}</span>
+            </p>
 
             <!-- Botão Encerrar Chamado -->
-            <button class="btn-encerrar" @click="encerrarChamado">Encerrar Chamado</button>
+            <button class="btn-encerrar" @click="confirmarEncerramento">Encerrar Chamado</button>
           </div>
+        </div>
+
+        <!-- Exibir enquanto o chamado carrega -->
+        <div v-else class="loading-container">
+          <p>🔄 Carregando detalhes do chamado...</p>
         </div>
       </div>
     </main>
+
+    <!-- Popup de Confirmação -->
+    <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="material-icons popup-icon" :class="popupType">
+            {{ popupIcon }}
+          </span>
+          <h3 class="popup-title">{{ popupTitle }}</h3>
+        </div>
+        
+        <div class="popup-content">
+          <p class="popup-message">{{ popupMessage }}</p>
+        </div>
+
+        <div class="popup-actions">
+          <button 
+            v-if="popupType === 'confirm'"
+            class="popup-btn popup-btn-cancel" 
+            @click="closePopup"
+            :disabled="isLoading"
+          >
+            Cancelar
+          </button>
+          <button 
+            class="popup-btn popup-btn-confirm" 
+            :class="popupType"
+            @click="handlePopupConfirm"
+            :disabled="isLoading"
+          >
+            {{ isLoading ? 'Processando...' : popupConfirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">{{ loadingText }}</p>
+    </div>
   </div>
 </template>
 
+
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { defineComponent, ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
+import api from '@/services/api'
+import { useAuthStore } from '@/stores/authStore'
 
 export default defineComponent({
   name: 'ChamadoDetalhado',
-  components: {
-    ClienteSidebar
-  },
+  components: { ClienteSidebar },
+
   setup() {
     const router = useRouter()
+    const route = useRoute()
+    const auth = useAuthStore()
 
-    const usuario = ref({
-      nome: 'Lucas Santino',
-      email: 'lucas@email.com'
-    })
+    const chamado = ref<any>(null)
+    const tecnico = ref<any>(null)
+    const isLoading = ref(false)
+    const loadingText = ref('Processando...')
 
-    const closeProfileMenu = () => {
-      // Esta função será chamada no clique da página para fechar o menu de perfil
+    // 🔹 Estados para o popup
+    const showPopup = ref(false)
+    const popupType = ref<'success' | 'error' | 'confirm'>('confirm')
+    const popupTitle = ref('')
+    const popupMessage = ref('')
+    const popupConfirmText = ref('')
+    const popupAction = ref<(() => void) | null>(null)
+
+    // ✅ Função para mostrar popup personalizado
+    const showCustomPopup = (
+      type: 'success' | 'error' | 'confirm',
+      title: string,
+      message: string,
+      confirmText: string,
+      action?: () => void
+    ) => {
+      popupType.value = type
+      popupTitle.value = title
+      popupMessage.value = message
+      popupConfirmText.value = confirmText
+      popupAction.value = action || null
+      showPopup.value = true
     }
 
-    const chamado = ref({
-      id: 1024,
-      titulo: 'Erro ao acessar o painel administrativo',
-      descricao:
-        'Usuário relata que ao tentar acessar o painel, uma tela de erro 500 é exibida. Foi realizado teste em diferentes navegadores e o problema persiste.',
-      Ambiente: 'Departamento Adiministrativo',
-      imagem: '', 
-      status: 'Em Andamento',
-      prioridade: 'Alta', // Campo de prioridade adicionado
-      criadoEm: '10/10/2025 - 14:22',
-      atualizadoEm: '11/10/2025 - 09:10',
-      criadoPor: { nome: 'Lucas Santino', email: 'lucas@email.com' },
+    const closePopup = () => {
+      showPopup.value = false
+      popupAction.value = null
+    }
+
+    const handlePopupConfirm = () => {
+      if (popupAction.value) {
+        popupAction.value()
+      }
+      closePopup()
+    }
+
+    const popupIcon = computed(() => {
+      switch (popupType.value) {
+        case 'success': return 'check_circle'
+        case 'error': return 'error'
+        case 'confirm': return 'help'
+        default: return 'info'
+      }
     })
 
-    const tecnico = ref({
-      nome: 'Carlos Almeida',
-      email: 'carlos.almeida@deskops.com',
-    })
+    // ✅ Função para buscar os detalhes do chamado
+    const carregarChamado = async () => {
+      try {
+        const id = route.params.id
+        const token = auth.access
 
+        if (!token) {
+          alert('Sessão expirada. Faça login novamente.')
+          router.push('/')
+          return
+        }
+
+        const response = await api.get(`/chamados/${id}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const data = response.data
+
+        chamado.value = {
+          id: data.id,
+          titulo: data.title,
+          descricao: data.description,
+          ambiente: data.environment?.name || '---',
+          imagem: data.photo || null,
+          status: data.status,
+          prioridade: data.prioridade,
+          criadoEm: new Date(data.dt_criacao).toLocaleString('pt-BR'),
+          atualizadoEm: new Date(data.update_date).toLocaleString('pt-BR'),
+          criadoPor: {
+            nome: data.creator?.name || '---',
+            email: data.creator?.email || '---',
+          },
+        }
+
+        // ✅ Técnico responsável (ajustado para os dois possíveis campos)
+        if (data.employee) {
+          tecnico.value = {
+            name: data.employee.name || '---',
+            email: data.employee.email || '---'
+          }
+        } else if (data.assigned_to) {
+          tecnico.value = {
+            name: data.assigned_to.name || '---',
+            email: data.assigned_to.email || '---'
+          }
+        } else {
+          tecnico.value = {
+            name: 'Não atribuído',
+            email: 'Não atribuído'
+          }
+        }
+
+        console.log('📋 Chamado carregado:', chamado.value)
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar chamado:', error.response?.data || error)
+        showCustomPopup('error', 'Erro', 'Erro ao carregar detalhes do chamado.', 'OK')
+      }
+    }
+
+    // ✅ Funções auxiliares para exibição de status e prioridade
     const statusClass = (status: string) => {
-      const s = status.toLowerCase()
+      const s = status?.toLowerCase() || ''
       if (s.includes('concl')) return 'status-concluido'
       if (s.includes('aberto')) return 'status-aberto'
       if (s.includes('aguard')) return 'status-aguardando'
@@ -146,7 +290,7 @@ export default defineComponent({
     }
 
     const statusIcon = (status: string) => {
-      const s = status.toLowerCase()
+      const s = status?.toLowerCase() || ''
       if (s.includes('concl')) return 'check_circle'
       if (s.includes('aberto')) return 'radio_button_unchecked'
       if (s.includes('aguard')) return 'hourglass_top'
@@ -155,9 +299,8 @@ export default defineComponent({
       return 'info'
     }
 
-    // Funções para prioridade (adicionadas do código do técnico)
-    const prioridadeClass = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const prioridadeClass = (p: string) => {
+      switch (p?.toLowerCase()) {
         case 'alta': return 'prioridade-alta'
         case 'media': return 'prioridade-media'
         case 'baixa': return 'prioridade-baixa'
@@ -165,8 +308,8 @@ export default defineComponent({
       }
     }
 
-    const prioridadeIcon = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const prioridadeIcon = (p: string) => {
+      switch (p?.toLowerCase()) {
         case 'alta': return 'arrow_upward'
         case 'media': return 'remove'
         case 'baixa': return 'arrow_downward'
@@ -174,34 +317,103 @@ export default defineComponent({
       }
     }
 
-    const formatarPrioridade = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const formatarPrioridade = (p: string) => {
+      switch (p?.toLowerCase()) {
         case 'alta': return 'Alta'
         case 'media': return 'Média'
         case 'baixa': return 'Baixa'
-        default: return prioridade
+        default: return p
       }
     }
 
-    const encerrarChamado = () => {
-      alert('Chamado encerrado com sucesso!')
+    // ✅ Confirmar encerramento do chamado
+    const confirmarEncerramento = () => {
+      showCustomPopup(
+        'confirm',
+        'Encerrar Chamado',
+        'Tem certeza que deseja encerrar este chamado? Esta ação não pode ser desfeita.',
+        'Encerrar',
+        encerrarChamado
+      )
     }
 
-    return { 
-      usuario,
-      chamado, 
-      tecnico, 
-      closeProfileMenu,
-      statusClass, 
-      statusIcon, 
+    // ✅ Função para encerrar o chamado
+    const encerrarChamado = async () => {
+      try {
+        isLoading.value = true
+        loadingText.value = 'Encerrando chamado...'
+
+        const id = route.params.id
+        const token = auth.access
+
+        if (!token) {
+          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+          return
+        }
+
+        await api.patch(`/chamados/${id}/encerrar/`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          'Chamado encerrado com sucesso! Você será redirecionado para a lista de chamados.',
+          'OK',
+          () => {
+            router.push('/cliente/meus-chamados')
+          }
+        )
+      } catch (error: any) {
+        console.error('❌ Erro ao encerrar chamado:', error.response?.data || error)
+        
+        let errorMessage = 'Erro ao encerrar chamado. Tente novamente.'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            errorMessage = Object.values(error.response.data).flat().join('\n')
+          } else {
+            errorMessage = error.response.data
+          }
+        }
+
+        showCustomPopup('error', 'Erro', errorMessage, 'OK')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    onMounted(() => {
+      carregarChamado()
+    })
+
+    return {
+      chamado,
+      tecnico,
+      isLoading,
+      showPopup,
+      popupType,
+      popupTitle,
+      popupMessage,
+      popupConfirmText,
+      popupIcon,
+      loadingText,
+      statusClass,
+      statusIcon,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
-      encerrarChamado 
+      confirmarEncerramento,
+      encerrarChamado,
+      closePopup,
+      handlePopupConfirm
     }
   },
 })
 </script>
+
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
@@ -236,14 +448,15 @@ html, body, #app {
   bottom: 0;
 }
 
-/* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN */
+/* CONTEÚDO PRINCIPAL - LAYOUT FULLSCREEN COM SCROLL */
 .main-content {
   flex: 1;
   background-color: #fff;
   margin-left: 250px;
   width: calc(100vw - 250px);
   height: 100vh;
-  overflow: hidden;
+  overflow-y: auto; /* ✅ Permite scroll vertical apenas no conteúdo principal */
+  overflow-x: hidden; /* ✅ Evita scroll horizontal */
   display: flex;
   justify-content: center;
 }
@@ -253,10 +466,9 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   max-width: 1200px;
-  height: auto;
-  min-height: 100vh;
-  overflow: hidden;
+  min-height: 100%; /* ✅ Garante que ocupe pelo menos 100% da altura */
   padding: 0 40px;
+  padding-bottom: 100px; /* ✅ Espaço extra no final para scroll */
 }
 
 /* CORREÇÃO: Material-icons no conteúdo principal devem herdar a cor do contexto */
@@ -354,6 +566,7 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 600px; /* ✅ Altura mínima para forçar scroll */
 }
 
 .card-summary {
@@ -369,6 +582,7 @@ html, body, #app {
   text-align: left;
   gap: 16px;
   height: fit-content;
+  min-height: 400px; /* ✅ Altura mínima para forçar scroll */
 }
 
 /* Header do Card */
@@ -542,8 +756,219 @@ html, body, #app {
   transition: background-color 0.2s;
 }
 
-.btn-encerrar:hover {
+.btn-encerrar:hover:not(:disabled) {
   background-color: #333;
+}
+
+.btn-encerrar:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* POPUP STYLES */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-icon {
+  font-size: 28px;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.popup-icon.success {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.popup-icon.error {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.popup-icon.confirm {
+  color: #084298;
+  background-color: #cfe2ff;
+}
+
+.popup-title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.popup-content {
+  padding: 20px 24px;
+}
+
+.popup-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 15px 0;
+  text-align: left;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.popup-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.popup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.popup-btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.popup-btn-cancel:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.popup-btn-confirm {
+  background-color: #000;
+  color: #fff;
+}
+
+.popup-btn-confirm:hover:not(:disabled) {
+  background-color: #333;
+}
+
+.popup-btn-confirm.success {
+  background-color: #065f46;
+}
+
+.popup-btn-confirm.success:hover:not(:disabled) {
+  background-color: #054c38;
+}
+
+.popup-btn-confirm.error {
+  background-color: #842029;
+}
+
+.popup-btn-confirm.error:hover:not(:disabled) {
+  background-color: #6a1a21;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* SCROLLBAR PERSONALIZADA PARA O CONTEÚDO PRINCIPAL */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* RESPONSIVIDADE */
@@ -565,6 +990,7 @@ html, body, #app {
   .card-summary {
     flex: none;
     width: 100%;
+    min-height: auto; /* Remove altura mínima em tablets */
   }
 }
 
@@ -578,6 +1004,7 @@ html, body, #app {
     margin-left: 0;
     height: auto;
     min-height: calc(100vh - 200px);
+    overflow-y: auto;
   }
   
   .content-area {
@@ -603,6 +1030,24 @@ html, body, #app {
   
   .date-container.right {
     text-align: left;
+  }
+  
+  .card-form,
+  .card-summary {
+    min-height: auto; /* Remove altura mínima em mobile */
+  }
+
+  .popup-container {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
+
+  .popup-btn {
+    width: 100%;
   }
 }
 

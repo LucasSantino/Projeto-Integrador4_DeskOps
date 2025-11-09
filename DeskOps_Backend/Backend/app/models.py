@@ -36,6 +36,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     dt_nascimento = models.DateField(null=False, blank=False)
     endereco = models.CharField(max_length=255, null=False, blank=False)
     foto_user = models.ImageField(upload_to='perfil/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     # Campos de permissão
     is_staff = models.BooleanField(default=False)
@@ -87,6 +88,7 @@ class Ativo(models.Model):
 class Chamado(models.Model):
     title = models.CharField(max_length=250, null=False)
     description = models.CharField(max_length=250, null=False)
+    categoria = models.CharField(max_length=100, blank=True, null=True)
     dt_criacao = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=60,
@@ -102,11 +104,12 @@ class Chamado(models.Model):
         related_name='chamado_usuario_FK',
         on_delete=models.CASCADE
     )
-    employee = models.ManyToManyField(
-        Users,
-        related_name='chamado_funcionario_FK',
-        blank=True
-    )
+    employee = models.ForeignKey(  
+        Users, 
+        on_delete=models.SET_NULL,
+        null=True, blank=True, 
+        related_name='chamados')
+
     asset = models.ForeignKey(
         Ativo,
         related_name='chamado_ativo_FK',

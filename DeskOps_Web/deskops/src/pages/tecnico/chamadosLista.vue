@@ -1,7 +1,7 @@
 <template>
   <div class="chamados-tecnico-page" @click="closeProfileMenu">
     <!-- Sidebar como componente -->
-    <tecnico-sidebar :usuario="usuario" />
+     <tecnico-sidebar />
 
     <!-- Conteúdo principal (mesmo da página meusChamados.vue) -->
     <main class="main-content">
@@ -59,13 +59,13 @@
                 @click="goToChamadoDetalhado(chamado.id)"
                 class="clickable-row"
               >
-                <td>{{ chamado.atualizado }}</td>
+                <td>{{ formatarData(chamado.update_date) }}</td>
                 <td>{{ chamado.id }}</td>
-                <td>{{ chamado.titulo }}</td>
+                <td>{{ chamado.title }}</td>
                 <td>
                   <div class="cliente-info">
-                    <p>{{ chamado.cliente }}</p>
-                    <p class="cliente-email">{{ chamado.email || chamado.cliente.toLowerCase() + '@email.com' }}</p>
+                    <p>{{ chamado.creator?.name || '---' }}</p>
+                    <p class="cliente-email">{{ chamado.creator?.email || '---' }}</p>
                   </div>
                 </td>
                 <td>
@@ -81,7 +81,7 @@
                     <span class="material-icons status-icon">
                       {{ statusIcon(chamado.status) }}
                     </span>
-                    {{ chamado.status }}
+                    {{ formatarStatus(chamado.status) }}
                   </span>
                 </td>
               </tr>
@@ -94,94 +94,168 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TecnicoSidebar from '@/components/layouts/tecnicoSidebar.vue'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
 
 interface Chamado {
+  atualizado: number
   id: number
-  atualizado: string
-  titulo: string
-  cliente: string
-  email?: string
+  title: string
+  email: String
   status: string
   prioridade: string
+  update_date: string
+  creator?: { name: string; email: string }
 }
 
 export default defineComponent({
-  name: 'ChamadosLista',
-  components: {
-    TecnicoSidebar
-  },
+  name: 'ChamadosTecnico',
+  components: { TecnicoSidebar },
+
   setup() {
     const router = useRouter()
+    const auth = useAuthStore()
+
+    // ✅ filtros
     const filtroStatus = ref('todos')
     const filtroPrioridade = ref('todos')
     const ordemExibicao = ref('recente')
     const pesquisa = ref('')
 
     const usuario = ref({
-      nome: 'Técnico Silva',
-      email: 'tecnico@empresa.com',
-      dataNascimento: '15/03/1985',
-      cpf: '987.654.321-00',
-      endereco: 'Av. Técnica, 456, São Paulo, SP',
-      tipoUsuario: 'Técnico',
-      foto: '',
+      nome: auth.user?.name || 'Técnico',
+      email: auth.user?.email || 'sem@email.com',
+      tipoUsuario: 'Técnico'
     })
+
+    const chamados = ref<Chamado[]>([])
+
+    // ✅ Buscar chamados do técnico logado
+    const carregarChamados = async () => {
+      try {
+        const token = auth.access
+        if (!token) {
+          console.warn('⚠️ Sem token, redirecionando para login...')
+          router.push('/')
+          return
+        }
+
+        const response = await api.get('/chamados/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const data = response.data.results || response.data
+        chamados.value = data.map((c: any) => ({
+          id: c.id,
+          title: c.title || 'Sem título',
+          status: c.status || 'Sem status',
+          prioridade: c.prioridade || 'Não definida',
+          update_date: c.update_date,
+          creator: c.creator
+            ? { name: c.creator.name, email: c.creator.email }
+            : { name: '---', email: '---' },
+          tecnico: c.employee
+            ? { name: c.employee.name, email: c.employee.email }
+            : null
+        }))
+
+        console.log('✅ Chamados carregados:', chamados.value)
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar chamados:', error.response?.data || error)
+        if (error.response?.status === 401) {
+          alert('Sessão expirada. Faça login novamente.')
+          router.push('/')
+        }
+      }
+    }
+
+    onMounted(() => {
+      carregarChamados()
+    })
+
+    // ✅ Formatar data no padrão do código original
+    const formatarData = (dataString: string) => {
+      if (!dataString) return '---'
+      const data = new Date(dataString)
+      const dia = String(data.getDate()).padStart(2, '0')
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const ano = data.getFullYear()
+      const horas = String(data.getHours()).padStart(2, '0')
+      const minutos = String(data.getMinutes()).padStart(2, '0')
+      return `${dia}/${mes}/${ano} ${horas}:${minutos}`
+    }
+
+    // ✅ Formatar status para exibição
+    const formatarStatus = (status: string) => {
+      switch (status.toLowerCase()) {
+        case 'aguardando_atendimento': return 'Aguardando'
+        case 'em_andamento': return 'Em Andamento'
+        default: return status
+      }
+    }
+
+    const filtrados = computed(() => {
+      return chamados.value.filter((c) => {
+        const statusNormalizado = c.status.toLowerCase()
+        const statusFiltro = filtroStatus.value.toLowerCase()
+        
+        let matchStatus = true
+        if (filtroStatus.value !== 'todos') {
+          if (statusFiltro === 'aguardando') {
+            matchStatus = statusNormalizado === 'aguardando_atendimento'
+          } else if (statusFiltro === 'andamento') {
+            matchStatus = statusNormalizado === 'em_andamento'
+          } else {
+            matchStatus = statusNormalizado.includes(statusFiltro)
+          }
+        }
+
+        const matchPrioridade =
+          filtroPrioridade.value === 'todos' ||
+          (c.prioridade || '').toLowerCase() === filtroPrioridade.value.toLowerCase()
+
+        const matchPesquisa =
+          (c.title || '').toLowerCase().includes(pesquisa.value.toLowerCase()) ||
+          (c.creator?.name || '').toLowerCase().includes(pesquisa.value.toLowerCase())
+
+        return matchStatus && matchPrioridade && matchPesquisa
+      })
+    })
+
+    // ✅ Ordenação
+    const chamadosOrdenados = computed(() => {
+      const lista = [...filtrados.value]
+      if (ordemExibicao.value === 'recente') {
+        return lista.sort((a, b) =>
+          new Date(b.update_date).getTime() - new Date(a.update_date).getTime()
+        )
+      } else {
+        return lista.sort((a, b) =>
+          new Date(a.update_date).getTime() - new Date(b.update_date).getTime()
+        )
+      }
+    })
+
+    // ✅ Navegar para o detalhe do chamado
+    const goToChamadoDetalhado = (id: number) => {
+      router.push(`/tecnico/chamado-detalhado/${id}`)
+    }
 
     const closeProfileMenu = () => {
       // Esta função será chamada no clique da página para fechar o menu de perfil
     }
 
-    const goToChamadoDetalhado = (id: number) => {
-      router.push({ path: '/tecnico/chamado-detalhado', query: { id: id.toString() } })
-    }
-
-    const chamados = ref<Chamado[]>([
-      { id: 101, atualizado: '11/10/2025 10:30', titulo: 'Troca de cabo de rede', cliente: 'Lucas Santino', email:'lucas@email.com', status: 'Aberto', prioridade: 'alta' },
-      { id: 102, atualizado: '10/10/2025 14:20', titulo: 'Atualização sistema operacional', cliente: 'Maria Silva', email:'maria@email.com', status: 'Concluído', prioridade: 'media' },
-      { id: 103, atualizado: '09/10/2025 09:50', titulo: 'Manutenção impressora laser', cliente: 'Pedro Costa', email:'pedro@email.com', status: 'Em Andamento', prioridade: 'alta' },
-      { id: 104, atualizado: '08/10/2025 11:10', titulo: 'Configuração rede Wi-Fi', cliente: 'Ana Oliveira', email:'ana@email.com', status: 'Aguardando', prioridade: 'baixa' },
-      { id: 105, atualizado: '07/10/2025 16:00', titulo: 'Backup servidor arquivos', cliente: 'Carlos Santos', email:'carlos@email.com', status: 'Cancelado', prioridade: 'media' },
-      { id: 106, atualizado: '06/10/2025 13:45', titulo: 'Instalação software antivírus', cliente: 'Fernanda Lima', email:'fernanda@email.com', status: 'Em Andamento', prioridade: 'alta' },
-      { id: 107, atualizado: '05/10/2025 08:20', titulo: 'Troca de HD com defeito', cliente: 'Roberto Alves', email:'roberto@email.com', status: 'Concluído', prioridade: 'baixa' },
-    ])
-
-    const filtrados = computed(() => {
-      return chamados.value.filter((c) => {
-        const matchStatus = filtroStatus.value === 'todos' || c.status.toLowerCase() === filtroStatus.value.toLowerCase()
-        const matchPrioridade = filtroPrioridade.value === 'todos' || c.prioridade.toLowerCase() === filtroPrioridade.value.toLowerCase()
-        const matchPesquisa =
-          c.titulo.toLowerCase().includes(pesquisa.value.toLowerCase()) ||
-          c.cliente.toLowerCase().includes(pesquisa.value.toLowerCase())
-        return matchStatus && matchPrioridade && matchPesquisa
-      })
-    })
-
-    const chamadosOrdenados = computed(() => {
-      const chamadosFiltrados = [...filtrados.value]
-      
-      if (ordemExibicao.value === 'recente') {
-        return chamadosFiltrados.sort((a, b) => {
-          // Ordenação por data mais recente primeiro
-          return new Date(b.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(a.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
-      } else {
-        return chamadosFiltrados.sort((a, b) => {
-          // Ordenação por data mais antiga primeiro
-          return new Date(a.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime() - 
-                 new Date(b.atualizado.split(' ')[0].split('/').reverse().join('-')).getTime()
-        })
-      }
-    })
-
+    // ✅ Classes e ícones - Mantendo o mesmo estilo do original
     const statusClass = (status: string) => {
       switch (status.toLowerCase()) {
-        case 'concluído': return 'status-concluido'
+        case 'concluído':
+        case 'concluido': return 'status-concluido'
         case 'aberto': return 'status-aberto'
-        case 'aguardando': return 'status-aguardando'
+        case 'aguardando_atendimento': return 'status-aguardando'
+        case 'em_andamento': 
         case 'em andamento': return 'status-andamento'
         case 'cancelado': return 'status-cancelado'
         default: return ''
@@ -190,12 +264,14 @@ export default defineComponent({
 
     const statusIcon = (status: string) => {
       switch (status.toLowerCase()) {
-        case 'concluído': return 'check_circle'
+        case 'concluído':
+        case 'concluido': return 'check_circle'
         case 'aberto': return 'circle'
-        case 'aguardando': return 'hourglass_top'
+        case 'aguardando_atendimento': return 'hourglass_top'
+        case 'em_andamento':
         case 'em andamento': return 'autorenew'
         case 'cancelado': return 'cancel'
-        default: return ''
+        default: return 'help_outline'
       }
     }
 
@@ -226,20 +302,22 @@ export default defineComponent({
       }
     }
 
-    return { 
+    return {
       usuario,
-      filtroStatus, 
+      filtroStatus,
       filtroPrioridade,
       ordemExibicao,
-      pesquisa, 
-      chamadosOrdenados, 
-      statusClass, 
+      pesquisa,
+      chamadosOrdenados,
+      statusClass,
       statusIcon,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
-      closeProfileMenu, 
-      goToChamadoDetalhado 
+      formatarData,
+      formatarStatus,
+      closeProfileMenu,
+      goToChamadoDetalhado
     }
   },
 })

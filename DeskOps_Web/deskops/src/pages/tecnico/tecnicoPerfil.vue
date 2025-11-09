@@ -1,7 +1,7 @@
 <template>
   <div class="perfil-page">
     <!-- Sidebar como componente -->
-    <tecnico-sidebar :usuario="usuario" />
+    <tecnico-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
@@ -26,11 +26,11 @@
                   Editar
                 </button>
                 <div v-else class="action-buttons">
-                  <button class="cancel-btn" @click="cancelEdit">
+                  <button class="cancel-btn" @click="confirmCancelEdit">
                     Cancelar
                   </button>
-                  <button class="save-btn" @click="saveChanges">
-                    Salvar Alterações
+                  <button class="save-btn" @click="confirmSaveChanges" :disabled="isLoading">
+                    {{ isLoading ? 'Salvando...' : 'Salvar Alterações' }}
                   </button>
                 </div>
               </div>
@@ -42,7 +42,7 @@
               <div class="form-section profile-section">
                 <div class="profile-header">
                   <div class="foto-container">
-                    <img :src="usuario.foto || defaultFoto" alt="Foto do usuário" class="perfil-foto" />
+                    <img :src="(editMode ? usuarioEditado.foto : usuario.foto) || defaultFoto" alt="Foto do tecnico" class="perfil-foto"/>
                     <button v-if="editMode" class="change-photo-btn" @click="changePhoto">
                       <span class="material-icons">photo_camera</span>
                     </button>
@@ -134,54 +134,319 @@
         </div>
       </div>
     </main>
+
+    <!-- Popup de Confirmação -->
+    <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="material-icons popup-icon" :class="popupType">
+            {{ popupIcon }}
+          </span>
+          <h3 class="popup-title">{{ popupTitle }}</h3>
+        </div>
+        
+        <div class="popup-content">
+          <p class="popup-message">{{ popupMessage }}</p>
+          <!-- Input para nova senha -->
+          <div v-if="popupType === 'password'" class="popup-input-container">
+            <input
+              type="password"
+              v-model="novaSenha"
+              placeholder="Digite a nova senha"
+              class="popup-input"
+            />
+            <input
+              type="password"
+              v-model="confirmarSenha"
+              placeholder="Confirme a nova senha"
+              class="popup-input"
+            />
+          </div>
+        </div>
+
+        <div class="popup-actions">
+          <button 
+            v-if="popupType === 'confirm' || popupType === 'password'"
+            class="popup-btn popup-btn-cancel" 
+            @click="closePopup"
+            :disabled="isLoading"
+          >
+            Cancelar
+          </button>
+          <button 
+            class="popup-btn popup-btn-confirm" 
+            :class="popupType"
+            @click="handlePopupConfirm"
+            :disabled="isLoading"
+          >
+            {{ isLoading ? 'Processando...' : popupConfirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">{{ loadingText }}</p>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive } from 'vue'
+import { defineComponent, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import TecnicoSidebar from '@/components/layouts/tecnicoSidebar.vue'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
 
 export default defineComponent({
-  name: 'TecnicoPerfil',
-  components: {
-    TecnicoSidebar
-  },
+  name: 'PerfilTecnico',
+  components: { TecnicoSidebar },
+
   setup() {
     const router = useRouter()
+    const auth = useAuthStore()
     const editMode = ref(false)
+    const isLoading = ref(false)
+    const loadingText = ref('Processando...')
 
+    // Estados para o popup
+    const showPopup = ref(false)
+    const popupType = ref<'success' | 'error' | 'confirm' | 'password'>('confirm')
+    const popupTitle = ref('')
+    const popupMessage = ref('')
+    const popupConfirmText = ref('')
+    const popupAction = ref<(() => void) | null>(null)
+    const novaSenha = ref('')
+    const confirmarSenha = ref('')
+
+    // 🔹 Estado principal do técnico
     const usuario = ref({
-      nome: 'Victor Ribeiro',
-      email: 'victor@email.com',
-      dataNascimento: '15/03/1985',
-      cpf: '987.654.321-00',
-      endereco: 'Av. Técnica, 456, São Paulo, SP',
-      tipoUsuario: 'Técnico',
-      foto: '', 
+      nome: '',
+      email: '',
+      cargo: '',
+      cpf: '',
+      dataNascimento: '',
+      endereco: '',
+      ativo: '',
+      tipoUsuario: '',
+      foto: '',
     })
 
-    const usuarioEditado = reactive({ ...usuario.value })
-
+    const usuarioEditado = ref({ ...usuario.value })
+    const selectedPhotoFile = ref<File | null>(null)
     const defaultFoto = new URL('../../assets/images/default-avatar.png', import.meta.url).href
 
+    // ✅ Carregar dados do técnico logado
+    const carregarDadosUsuario = async () => {
+      try {
+        const token = auth.access
+        if (!token) {
+          console.warn('⚠️ Nenhum token encontrado. Redirecionando para login...')
+          router.push('/')
+          return
+        }
+
+        const response = await api.get('/me/', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const data = response.data
+        usuario.value = {
+          nome: data.name,
+          email: data.email,
+          cargo: data.cargo || 'Não informado',
+          cpf: data.cpf || '---',
+          dataNascimento: data.dt_nascimento || '---',
+          endereco: data.endereco || '---',
+          ativo: data.is_active ? 'Ativo' : 'Inativo',
+          tipoUsuario: 'Técnico',
+          foto: data.foto_user || '',
+        }
+
+        usuarioEditado.value = { ...usuario.value }
+
+        // 🔹 Atualiza o Pinia para refletir no sidebar
+        auth.user = data
+
+        console.log('👤 Dados do técnico carregados:', usuario.value)
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar dados do técnico:', error.response?.data || error)
+        if (error.response?.status === 401) {
+          showCustomPopup('error', 'Sessão Expirada', 'Sua sessão expirou. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+        }
+      }
+    }
+
+    onMounted(() => {
+      carregarDadosUsuario()
+    })
+
+    // Função para mostrar popup personalizado
+    const showCustomPopup = (
+      type: 'success' | 'error' | 'confirm' | 'password',
+      title: string,
+      message: string,
+      confirmText: string,
+      action?: () => void
+    ) => {
+      popupType.value = type
+      popupTitle.value = title
+      popupMessage.value = message
+      popupConfirmText.value = confirmText
+      popupAction.value = action || null
+      
+      // Resetar campos de senha quando abrir popup de senha
+      if (type === 'password') {
+        novaSenha.value = ''
+        confirmarSenha.value = ''
+      }
+      
+      showPopup.value = true
+    }
+
+    const closePopup = () => {
+      showPopup.value = false
+      popupAction.value = null
+    }
+
+    const handlePopupConfirm = () => {
+      if (popupAction.value) {
+        popupAction.value()
+      }
+      closePopup()
+    }
+
+    const popupIcon = computed(() => {
+      switch (popupType.value) {
+        case 'success': return 'check_circle'
+        case 'error': return 'error'
+        case 'confirm': return 'help'
+        case 'password': return 'lock'
+        default: return 'info'
+      }
+    })
+
+    // 🟢 Entrar em modo de edição
     const enterEditMode = () => {
-      Object.assign(usuarioEditado, usuario.value)
+      usuarioEditado.value = { ...usuario.value }
       editMode.value = true
     }
 
-    const cancelEdit = () => {
-      editMode.value = false
-      Object.assign(usuarioEditado, usuario.value)
+    // 🟢 Cancelar edição com confirmação
+    const confirmCancelEdit = () => {
+      showCustomPopup(
+        'confirm',
+        'Cancelar Edição',
+        'Tem certeza que deseja cancelar as alterações? Todas as modificações serão perdidas.',
+        'Confirmar',
+        () => {
+          usuarioEditado.value = { ...usuario.value }
+          editMode.value = false
+        }
+      )
     }
 
-    const saveChanges = () => {
-      Object.assign(usuario.value, usuarioEditado)
-      editMode.value = false
-      console.log('Dados salvos:', usuario.value)
-      alert('Alterações salvas com sucesso!')
+    // 🟢 Confirmar salvamento
+    const confirmSaveChanges = () => {
+      // Validações básicas
+      if (!usuarioEditado.value.nome.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe o nome completo.', 'OK')
+        return
+      }
+      if (!usuarioEditado.value.email.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe o email.', 'OK')
+        return
+      }
+
+      showCustomPopup(
+        'confirm',
+        'Confirmar Alterações',
+        'Tem certeza que deseja salvar as alterações do perfil?',
+        'Salvar',
+        saveChanges
+      )
     }
 
+    // 🟢 Salvar alterações (com upload da foto)
+    const saveChanges = async () => {
+      try {
+        const token = auth.access
+        if (!token) {
+          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+          return
+        }
+
+        isLoading.value = true
+        loadingText.value = 'Salvando alterações...'
+
+        const formData = new FormData()
+        formData.append('name', usuarioEditado.value.nome)
+        formData.append('email', usuarioEditado.value.email)
+        formData.append('cpf', usuarioEditado.value.cpf)
+        formData.append('cargo', usuarioEditado.value.cargo)
+        formData.append('dt_nascimento', usuarioEditado.value.dataNascimento)
+        formData.append('endereco', usuarioEditado.value.endereco)
+
+        if (selectedPhotoFile.value) {
+          formData.append('foto_user', selectedPhotoFile.value)
+        }
+
+        const response = await api.patch('/me/', formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+
+        // Atualiza os dados locais
+        usuario.value = {
+          ...usuario.value,
+          nome: response.data.name,
+          email: response.data.email,
+          cpf: response.data.cpf,
+          cargo: response.data.cargo,
+          dataNascimento: response.data.dt_nascimento,
+          endereco: response.data.endereco,
+          foto: response.data.foto_user || usuarioEditado.value.foto,
+        }
+
+        // Atualiza o estado global → Sidebar reflete automaticamente
+        auth.user = response.data
+
+        editMode.value = false
+        selectedPhotoFile.value = null
+        
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          'Alterações salvas com sucesso!',
+          'OK'
+        )
+      } catch (error: any) {
+        console.error('❌ Erro ao salvar alterações:', error.response?.data || error)
+        
+        let errorMessage = 'Erro ao salvar alterações. Verifique os campos e tente novamente.'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            errorMessage = Object.values(error.response.data).flat().join('\n')
+          } else {
+            errorMessage = error.response.data
+          }
+        }
+
+        showCustomPopup('error', 'Erro', errorMessage, 'OK')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // 🟢 Alterar foto de perfil (pré-visualização e upload)
     const changePhoto = () => {
       const input = document.createElement('input')
       input.type = 'file'
@@ -190,9 +455,12 @@ export default defineComponent({
         const target = e.target as HTMLInputElement
         if (target.files && target.files[0]) {
           const file = target.files[0]
+          selectedPhotoFile.value = file
+
+          // Exibe a prévia da imagem antes de enviar
           const reader = new FileReader()
           reader.onload = (e) => {
-            usuarioEditado.foto = e.target?.result as string
+            usuarioEditado.value.foto = e.target?.result as string
           }
           reader.readAsDataURL(file)
         }
@@ -200,24 +468,87 @@ export default defineComponent({
       input.click()
     }
 
+    // 🟢 Alterar senha com popup
     const changePassword = () => {
-      const newPassword = prompt('Digite sua nova senha:')
-      if (newPassword) {
-        console.log('Nova senha definida')
-        alert('Senha alterada com sucesso!')
+      showCustomPopup(
+        'password',
+        'Alterar Senha',
+        'Digite sua nova senha:',
+        'Alterar Senha',
+        performPasswordChange
+      )
+    }
+
+    const performPasswordChange = async () => {
+      if (!novaSenha.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe a nova senha.', 'OK')
+        return
+      }
+      if (!confirmarSenha.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Confirme a nova senha.', 'OK')
+        return
+      }
+      if (novaSenha.value !== confirmarSenha.value) {
+        showCustomPopup('error', 'Senhas não conferem', 'As senhas digitadas não são iguais.', 'OK')
+        return
+      }
+      if (novaSenha.value.length < 6) {
+        showCustomPopup('error', 'Senha muito curta', 'A senha deve ter pelo menos 6 caracteres.', 'OK')
+        return
+      }
+
+      isLoading.value = true
+      loadingText.value = 'Alterando senha...'
+
+      try {
+        const token = auth.access
+        if (!token) {
+          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+          return
+        }
+
+        // Simulação de alteração de senha - substitua pela sua API real
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          'Senha alterada com sucesso!',
+          'OK'
+        )
+      } catch (error: any) {
+        console.error('❌ Erro ao alterar senha:', error)
+        showCustomPopup('error', 'Erro', 'Erro ao alterar senha. Tente novamente.', 'OK')
+      } finally {
+        isLoading.value = false
       }
     }
 
     return {
       usuario,
       usuarioEditado,
-      defaultFoto,
       editMode,
+      defaultFoto,
+      isLoading,
+      showPopup,
+      popupType,
+      popupTitle,
+      popupMessage,
+      popupConfirmText,
+      popupIcon,
+      loadingText,
+      novaSenha,
+      confirmarSenha,
       enterEditMode,
-      cancelEdit,
+      confirmCancelEdit,
+      confirmSaveChanges,
       saveChanges,
       changePhoto,
       changePassword,
+      closePopup,
+      handlePopupConfirm,
     }
   },
 })
@@ -333,7 +664,7 @@ html, body, #app {
   margin-bottom: 40px;
 }
 
-/* Card do Perfil - ESTILO CONSISTENTE */
+/* Card do Perfil - ESTILO CONSISTENTE COM NOVO CHAMADO */
 .card-form {
   width: 500px;
   background-color: #fff;
@@ -409,8 +740,14 @@ html, body, #app {
   color: #fff;
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   background-color: #333;
+}
+
+.save-btn:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* Conteúdo do formulário - SEM SCROLLBAR */
@@ -548,6 +885,225 @@ html, body, #app {
   border-color: #ccc;
 }
 
+/* POPUP STYLES - MESMO ESTILO DAS OUTRAS PÁGINAS */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-icon {
+  font-size: 28px;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.popup-icon.success {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.popup-icon.error {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.popup-icon.confirm {
+  color: #084298;
+  background-color: #cfe2ff;
+}
+
+.popup-icon.password {
+  color: #7b1fa2;
+  background-color: #f3e5f5;
+}
+
+.popup-title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.popup-content {
+  padding: 20px 24px;
+}
+
+.popup-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 15px 0;
+  text-align: left;
+}
+
+.popup-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.popup-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.popup-input:focus {
+  border-color: #000;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.popup-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.popup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.popup-btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.popup-btn-cancel:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.popup-btn-confirm {
+  background-color: #000;
+  color: #fff;
+}
+
+.popup-btn-confirm:hover:not(:disabled) {
+  background-color: #333;
+}
+
+.popup-btn-confirm.success {
+  background-color: #065f46;
+}
+
+.popup-btn-confirm.success:hover:not(:disabled) {
+  background-color: #054c38;
+}
+
+.popup-btn-confirm.error {
+  background-color: #842029;
+}
+
+.popup-btn-confirm.error:hover:not(:disabled) {
+  background-color: #6a1a21;
+}
+
+.popup-btn-confirm.password {
+  background-color: #7b1fa2;
+}
+
+.popup-btn-confirm.password:hover:not(:disabled) {
+  background-color: #6a1b7a;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {
   .main-content {
@@ -636,6 +1192,19 @@ html, body, #app {
   
   .divider-line {
     margin: 0 20px;
+  }
+
+  .popup-container {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
+
+  .popup-btn {
+    width: 100%;
   }
 }
 

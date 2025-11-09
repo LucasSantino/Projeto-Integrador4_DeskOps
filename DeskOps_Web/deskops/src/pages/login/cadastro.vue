@@ -1,65 +1,65 @@
 <template>
   <div class="cadastro-page">
-    <!-- Container principal dividindo tela -->
     <div class="left-side">
       <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
     </div>
 
     <div class="right-side">
       <div class="right-scroll">
-        <!-- Container de cadastro com scroll -->
         <div class="cadastro-form-container fade-in">
           <h1 class="cadastro-title">Crie a sua conta!</h1>
           <p class="cadastro-subtitle">Preencha os campos abaixo para criar sua conta</p>
 
           <div class="form-scroll">
-            <!-- Campo Nome -->
+            <!-- Nome -->
             <div class="input-group">
               <label for="nome">Nome</label>
-              <input type="text" id="nome" placeholder="Digite seu nome" />
+              <input v-model="form.name" type="text" id="nome" placeholder="Digite seu nome" />
             </div>
 
-            <!-- Campo E-mail -->
+            <!-- Email -->
             <div class="input-group">
               <label for="email">E-mail</label>
-              <input type="email" id="email" placeholder="Digite seu email" />
+              <input v-model="form.email" type="email" id="email" placeholder="Digite seu email" />
             </div>
 
-            <!-- Campo Data de Nascimento -->
+            <!-- Data de Nascimento -->
             <div class="input-group">
               <label for="birthdate">Data de Nascimento</label>
-              <input type="date" id="birthdate" />
+              <input v-model="form.dt_nascimento" type="date" id="birthdate" />
             </div>
 
-            <!-- Campo CPF -->
+            <!-- CPF -->
             <div class="input-group">
               <label for="cpf">CPF</label>
-              <input type="text" id="cpf" placeholder="Digite seu CPF" />
+              <input v-model="form.cpf" type="text" id="cpf" placeholder="Digite seu CPF" />
             </div>
 
-            <!-- Campo Endereço -->
+            <!-- Endereço -->
             <div class="input-group">
               <label for="endereco">Endereço</label>
-              <input type="text" id="endereco" placeholder="Digite seu endereço" />
+              <input v-model="form.endereco" type="text" id="endereco" placeholder="Digite seu endereço" />
             </div>
 
-            <!-- Campo Senha -->
+          
+            <!-- Senha -->
             <div class="input-group">
               <label for="password">Senha</label>
-              <input type="password" id="password" placeholder="Digite sua senha" />
+              <input v-model="form.password" type="password" id="password" placeholder="Digite sua senha" />
             </div>
 
-            <!-- Campo Confirmar Senha -->
+            <!-- Confirmar Senha -->
             <div class="input-group">
               <label for="confirm-password">Confirmar Senha</label>
-              <input type="password" id="confirm-password" placeholder="Confirme sua senha" />
+              <input v-model="confirmPassword" type="password" id="confirm-password" placeholder="Confirme sua senha" />
             </div>
           </div>
 
-          <button class="btn-cadastrar">Cadastrar</button>
+          <button class="btn-cadastrar" @click="handleRegister">Cadastrar</button>
+          <p v-if="message" class="success-message">{{ message }}</p>
+          <p v-if="error" class="error-message">{{ error }}</p>
         </div>
 
-        <!-- Container para entrar -->
         <div class="login-container fade-in">
           <h2>Já tem uma conta?</h2>
           <p>Entre agora mesmo</p>
@@ -72,10 +72,52 @@
   </div>
 </template>
 
-<script lang="ts">
-export default {
-  name: 'Cadastro',
-}
+<script setup>
+import { ref } from "vue";
+import api from "../../services/api"; // arquivo axios centralizado
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+// Campos do formulário
+const form = ref({
+  name: "",
+  email: "",
+  password: "",
+  cpf: "",
+  dt_nascimento: "",
+  endereco: "",
+});
+
+const confirmPassword = ref("");
+const message = ref("");
+const error = ref("");
+
+// Função de cadastro
+const handleRegister = async () => {
+  message.value = "";
+  error.value = "";
+
+  if (form.value.password !== confirmPassword.value) {
+    error.value = "As senhas não coincidem.";
+    return;
+  }
+
+  try {
+    const response = await api.post("register/", form.value);
+    message.value = "Cadastro realizado com sucesso! Aguarde aprovação do administrador.";
+    
+    // limpa campos após o sucesso
+    Object.keys(form.value).forEach((key) => (form.value[key] = ""));
+    confirmPassword.value = "";
+
+    // redireciona após 3s
+    setTimeout(() => router.push("/"), 3000);
+  } catch (err) {
+    console.error("Erro ao cadastrar:", err.response?.data || err);
+    error.value = err.response?.data?.error || "Erro ao cadastrar. Verifique os dados.";
+  }
+};
 </script>
 
 <style scoped>

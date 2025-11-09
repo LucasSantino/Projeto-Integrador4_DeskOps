@@ -15,46 +15,95 @@
       </router-link>
     </nav>
 
-    <!-- Perfil -->
+     <!-- Perfil -->
     <div class="profile-container" ref="profileContainer" @click.stop>
       <div class="sidebar-profile" @click="toggleProfileMenu">
-        <div class="profile-image">👤</div>
+        <div class="profile-image">
+          <img
+            v-if="usuario.foto"
+            :src="usuario.foto"
+            alt="Foto de perfil"
+            class="user-photo"
+          />
+        </div>
+
         <div class="profile-info">
-          <p class="profile-name">Victor Ribeiro</p>
-          <p class="profile-email">victor@email.com</p>
+          <p class="profile-name">{{ usuario.name }}</p>
+          <p class="profile-email">{{ usuario.email }}</p>
         </div>
       </div>
 
-      <!-- Dropdown corrigido -->
+      <!-- Dropdown -->
       <transition name="slide-right">
         <div v-if="profileMenuOpen" class="profile-dropdown-right">
           <div class="dropdown-item" @click="goToPerfil">
             <span class="material-icons">person</span> Perfil
           </div>
-          <div class="dropdown-item" @click="goToLogin">
+          <div class="dropdown-item" @click="confirmLogout">
             <span class="material-icons">logout</span> Sair
           </div>
         </div>
       </transition>
     </div>
+
+    <!-- Popup de Confirmação de Logout -->
+    <div v-if="showLogoutPopup" class="popup-overlay" @click.self="closeLogoutPopup">
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="material-icons popup-icon confirm">help</span>
+          <h3 class="popup-title">Confirmar Saída</h3>
+        </div>
+        
+        <div class="popup-content">
+          <p class="popup-message">Tem certeza que deseja sair do sistema?</p>
+        </div>
+
+        <div class="popup-actions">
+          <button 
+            class="popup-btn popup-btn-cancel" 
+            @click="closeLogoutPopup"
+          >
+            Cancelar
+          </button>
+          <button 
+            class="popup-btn popup-btn-confirm confirm"
+            @click="performLogout"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+    </div>
   </aside>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
 
 export default defineComponent({
   name: 'TecnicoSidebar',
-  props: {
-    usuario: {
-      type: Object,
-      required: true
-    }
-  },
   setup() {
     const router = useRouter()
+    const auth = useAuthStore()
     const profileMenuOpen = ref(false)
+    const showLogoutPopup = ref(false)
+    const defaultFoto = new URL('@/assets/images/default-avatar.png', import.meta.url).href
+
+    // ✅ Computed protegido (evita erro se auth.user for undefined)
+    const usuario = computed(() => {
+      const user = auth.user
+      if (!user) {
+        return { name: 'Técnico', email: 'sem@email.com', foto: '' }
+      }
+      return {
+        name: user.name || 'Técnico',
+        email: user.email || 'sem@email.com',
+        foto: user.foto_user || ''
+      }
+    })
 
     const toggleProfileMenu = () => {
       profileMenuOpen.value = !profileMenuOpen.value
@@ -69,19 +118,50 @@ export default defineComponent({
       closeProfileMenu()
     }
 
-    const goToLogin = () => {
-      router.push('/')
+    const confirmLogout = () => {
       closeProfileMenu()
+      showLogoutPopup.value = true
     }
+
+    const closeLogoutPopup = () => {
+      showLogoutPopup.value = false
+    }
+
+    const performLogout = () => {
+      auth.logout?.()
+      router.push('/')
+      closeLogoutPopup()
+    }
+
+    // Fechar menu ao clicar fora
+    const handleClickOutside = (event: Event) => {
+      const profileContainer = document.querySelector('.profile-container')
+      if (profileContainer && !profileContainer.contains(event.target as Node)) {
+        closeProfileMenu()
+      }
+    }
+
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside)
+    })
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', handleClickOutside)
+    })
 
     return {
       profileMenuOpen,
+      showLogoutPopup,
       toggleProfileMenu,
       closeProfileMenu,
       goToPerfil,
-      goToLogin,
+      confirmLogout,
+      closeLogoutPopup,
+      performLogout,
+      usuario,
+      defaultFoto
     }
-  },
+  }
 })
 </script>
 
@@ -111,6 +191,13 @@ export default defineComponent({
   text-align: left;
   margin-bottom: 30px;
   padding: 0 10px;
+}
+.user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #93bfa7;
 }
 
 .logo-image {
@@ -266,6 +353,158 @@ export default defineComponent({
   transform: translateY(10px);
 }
 
+/* POPUP STYLES - MESMO ESTILO DAS OUTRAS PÁGINAS */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000; /* Maior que o sidebar */
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-icon {
+  font-size: 28px;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.popup-icon.success {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.popup-icon.error {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.popup-icon.confirm {
+  color: #084298;
+  background-color: #cfe2ff;
+}
+
+.popup-title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.popup-content {
+  padding: 20px 24px;
+}
+
+.popup-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  text-align: left;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.popup-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.popup-btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.popup-btn-cancel:hover {
+  background-color: #e9ecef;
+}
+
+.popup-btn-confirm {
+  background-color: #000;
+  color: #fff;
+}
+
+.popup-btn-confirm:hover {
+  background-color: #333;
+}
+
+.popup-btn-confirm.success {
+  background-color: #065f46;
+}
+
+.popup-btn-confirm.success:hover {
+  background-color: #054c38;
+}
+
+.popup-btn-confirm.error {
+  background-color: #842029;
+}
+
+.popup-btn-confirm.error:hover {
+  background-color: #6a1a21;
+}
+
+.popup-btn-confirm.confirm {
+  background-color: #084298;
+}
+
+.popup-btn-confirm.confirm:hover {
+  background-color: #06357a;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* RESPONSIVIDADE */
 @media (max-width: 1024px) {
   .sidebar {
@@ -293,6 +532,19 @@ export default defineComponent({
     transform: translateX(-50%);
     margin-bottom: 0;
     min-width: 200px;
+  }
+
+  .popup-container {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
+
+  .popup-btn {
+    width: 100%;
   }
 }
 

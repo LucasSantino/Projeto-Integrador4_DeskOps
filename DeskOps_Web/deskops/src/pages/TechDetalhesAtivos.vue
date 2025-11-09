@@ -23,7 +23,24 @@
           <h1 class="page-title">Informações do Ativo</h1>
         </div>
 
-        <div class="cards-container">
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-container">
+          <div class="loading-spinner">
+            <img src="@/assets/images/iconedeskops.png" alt="Loading" class="spinner-image rotating" />
+          </div>
+          <p class="loading-text">Carregando informações do ativo...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="error-container">
+          <span class="material-icons error-icon">error</span>
+          <h3 class="error-title">Erro ao carregar ativo</h3>
+          <p class="error-message">{{ error }}</p>
+          <button class="btn-retry" @click="carregarAtivo">Tentar Novamente</button>
+        </div>
+
+        <!-- Success State -->
+        <div v-else-if="ativo" class="cards-container">
           <!-- Card do ativo (MAIOR) - MESMO LAYOUT -->
           <div class="card-form full-card">
             <div class="header-info">
@@ -38,23 +55,23 @@
 
             <div class="info-section">
               <h3>Descrição</h3>
-              <p class="info-text">{{ ativo.descricao }}</p>
+              <p class="info-text">{{ ativo.descricao || 'Sem descrição' }}</p>
             </div>
 
             <div class="info-section">
               <h3>Ambiente</h3>
               <p class="info-text">{{ ativo.ambiente.nome }}</p>
-              <p class="info-text">{{ ativo.ambiente.localizacao }}</p>
+              <p class="info-text">{{ ativo.ambiente.localizacao || 'Localização não informada' }}</p>
             </div>
 
             <div class="date-info">
               <div class="date-container left">
                 <h3 class="date-title">Data de Criação</h3>
-                <p class="info-text date-text">{{ ativo.criadoEm }}</p>
+                <p class="info-text date-text">{{ formatarData(ativo.criadoEm) }}</p>
               </div>
               <div class="date-container right">
                 <h3 class="date-title">Última Atualização</h3>
-                <p class="info-text date-text">{{ ativo.atualizadoEm }}</p>
+                <p class="info-text date-text">{{ formatarData(ativo.atualizadoEm) }}</p>
               </div>
             </div>
           </div>
@@ -76,14 +93,22 @@
               </div>
               <div class="info-item">
                 <span class="info-label">Localização:</span>
-                <span class="info-value">{{ ativo.ambiente.localizacao }}</span>
+                <span class="info-value">{{ ativo.ambiente.localizacao || 'N/D' }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">ID QR Code:</span>
-                <span class="info-value">{{ ativo.qrCode }}</span>
+                <span class="info-value">{{ ativo.id }}</span>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Not Found State -->
+        <div v-else class="not-found-container">
+          <span class="material-icons not-found-icon">search_off</span>
+          <h3 class="not-found-title">Ativo não encontrado</h3>
+          <p class="not-found-message">O ativo solicitado não foi encontrado no sistema.</p>
+          <button class="btn-fechar" @click="fecharPagina">Fechar</button>
         </div>
       </div>
     </main>
@@ -93,6 +118,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import api from '@/services/api'
 
 interface Ambiente {
   id: number
@@ -106,7 +132,6 @@ interface Ativo {
   descricao: string
   ambiente: Ambiente
   status: string
-  qrCode: string
   criadoEm: string
   atualizadoEm: string
 }
@@ -122,50 +147,107 @@ export default defineComponent({
   setup(props) {
     const route = useRoute()
     
-    // Dados mockados - em produção, buscar por ID
-    const ativo = ref<Ativo>({
-      id: 3001,
-      nome: 'Notebook Dell Latitude 5420',
-      descricao: 'Notebook corporativo para desenvolvimento, equipado com 16GB RAM, SSD 512GB e processador Intel i7.',
-      ambiente: {
-        id: 2,
-        nome: 'Laboratório de TI',
-        localizacao: 'Andar 2'
-      },
-      status: 'ativo',
-      qrCode: 'QR001',
-      criadoEm: '10/10/2025 - 14:22',
-      atualizadoEm: '11/10/2025 - 09:10'
-    })
+    const ativo = ref<Ativo | null>(null)
+    const loading = ref(true)
+    const error = ref<string | null>(null)
 
-    onMounted(() => {
-      console.log('ID recebido:', props.id)
-      console.log('Route params:', route.params)
-      // Aqui você pode buscar os dados reais do ativo baseado no ID
-      // buscarAtivo(props.id)
-    })
+    const carregarAtivo = async () => {
+      loading.value = true
+      error.value = null
+      
+      try {
+        // Usar o ID da prop ou da rota
+        const ativoId = props.id || route.params.id
+        
+        console.log('Buscando ativo ID:', ativoId)
+        
+        const response = await api.get(`/ativo/${ativoId}/`)
+        
+        console.log('Resposta da API:', response.data)
+        
+        // Mapear os dados da API para nossa interface
+        const dados = response.data
+        
+        ativo.value = {
+          id: dados.id,
+          nome: dados.name,
+          descricao: dados.description || 'Sem descrição',
+          status: dados.status || 'ATIVO',
+          ambiente: {
+            id: dados.environment_FK || 0,
+            nome: dados.environment_name || `Ambiente ${dados.environment_FK || 'N/D'}`,
+            localizacao: dados.environment_location || 'Localização não informada'
+          },
+          criadoEm: dados.created_at || new Date().toISOString(),
+          atualizadoEm: dados.updated_at || new Date().toISOString()
+        }
+        
+      } catch (err: any) {
+        console.error('Erro ao carregar ativo:', err)
+        error.value = err.response?.data?.message || 
+                     err.response?.data?.detail || 
+                     'Erro ao carregar informações do ativo'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const formatarData = (dataString: string) => {
+      if (!dataString) return 'Data não disponível'
+      
+      try {
+        const data = new Date(dataString)
+        return data.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch {
+        return dataString
+      }
+    }
 
     const statusClass = (status: string) => {
-      switch (status) {
-        case 'ativo': return 'status-ativo'
-        case 'manutencao': return 'status-manutencao'
-        default: return ''
+      switch (status?.toUpperCase()) {
+        case 'ATIVO':
+        case 'ACTIVE': 
+          return 'status-ativo'
+        case 'EM_MANUTENCAO':
+        case 'MANUTENCAO':
+        case 'MAINTENANCE':
+          return 'status-manutencao'
+        default: 
+          return 'status-desconhecido'
       }
     }
 
     const statusIcon = (status: string) => {
-      switch (status) {
-        case 'ativo': return 'check_circle'
-        case 'manutencao': return 'build'
-        default: return ''
+      switch (status?.toUpperCase()) {
+        case 'ATIVO':
+        case 'ACTIVE': 
+          return 'check_circle'
+        case 'EM_MANUTENCAO':
+        case 'MANUTENCAO':
+        case 'MAINTENANCE':
+          return 'build'
+        default: 
+          return 'help'
       }
     }
 
     const formatarStatus = (status: string) => {
-      switch (status) {
-        case 'ativo': return 'Ativo'
-        case 'manutencao': return 'Em Manutenção'
-        default: return status
+      switch (status?.toUpperCase()) {
+        case 'ATIVO':
+        case 'ACTIVE': 
+          return 'Ativo'
+        case 'EM_MANUTENCAO':
+        case 'MANUTENCAO':
+        case 'MAINTENANCE':
+          return 'Em Manutenção'
+        default: 
+          return status || 'Status Desconhecido'
       }
     }
 
@@ -177,11 +259,21 @@ export default defineComponent({
       }
     }
 
+    onMounted(() => {
+      console.log('ID recebido:', props.id)
+      console.log('Route params:', route.params)
+      carregarAtivo()
+    })
+
     return { 
       ativo,
+      loading,
+      error,
+      carregarAtivo,
       statusClass,
       statusIcon,
       formatarStatus,
+      formatarData,
       fecharPagina
     }
   },
@@ -325,6 +417,112 @@ html, body, #app {
   margin: 0;
 }
 
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  margin-bottom: 20px;
+}
+
+.spinner-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.rotating {
+  animation: rotate 2s linear infinite;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Error State */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 64px;
+  color: #dc2626;
+  margin-bottom: 20px;
+}
+
+.error-title {
+  color: #dc2626;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 30px;
+  max-width: 400px;
+}
+
+.btn-retry {
+  padding: 12px 24px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-retry:hover {
+  background-color: #333;
+}
+
+/* Not Found State */
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.not-found-icon {
+  font-size: 64px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.not-found-title {
+  color: #374151;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.not-found-message {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 30px;
+  max-width: 400px;
+}
+
 /* Container dos Cards - ALTURAS ORIGINAIS */
 .cards-container {
   display: flex;
@@ -409,6 +607,11 @@ html, body, #app {
 .status-manutencao {
   background-color: #fff3cd;
   color: #856404;
+}
+
+.status-desconhecido {
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
 .ativo-nome {
@@ -499,6 +702,12 @@ html, body, #app {
   color: #000;
   font-size: 14px;
   font-weight: 500;
+}
+
+/* Animação de rotação */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* RESPONSIVIDADE */

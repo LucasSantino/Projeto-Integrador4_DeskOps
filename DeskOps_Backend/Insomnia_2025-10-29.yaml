@@ -1,0 +1,244 @@
+type: collection.insomnia.rest/5.0
+name: Scratch Pad
+meta:
+  id: wrk_scratchpad
+  created: 1728946321920
+  modified: 1728946321920
+  description: ""
+collection:
+  - url: http://127.0.0.1:8000/api/register/
+    name: Register
+    meta:
+      id: req_e046867703b44855ae76eac2ec4a9aea
+      created: 1744999144683
+      modified: 1761759115395
+      isPrivate: false
+      description: ""
+      sortKey: -1744999144684
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "Victor Santos",
+          "email": "victor@user.com",
+          "password": "123456",
+          "cpf": "12345678900",
+          "dt_nascimento": "1999-05-05",
+          "endereco": "Rua do Sistema, 100"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/10.2.0
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://127.0.0.1:8000/api/aprovar_usuario/11/
+    name: Aprovar User
+    meta:
+      id: req_5cf1684dc1604d61821b24e3be35c85a
+      created: 1761749211609
+      modified: 1761762308540
+      isPrivate: false
+      description: ""
+      sortKey: -1761749211609
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "cargo": "admim"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_3e92ff834aeb425fbc2c8ce8938b5ad8
+      - name: User-Agent
+        value: insomnia/11.6.2
+        id: pair_a5355d00f26740eaac35ba0682b373fb
+      - id: pair_fcfa6931c1d243d6a6b5fee3bafd21ab
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzY0MDM3LCJpYXQiOjE3NjE3NjIyMzcsImp0aSI6ImYwNGU3MGM5ZmYyNzRlZWQ5YTc5OWRmZjUxMGM2YTEzIiwidXNlcl9pZCI6IjcifQ.VErKDab7CTM6CPnDif9lqm7u8O4CNZLX1YnNfgM9-74
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://127.0.0.1:8000/api/login/
+    name: Login
+    meta:
+      id: req_46a30c3edf004ef080a22abf1b17e17c
+      created: 1761750016636
+      modified: 1761762656438
+      isPrivate: false
+      description: ""
+      sortKey: -1761750016636
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "adm@victor.com",
+          "password": "123456"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.6.2
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://127.0.0.1:8000/api/refresh/
+    name: Refresh
+    meta:
+      id: req_2fb35fac716c4bdc88371843e152f6ce
+      created: 1761751692347
+      modified: 1761756422948
+      isPrivate: false
+      description: ""
+      sortKey: -1761751692347
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2MTgzODA2NSwiaWF0IjoxNzYxNzUxNjY1LCJqdGkiOiIzODk0MGU4ZmMwNjY0OGEzYWEzNjdlMTk4NzYyNjk3ZCIsInVzZXJfaWQiOiI4In0.5CmzfpnhBWFu53ofmZ4Fm_M_gBvijGenyHqZmM9scM8"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.6.2
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://127.0.0.1:8000/api/ativo/
+    name: Ativos
+    meta:
+      id: req_81528801b974444a9dfcee9f8b758f2f
+      created: 1761751807277
+      modified: 1761756412572
+      isPrivate: false
+      description: ""
+      sortKey: -1761751807277
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/11.6.2
+        id: pair_74825af432fb4764892544aaddcc4e52
+      - id: pair_908150e691d641318a34d56b586c2c9d
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzUzNTg3LCJpYXQiOjE3NjE3NTE3ODcsImp0aSI6IjBkMmY0ZDNkZDAwNzQ0NmZiMzFhMTQyN2MwOTZjY2QzIiwidXNlcl9pZCI6IjgifQ.cb39ON1A9a3p5xIeQDznHLQqoSCCwRCNg68Qi05sj-o
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://127.0.0.1:8000/api/logout/
+    name: Logout
+    meta:
+      id: req_96d4d4d3366748f3a0caaf442e6ddc91
+      created: 1761754095854
+      modified: 1761756403196
+      isPrivate: false
+      description: ""
+      sortKey: -1761754095854
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2MTg0MTE0NCwiaWF0IjoxNzYxNzU0NzQ0LCJqdGkiOiJiZmNhNThkNDgxOGU0YjlkYjkyMGRiZmIyMzdlNmRhYiIsInVzZXJfaWQiOiI4IiwibmFtZSI6IlZpY3RvciBSaWJlaXJvIiwiY2FyZ28iOiJ0ZWNuaWNvIn0.xOkMMYeERBD0199UjncWKKLs_IQhvHk4LUGvM8jMUZI",
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_25688ecc758d4190a6c0b00555724441
+      - name: User-Agent
+        value: insomnia/11.6.2
+        id: pair_8fd1c0ed02f34c6b9e39deaf79af2bae
+      - id: pair_d1263c26258d4953ae51916f7fc6d031
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzU2NTQ0LCJpYXQiOjE3NjE3NTQ3NDQsImp0aSI6ImY3YzUxMDA3MGMwZDRmNzZhYTdmMjJkZjM2ZjU5MDVjIiwidXNlcl9pZCI6IjgiLCJuYW1lIjoiVmljdG9yIFJpYmVpcm8iLCJjYXJnbyI6InRlY25pY28ifQ.WnY1EhbsDdoYGoGKM3elDJJlI6taGGUgzHWOFJHpmDk
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://127.0.0.1:8000/api/me/
+    name: Me
+    meta:
+      id: req_ef97e610a4334646b945515d69cbc520
+      created: 1761756675316
+      modified: 1761756786737
+      isPrivate: false
+      description: ""
+      sortKey: -1761756675316
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/11.6.2
+        id: pair_3655e0c2140d4fd790ab40f12ec9e265
+      - id: pair_699193fc4151427aaa22ba4161a8dabe
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNzU4MjY3LCJpYXQiOjE3NjE3NTY0NjcsImp0aSI6Ijg0YWQyNGY5NjRlMzRiOTlhYWQ5N2M4NjJmZDRiZDAyIiwidXNlcl9pZCI6IjgiLCJuYW1lIjoiVmljdG9yIFJpYmVpcm8iLCJjYXJnbyI6InRlY25pY28ifQ.liG6oNZ0quMgbmDfiFcs2-dd4k1RBvxsQc507nNEMA8
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_99d30891da4bdcebc63947a8fc17f076de878684
+    created: 1744999139866
+    modified: 1744999139866
+environments:
+  name: Base Environment
+  meta:
+    id: env_99d30891da4bdcebc63947a8fc17f076de878684
+    created: 1744999139855
+    modified: 1744999139855
+    isPrivate: false
