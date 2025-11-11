@@ -250,16 +250,10 @@ export default defineComponent({
     }
 
     const carregarAmbientes = async () => {
-      try {
-        const token = auth.access
-        const response = await api.get('/environment/', { 
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        ambientes.value = response.data.results || response.data
-      } catch (error: any) {
-        console.error('❌ Erro ao carregar ambientes:', error.response?.data || error)
-      }
-    }
+    const response = await api.get('/environment/', { headers: { Authorization: `Bearer ${token}` } })
+    ambientes.value = response.data.results || response.data
+  }
+
 
     // ✅ Função para mostrar popup personalizado
     const showCustomPopup = (

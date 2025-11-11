@@ -1,26 +1,19 @@
 <template>
-  <div class="editar-chamado-page">
-    <!-- Sidebar como componente -->
+  <div class="editar-chamado-page" @click="closeProfileMenu">
+    <!-- Sidebar do Cliente -->
     <cliente-sidebar />
 
     <!-- Conteúdo principal -->
     <main class="main-content">
       <div class="content-area">
-        <!-- Botão Voltar -->
-        <div class="back-container" @click="voltarParaDetalhes">
-          <span class="material-icons back-icon">arrow_back</span>
-          <span class="back-text">Voltar</span>
-        </div>
+        <h1 class="page-title">Editar Chamado</h1>
 
-        <h1 class="page-title">Edição de Chamado</h1>
-
-        <!-- Cards -->
         <div class="cards-container">
           <!-- Formulário -->
           <div class="card-form">
             <div class="card-header">
               <h2 class="card-title">Informações</h2>
-              <p class="card-subtitle">Atualize as informações abaixo do chamado</p>
+              <p class="card-subtitle">Atualize as informações do chamado</p>
             </div>
 
             <div class="form-section">
@@ -37,7 +30,7 @@
               <h3 class="section-title">Descrição</h3>
               <textarea
                 v-model="descricao"
-                placeholder="Descreva o que está acontecendo"
+                placeholder="Descreva o problema"
                 :maxlength="maxDescricaoChars"
                 class="form-textarea"
               ></textarea>
@@ -48,44 +41,50 @@
 
             <div class="form-section">
               <h3 class="section-title">Ambiente</h3>
-              <select v-model="categoria" class="form-select">
-                <option value="" disabled>Selecione o Ambiente</option>
-                <option v-for="cat in categorias" :key="cat" :value="cat">{{ cat }}</option>
-              </select>
-            </div>
-
-            <!-- Seletor de Prioridade Adicionado -->
-            <div class="form-section">
-              <h3 class="section-title">Prioridade</h3>
-              <select v-model="prioridade" class="form-select">
-                <option value="" disabled>Selecione a prioridade</option>
-                <option v-for="prioridadeOption in prioridades" :key="prioridadeOption.value" :value="prioridadeOption.value">
-                  {{ prioridadeOption.label }}
+              <select v-model="ambienteSelecionado" class="form-select">
+                <option value="" disabled>Selecione um ambiente</option>
+                <option v-for="amb in ambientes" :key="amb.id" :value="amb.id">
+                  {{ amb.nome || amb.name || `Ambiente #${amb.id}` }}
                 </option>
               </select>
             </div>
 
-            <div class="form-section file-section">
-              <h3 class="section-title">Anexar imagem</h3>
-              <div class="file-upload">
-                <label class="file-label">
-                  <input type="file" @change="onFileChange" class="file-input" />
-                  <span class="file-button">Escolher arquivo</span>
-                  <span class="file-text">{{ imagem ? imagem.name : 'Nenhum arquivo escolhido' }}</span>
-                </label>
-              </div>
-              <div v-if="imagemURL" class="image-preview">
-                <img :src="imagemURL" alt="Prévia da imagem" class="preview-image" />
-              </div>
+            <div class="form-section">
+              <h3 class="section-title">Prioridade</h3>
+              <select v-model="prioridade" class="form-select">
+                <option value="" disabled>Selecione a prioridade</option>
+                <option v-for="p in prioridades" :key="p.value" :value="p.value">{{ p.label }}</option>
+              </select>
             </div>
+
+            <div class="file-upload">
+  <label class="file-label">
+    <input type="file" @change="onFileChange" class="file-input" />
+    <span class="file-button">Escolher arquivo</span>
+    <span class="file-text">
+      {{ imagem ? imagem.name : (imagemURL ? 'Imagem atual carregada' : 'Nenhum arquivo escolhido') }}
+    </span>
+  </label>
+
+  <div v-if="imagemURL">
+    <img
+      :src="imagemURL"
+      alt="Imagem"
+      style="max-width: 100px; max-height: 100px; margin-top: 10px;"
+    />
+  </div>
+</div>
+
+
+            
           </div>
 
-          <!-- Card Resumo -->
+          <!-- Resumo -->
           <div class="card-summary">
             <h2 class="summary-title">Resumo</h2>
-            
+
             <div class="summary-section">
-              <p class="summary-label">Título do chamado</p>
+              <p class="summary-label">Título</p>
               <p class="summary-value">{{ titulo || 'Nenhum título' }}</p>
             </div>
 
@@ -96,40 +95,42 @@
 
             <div class="summary-section">
               <p class="summary-label">Ambiente</p>
-              <p class="summary-value">{{ categoria || 'Nenhum selecionado' }}</p>
+              <p class="summary-value">{{ obterNomeAmbiente(ambienteSelecionado) || 'Nenhum selecionado' }}</p>
             </div>
 
-            <!-- Prioridade no Resumo Adicionada -->
             <div class="summary-section">
               <p class="summary-label">Prioridade</p>
               <p class="summary-value">
-                <span :class="['prioridade-badge', prioridadeClass(prioridade)]" v-if="prioridade">
+                <span v-if="prioridade" :class="['prioridade-badge', prioridadeClass(prioridade)]">
                   <span class="material-icons prioridade-icon">{{ prioridadeIcon(prioridade) }}</span>
                   {{ formatarPrioridade(prioridade) }}
                 </span>
                 <span v-else>Nenhuma selecionada</span>
               </p>
             </div>
-
-            <div class="summary-section">
+              <div class="summary-section">
               <p class="summary-label">Imagem</p>
               <p class="summary-value">
-                <span v-if="imagem || imagemOriginal">{{ (imagem ? imagem.name : 'Imagem existente') || 'Nenhuma imagem' }}</span>
-                <span v-else>Nenhuma imagem</span>
+                <img
+                  v-if="imagemURL"
+                  :src="imagemURL"
+                  alt="Imagem selecionada"
+                  style="max-width: 100px; max-height: 100px; border-radius: 6px; border: 1px solid #ccc;"
+                />
+                <span v-else>Nenhuma imagem selecionada</span>
               </p>
             </div>
 
+
             <div class="save-btn-container">
-              <button class="save-btn" @click="confirmarSalvamento" :disabled="isLoading">
-                {{ isLoading ? 'Salvando...' : 'Salvar Alterações' }}
-              </button>
+              <button class="save-btn" @click="salvarChamado">Salvar Alterações</button>
             </div>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Popup de Confirmação -->
+    <!-- Popup de confirmação -->
     <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
       <div class="popup-container">
         <div class="popup-header">
@@ -138,27 +139,13 @@
           </span>
           <h3 class="popup-title">{{ popupTitle }}</h3>
         </div>
-        
         <div class="popup-content">
           <p class="popup-message">{{ popupMessage }}</p>
         </div>
-
         <div class="popup-actions">
-          <button 
-            v-if="popupType === 'confirm'"
-            class="popup-btn popup-btn-cancel" 
-            @click="closePopup"
-            :disabled="isLoading"
-          >
-            Cancelar
-          </button>
-          <button 
-            class="popup-btn popup-btn-confirm" 
-            :class="popupType"
-            @click="handlePopupConfirm"
-            :disabled="isLoading"
-          >
-            {{ isLoading ? 'Processando...' : popupConfirmText }}
+          <button v-if="popupType === 'confirm'" class="popup-btn popup-btn-cancel" @click="closePopup">Cancelar</button>
+          <button class="popup-btn popup-btn-confirm" :class="popupType" @click="handlePopupConfirm">
+            {{ popupConfirmText }}
           </button>
         </div>
       </div>
@@ -173,11 +160,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/authStore'
+import ClienteSidebar from '@/components/layouts/clienteSidebar.vue'
+
+interface Ambiente {
+  id: string
+  name?: string
+  nome?: string
+}
+
+interface Prioridade {
+  value: string
+  label: string
+}
 
 export default defineComponent({
   name: 'EditarChamado',
@@ -188,18 +186,17 @@ export default defineComponent({
     const route = useRoute()
     const auth = useAuthStore()
 
-    // ✅ Campos do chamado
     const titulo = ref('')
     const descricao = ref('')
-    const categoria = ref('')
     const prioridade = ref('')
-    const imagemURL = ref<string | null>(null)
     const imagem = ref<File | null>(null)
-    const imagemOriginal = ref<string | null>(null)
+    const imagemURL = ref<string | null>(null)
+    const ambientes = ref<Ambiente[]>([])
+    const ambienteSelecionado = ref('')
     const isLoading = ref(false)
-    const loadingText = ref('Processando...')
+    const loadingText = ref('Carregando...')
+    const maxDescricaoChars = 2830
 
-    // ✅ Estados para o popup
     const showPopup = ref(false)
     const popupType = ref<'success' | 'error' | 'confirm'>('confirm')
     const popupTitle = ref('')
@@ -207,17 +204,106 @@ export default defineComponent({
     const popupConfirmText = ref('')
     const popupAction = ref<(() => void) | null>(null)
 
-    // ✅ Opções fixas
-    const categorias = ref(['Manutenção', 'Suporte', 'Instalação', 'Rede', 'Software', 'Hardware'])
-    const prioridades = ref([
+    const prioridades = ref<Prioridade[]>([
       { value: 'alta', label: 'Alta' },
       { value: 'media', label: 'Média' },
       { value: 'baixa', label: 'Baixa' },
     ])
 
-    const maxDescricaoChars = 2830
+    const carregarAmbientes = async () => {
+      try {
+        const token = auth.access
+        const response = await api.get('/environment/', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        ambientes.value = response.data.results || response.data
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar ambientes:', error.response?.data || error)
+      }
+    }
 
-    // ✅ Função para mostrar popup personalizado
+    const obterNomeAmbiente = (ambienteId: string) => {
+      const ambiente = ambientes.value.find((a) => a.id === ambienteId)
+      return ambiente ? (ambiente.nome || ambiente.name || `Ambiente #${ambiente.id}`) : ''
+    }
+
+    const carregarChamado = async () => {
+      try {
+        const id = route.params.id
+        const token = auth.access
+        const response = await api.get(`/chamados/${id}/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const chamado = response.data
+        titulo.value = chamado.title
+        descricao.value = chamado.description
+        prioridade.value = chamado.prioridade?.toLowerCase() || ''
+        ambienteSelecionado.value = chamado.environment?.id || chamado.environment_id || ''
+        if (chamado.photo) imagemURL.value = chamado.photo
+      } catch (error: any) {
+        console.error('Erro ao carregar chamado:', error)
+      }
+    }
+
+    const confirmarSalvamento = () => {
+      if (!titulo.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe o título do chamado.', 'OK')
+        return
+      }
+      if (!descricao.value.trim()) {
+        showCustomPopup('error', 'Campo obrigatório', 'Informe a descrição do problema.', 'OK')
+        return
+      }
+      if (!ambienteSelecionado.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione um ambiente.', 'OK')
+        return
+      }
+      if (!prioridade.value) {
+        showCustomPopup('error', 'Campo obrigatório', 'Selecione a prioridade.', 'OK')
+        return
+      }
+      showCustomPopup(
+        'confirm',
+        'Confirmar alterações',
+        'Deseja salvar as alterações neste chamado?',
+        'Salvar',
+        salvarChamado
+      )
+    }
+
+    const salvarChamado = async () => {
+      try {
+        isLoading.value = true
+        loadingText.value = 'Salvando alterações...'
+        const id = route.params.id
+        const token = auth.access
+        const formData = new FormData()
+        formData.append('title', titulo.value)
+        formData.append('description', descricao.value)
+        formData.append('prioridade', prioridade.value.toUpperCase())
+        formData.append('environment_id', ambienteSelecionado.value)
+        if (imagem.value) formData.append('photo', imagem.value)
+        await api.patch(`/chamados/${id}/`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          'Chamado atualizado com sucesso!',
+          'OK',
+          () => router.push('/cliente/meus-chamados')
+        )
+      } catch (error: any) {
+        console.error('Erro ao salvar chamado:', error.response?.data || error)
+        showCustomPopup('error', 'Erro', 'Falha ao salvar o chamado.', 'OK')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
     const showCustomPopup = (
       type: 'success' | 'error' | 'confirm',
       title: string,
@@ -239,9 +325,7 @@ export default defineComponent({
     }
 
     const handlePopupConfirm = () => {
-      if (popupAction.value) {
-        popupAction.value()
-      }
+      if (popupAction.value) popupAction.value()
       closePopup()
     }
 
@@ -254,152 +338,8 @@ export default defineComponent({
       }
     })
 
-    // ✅ Voltar para página de detalhes do chamado
-    const voltarParaDetalhes = () => {
-      router.push(`/cliente/chamado/${route.params.id}`)
-    }
-
-    // ✅ Carregar dados do chamado
-    const carregarChamado = async () => {
-      try {
-        const id = route.params.id
-        const token = auth.access
-
-        if (!token) {
-          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
-            router.push('/')
-          })
-          return
-        }
-
-        const response = await api.get(`/chamados/${id}/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        const data = response.data
-        titulo.value = data.title || ''
-        descricao.value = data.description || ''
-        categoria.value = data.environment || ''
-        prioridade.value = data.prioridade?.toLowerCase() || ''
-        imagemOriginal.value = data.photo || null
-        
-        if (data.photo) {
-          imagemURL.value = data.photo
-        }
-      } catch (error: any) {
-        console.error('❌ Erro ao carregar chamado:', error.response?.data || error)
-        showCustomPopup('error', 'Erro', 'Erro ao carregar informações do chamado.', 'OK')
-      }
-    }
-
-    onMounted(() => carregarChamado())
-
-    // ✅ Confirmar salvamento
-    const confirmarSalvamento = () => {
-      // Validações básicas
-      if (!titulo.value.trim()) {
-        showCustomPopup('error', 'Campo obrigatório', 'Informe o título do chamado.', 'OK')
-        return
-      }
-      if (!descricao.value.trim()) {
-        showCustomPopup('error', 'Campo obrigatório', 'Informe a descrição do problema.', 'OK')
-        return
-      }
-      if (!categoria.value) {
-        showCustomPopup('error', 'Campo obrigatório', 'Selecione um ambiente.', 'OK')
-        return
-      }
-      if (!prioridade.value) {
-        showCustomPopup('error', 'Campo obrigatório', 'Selecione a prioridade.', 'OK')
-        return
-      }
-
-      showCustomPopup(
-        'confirm',
-        'Confirmar Alterações',
-        'Tem certeza que deseja salvar as alterações deste chamado?',
-        'Salvar',
-        salvarChamado
-      )
-    }
-
-    // ✅ Atualizar chamado
-    const salvarChamado = async () => {
-      try {
-        const id = route.params.id
-        const token = auth.access
-
-        if (!token) {
-          showCustomPopup('error', 'Erro de Sessão', 'Sessão expirada. Faça login novamente.', 'OK', () => {
-            router.push('/')
-          })
-          return
-        }
-
-        isLoading.value = true
-        loadingText.value = 'Salvando alterações...'
-
-        const formData = new FormData()
-        formData.append('title', titulo.value)
-        formData.append('description', descricao.value)
-        formData.append('prioridade', prioridade.value.toUpperCase())
-        formData.append('environment', categoria.value)
-
-        if (imagem.value) {
-          formData.append('photo', imagem.value)
-        }
-
-        const response = await api.patch(`/chamados/${id}/`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-
-        console.log('✅ Chamado atualizado:', response.data)
-        
-        showCustomPopup(
-          'success',
-          'Sucesso!',
-          'Chamado atualizado com sucesso! Você será redirecionado para os detalhes do chamado.',
-          'OK',
-          () => {
-            router.push(`/cliente/chamado/${id}`)
-          }
-        )
-      } catch (error: any) {
-        console.error('❌ Erro ao atualizar chamado:', error.response?.data || error)
-        
-        let errorMessage = 'Erro ao salvar alterações. Verifique os dados e tente novamente.'
-        if (error.response?.data) {
-          if (typeof error.response.data === 'object') {
-            errorMessage = Object.values(error.response.data).flat().join('\n')
-          } else {
-            errorMessage = error.response.data
-          }
-        }
-
-        showCustomPopup('error', 'Erro', errorMessage, 'OK')
-      } finally {
-        isLoading.value = false
-      }
-    }
-
-    // ✅ Upload de imagem
-    const onFileChange = (event: Event) => {
-      const target = event.target as HTMLInputElement
-      if (target.files && target.files[0]) {
-        imagem.value = target.files[0]
-        imagemURL.value = URL.createObjectURL(target.files[0])
-      } else {
-        imagem.value = null
-        imagemURL.value = imagemOriginal.value
-      }
-    }
-
-    // ✅ Funções auxiliares de prioridade
-    const prioridadeClass = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const prioridadeClass = (p: string) => {
+      switch (p.toLowerCase()) {
         case 'alta': return 'prioridade-alta'
         case 'media': return 'prioridade-media'
         case 'baixa': return 'prioridade-baixa'
@@ -407,8 +347,8 @@ export default defineComponent({
       }
     }
 
-    const prioridadeIcon = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const prioridadeIcon = (p: string) => {
+      switch (p.toLowerCase()) {
         case 'alta': return 'arrow_upward'
         case 'media': return 'remove'
         case 'baixa': return 'arrow_downward'
@@ -416,45 +356,57 @@ export default defineComponent({
       }
     }
 
-    const formatarPrioridade = (prioridade: string) => {
-      switch (prioridade.toLowerCase()) {
+    const formatarPrioridade = (p: string) => {
+      switch (p.toLowerCase()) {
         case 'alta': return 'Alta'
         case 'media': return 'Média'
         case 'baixa': return 'Baixa'
-        default: return prioridade
+        default: return p
       }
     }
+
+    const onFileChange = (event: Event) => {
+      const target = event.target as HTMLInputElement
+      if (target.files && target.files[0]) {
+        imagem.value = target.files[0]
+        imagemURL.value = URL.createObjectURL(target.files[0])
+      }
+    }
+
+    onMounted(() => {
+      carregarAmbientes()
+      carregarChamado()
+    })
 
     return {
       titulo,
       descricao,
-      categoria,
       prioridade,
-      imagemURL,
-      imagem,
-      imagemOriginal,
-      categorias,
+      ambientes,
+      ambienteSelecionado,
       prioridades,
+      imagem,
+      imagemURL,
       isLoading,
+      loadingText,
       showPopup,
       popupType,
       popupTitle,
       popupMessage,
       popupConfirmText,
       popupIcon,
-      loadingText,
-      voltarParaDetalhes,
       confirmarSalvamento,
       salvarChamado,
+      closePopup,
+      handlePopupConfirm,
       onFileChange,
-      maxDescricaoChars,
       prioridadeClass,
       prioridadeIcon,
       formatarPrioridade,
-      closePopup,
-      handlePopupConfirm,
+      obterNomeAmbiente,
+      maxDescricaoChars
     }
-  },
+  }
 })
 </script>
 
