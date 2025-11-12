@@ -14,7 +14,7 @@
           <div class="metric-card clickable" @click="navigateTo('/adm/gestao-chamado')">
             <div class="metric-header">
               <span class="material-icons metric-icon status-aberto">circle</span>
-              <h3 class="metric-title">Chamados Abertos</h3>
+              <h3 class="metric-title">Chamados Total</h3>
             </div>
             <div class="metric-value">{{ metrics.chamadosAbertos }}</div>
             <div class="metric-trend positive">

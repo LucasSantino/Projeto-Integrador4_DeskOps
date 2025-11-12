@@ -55,16 +55,8 @@
                 <p class="info-text">{{ ativo.ambiente.localizacao }}</p>
               </div>
 
-              <div class="date-info">
-                <div class="date-container left">
-                  <h3 class="date-title">Criado em</h3>
-                  <p class="info-text">{{ ativo.criadoEm }}</p>
-                </div>
-                <div class="date-container right">
-                  <h3 class="date-title">Atualizado em</h3>
-                  <p class="info-text">{{ ativo.atualizadoEm }}</p>
-                </div>
-              </div>
+              
+              
             </div>
 
             <!-- EDIÇÃO -->
@@ -134,14 +126,7 @@
                 <span class="info-label">Ambiente:</span>
                 <span class="info-value">{{ ativo.ambiente.nome }}</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Localização:</span>
-                <span class="info-value">{{ ativo.ambiente.localizacao }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">QR Code:</span>
-                <span class="info-value">{{ ativo.qrCode }}</span>
-              </div>
+              
             </div>
           </div>
         </div>

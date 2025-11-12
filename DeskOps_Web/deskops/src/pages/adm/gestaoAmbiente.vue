@@ -42,7 +42,7 @@
           <table class="ambientes-table">
             <thead>
               <tr>
-                <th class="col-criado">Criado em</th>
+                
                 <th class="col-id">ID</th>
                 <th class="col-nome">Nome do Ambiente</th>
                 <th class="col-descricao">Descrição</th>
@@ -56,7 +56,7 @@
                 @click="$router.push(`/adm/detalhes-ambiente/${ambiente.id}`)"
                 class="clickable-row"
               >
-                <td>{{ ambiente.criadoEm }}</td>
+               
                 <td>{{ ambiente.id }}</td>
                 <td>
                   <div class="ambiente-info">

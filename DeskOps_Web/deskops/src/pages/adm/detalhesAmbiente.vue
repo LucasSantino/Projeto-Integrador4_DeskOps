@@ -49,17 +49,7 @@
                 <p class="info-text">{{ ambiente.responsavel.nome }}</p>
                 <p class="info-text">{{ ambiente.responsavel.email }}</p>
               </div>
-
-              <div class="date-info">
-                <div class="date-container left">
-                  <h3 class="date-title">Data de Criação</h3>
-                  <p class="info-text date-text">{{ ambiente.criadoEm }}</p>
-                </div>
-                <div class="date-container right">
-                  <h3 class="date-title">Última Atualização</h3>
-                  <p class="info-text date-text">{{ ambiente.atualizadoEm }}</p>
-                </div>
-              </div>
+              
             </div>
 
             <!-- Modo Edição -->
@@ -145,11 +135,7 @@
               <div class="info-item">
                 <span class="info-label">Email:</span>
                 <span class="info-value">{{ ambiente.responsavel.email }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Criado em:</span>
-                <span class="info-value">{{ ambiente.criadoEm }}</span>
-              </div>
+              </div>              
             </div>
           </div>
         </div>
