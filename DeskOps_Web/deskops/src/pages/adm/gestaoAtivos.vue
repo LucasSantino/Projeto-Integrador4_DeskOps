@@ -276,8 +276,9 @@ export default defineComponent({
       })
     })
 
+    // 🔥 ORDENAÇÃO POR ID CRESCENTE
     const ativosFiltradosOrdenados = computed(() =>
-      [...ativosFiltrados.value].sort((a, b) => a.nome.localeCompare(b.nome))
+      [...ativosFiltrados.value].sort((a, b) => a.id - b.id)
     )
 
     // ✅ Redirecionar para o cadastro
