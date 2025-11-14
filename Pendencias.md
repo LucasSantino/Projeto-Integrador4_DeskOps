@@ -3,7 +3,7 @@
 - Ajustar caixa de dialogo
 
 **Na pagina ADM**
-- ajustar caixa de dialogo gestão de usuário
+- ajustar caixa de dialogo gestão de usuário ✅
 - trazer informações do responsável do detalhes ambiente
 - id do gestão de ativos fora de ordem
 - detalhes do ativo não esta puxando o ambiente

@@ -67,9 +67,9 @@
 
                 <td>
                   <select 
-                    v-model="usuario.nivel" 
+                    :value="usuario.nivel" 
                     class="nivel-select"
-                    @change="atualizarNivelUsuario(usuario)"
+                    @change="(event) => prepararAtualizacaoNivel(usuario, event)"
                   >
                     <option value="usuario">Usuário</option>
                     <option value="tecnico">Técnico</option>
@@ -79,9 +79,9 @@
 
                 <td>
                   <select 
-                    v-model="usuario.status" 
+                    :value="usuario.status" 
                     :class="['status-select', statusClass(usuario.status)]"
-                    @change="atualizarStatusUsuario(usuario)"
+                    @change="(event) => prepararAtualizacaoStatus(usuario, event)"
                   >
                     <option value="ativo">Ativo</option>
                     <option value="inativo">Inativo</option>
@@ -94,6 +94,47 @@
         <p v-else class="loading-msg">Carregando usuários...</p>
       </div>
     </main>
+
+    <!-- Popup de Confirmação -->
+    <div v-if="showPopup" class="popup-overlay" @click.self="closePopup">
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="material-icons popup-icon" :class="popupType">
+            {{ popupIcon }}
+          </span>
+          <h3 class="popup-title">{{ popupTitle }}</h3>
+        </div>
+        
+        <div class="popup-content">
+          <p class="popup-message" v-html="popupMessage"></p>
+        </div>
+
+        <div class="popup-actions">
+          <button 
+            v-if="popupType === 'confirm'"
+            class="popup-btn popup-btn-cancel" 
+            @click="cancelAction"
+            :disabled="isLoading"
+          >
+            Cancelar
+          </button>
+          <button 
+            class="popup-btn popup-btn-confirm" 
+            :class="popupType"
+            @click="handlePopupConfirm"
+            :disabled="isLoading"
+          >
+            {{ isLoading ? 'Processando...' : popupConfirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">{{ loadingText }}</p>
+    </div>
   </div>
 </template>
 
@@ -126,14 +167,75 @@ export default defineComponent({
     const ordemExibicao = ref('recente')
     const pesquisa = ref('')
     const usuarios = ref<Usuario[]>([])
+    const isLoading = ref(false)
+    const loadingText = ref('Processando...')
+
+    // Estados para o popup
+    const showPopup = ref(false)
+    const popupType = ref<'success' | 'error' | 'confirm'>('confirm')
+    const popupTitle = ref('')
+    const popupMessage = ref('')
+    const popupConfirmText = ref('')
+    const popupAction = ref<(() => void) | null>(null)
+    const usuarioPendente = ref<Usuario | null>(null)
+    const novoValor = ref<string>('')
+    const valorOriginal = ref<string>('') // 🔥 NOVO: Guarda o valor original
+    const campoPendente = ref<'nivel' | 'status' | null>(null)
+
+    // Função para mostrar popup personalizado
+    const showCustomPopup = (
+      type: 'success' | 'error' | 'confirm',
+      title: string,
+      message: string,
+      confirmText: string,
+      action?: () => void
+    ) => {
+      popupType.value = type
+      popupTitle.value = title
+      popupMessage.value = message
+      popupConfirmText.value = confirmText
+      popupAction.value = action || null
+      showPopup.value = true
+    }
+
+    const closePopup = () => {
+      showPopup.value = false
+      popupAction.value = null
+      usuarioPendente.value = null
+      campoPendente.value = null
+      novoValor.value = ''
+      valorOriginal.value = ''
+    }
+
+    // 🔥 FUNÇÃO: Cancelar ação
+    const cancelAction = () => {
+      // Não faz nada, apenas fecha o popup (o valor não foi alterado ainda)
+      closePopup()
+    }
+
+    const handlePopupConfirm = () => {
+      if (popupAction.value) {
+        popupAction.value()
+      }
+    }
+
+    const popupIcon = computed(() => {
+      switch (popupType.value) {
+        case 'success': return 'check_circle'
+        case 'error': return 'error'
+        case 'confirm': return 'help'
+        default: return 'info'
+      }
+    })
 
     // ✅ Buscar usuários da API
     const carregarUsuarios = async () => {
       try {
         const token = auth.access
         if (!token) {
-          alert('Sessão expirada. Faça login novamente.')
-          router.push('/')
+          showCustomPopup('error', 'Sessão Expirada', 'Sua sessão expirou. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
           return
         }
 
@@ -169,8 +271,11 @@ export default defineComponent({
       } catch (error: any) {
         console.error('❌ Erro ao carregar usuários:', error)
         if (error.response?.status === 401) {
-          alert('Sessão expirada. Faça login novamente.')
-          router.push('/')
+          showCustomPopup('error', 'Sessão Expirada', 'Sua sessão expirou. Faça login novamente.', 'OK', () => {
+            router.push('/')
+          })
+        } else {
+          showCustomPopup('error', 'Erro', 'Erro ao carregar usuários. Tente novamente.', 'OK')
         }
       }
     }
@@ -179,51 +284,201 @@ export default defineComponent({
       carregarUsuarios()
     })
 
-    // ✅ Atualizar Nível (envia cargo)
-    const atualizarNivelUsuario = async (usuario: Usuario) => {
+    // ✅ PREPARAR atualização de nível (NÃO atualiza o v-model ainda)
+    const prepararAtualizacaoNivel = (usuario: Usuario, event: Event) => {
+      const target = event.target as HTMLSelectElement
+      const novoNivel = target.value
+      
+      // 🔥 GUARDA tanto o novo valor quanto o original
+      usuarioPendente.value = usuario
+      novoValor.value = novoNivel
+      valorOriginal.value = usuario.nivel // 🔥 GUARDA O ORIGINAL
+      campoPendente.value = 'nivel'
+      
+      const nivelTexto = {
+        'usuario': 'Usuário',
+        'tecnico': 'Técnico',
+        'admin': 'Administrador'
+      }[novoNivel] || novoNivel
+
+      showCustomPopup(
+        'confirm',
+        'Alterar Nível de Acesso',
+        `Tem certeza que deseja alterar o nível de acesso de <strong>${usuario.nome}</strong> para <strong>${nivelTexto}</strong>?`,
+        'Confirmar Alteração',
+        () => confirmarAtualizacaoNivel()
+      )
+    }
+
+    // ✅ PREPARAR atualização de status (NÃO atualiza o v-model ainda)
+    const prepararAtualizacaoStatus = (usuario: Usuario, event: Event) => {
+      const target = event.target as HTMLSelectElement
+      const novoStatus = target.value
+      
+      // 🔥 GUARDA tanto o novo valor quanto o original
+      usuarioPendente.value = usuario
+      novoValor.value = novoStatus
+      valorOriginal.value = usuario.status // 🔥 GUARDA O ORIGINAL
+      campoPendente.value = 'status'
+      
+      const statusTexto = novoStatus === 'ativo' ? 'Ativo' : 'Inativo'
+      const acaoTexto = novoStatus === 'ativo' ? 'ativar' : 'desativar'
+
+      showCustomPopup(
+        'confirm',
+        novoStatus === 'ativo' ? 'Ativar Usuário' : 'Desativar Usuário',
+        `Tem certeza que deseja ${acaoTexto} o usuário <strong>${usuario.nome}</strong>?`,
+        novoStatus === 'ativo' ? 'Ativar' : 'Desativar',
+        () => confirmarAtualizacaoStatus()
+      )
+    }
+
+    // ✅ CONFIRMAR atualização de nível (agora sim atualiza o v-model)
+    const confirmarAtualizacaoNivel = async () => {
+      if (!usuarioPendente.value || !novoValor.value) {
+        closePopup()
+        return
+      }
+
       try {
         const token = auth.access
-        if (!token) return
+        if (!token) {
+          closePopup()
+          return
+        }
 
-        const payload = { cargo: usuario.nivel }
+        isLoading.value = true
+        loadingText.value = 'Atualizando nível de acesso...'
 
-        await api.patch(`/usuarios/${usuario.id}/`, payload, {
+        // 🔥 AGORA SIM: Atualiza o v-model
+        usuarioPendente.value.nivel = novoValor.value
+
+        const payload = { cargo: novoValor.value }
+
+        const response = await api.patch(`/usuarios/${usuarioPendente.value.id}/`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
-        alert(`✅ Nível de ${usuario.nome} atualizado para ${usuario.nivel}`)
+        console.log('✅ Resposta da API:', response.data)
+
+        const nivelTexto = {
+          'usuario': 'Usuário',
+          'tecnico': 'Técnico',
+          'admin': 'Administrador'
+        }[novoValor.value] || novoValor.value
+
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          `Nível de acesso de <strong>${usuarioPendente.value.nome}</strong> atualizado para <strong>${nivelTexto}</strong> com sucesso!`,
+          'OK',
+          () => closePopup()
+        )
       } catch (error: any) {
-        console.error('❌ Erro ao atualizar nível:', error.response?.data || error)
-        alert('Erro ao atualizar nível do usuário.')
+        console.error('❌ Erro ao atualizar nível:', error)
+        console.error('❌ Detalhes do erro:', error.response?.data || error)
+        
+        // 🔥 REVERTE em caso de erro
+        if (usuarioPendente.value && valorOriginal.value) {
+          usuarioPendente.value.nivel = valorOriginal.value
+        }
+
+        let errorMessage = 'Erro ao atualizar nível do usuário. Verifique os dados e tente novamente.'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            // Tenta extrair mensagens de erro específicas
+            const errorData = error.response.data
+            if (errorData.detail) {
+              errorMessage = errorData.detail
+            } else if (errorData.cargo) {
+              errorMessage = `Cargo: ${Array.isArray(errorData.cargo) ? errorData.cargo.join(', ') : errorData.cargo}`
+            } else {
+              errorMessage = Object.values(errorData).flat().join('\n')
+            }
+          } else {
+            errorMessage = error.response.data
+          }
+        }
+
+        showCustomPopup('error', 'Erro', errorMessage, 'OK', () => closePopup())
+      } finally {
+        isLoading.value = false
       }
     }
 
-   // ✅ Atualizar Status
-const atualizarStatusUsuario = async (usuario: Usuario) => {
-  try {
-    const token = auth.access
-    if (!token) return
+    // ✅ CONFIRMAR atualização de status (agora sim atualiza o v-model)
+    const confirmarAtualizacaoStatus = async () => {
+      if (!usuarioPendente.value || !novoValor.value) {
+        closePopup()
+        return
+      }
 
-    const ativo = usuario.status === 'ativo'
+      try {
+        const token = auth.access
+        if (!token) {
+          closePopup()
+          return
+        }
 
-    // Ativa/desativa também o is_staff
-    const payload = {
-      is_active: ativo,
-      is_staff: ativo
+        isLoading.value = true
+        loadingText.value = novoValor.value === 'ativo' ? 'Ativando usuário...' : 'Desativando usuário...'
+
+        // 🔥 AGORA SIM: Atualiza o v-model
+        usuarioPendente.value.status = novoValor.value
+
+        const ativo = novoValor.value === 'ativo'
+
+        const payload = {
+          is_active: ativo,
+          is_staff: ativo
+        }
+
+        const response = await api.patch(`/usuarios/${usuarioPendente.value.id}/`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        console.log('✅ Resposta da API:', response.data)
+
+        const acaoTexto = novoValor.value === 'ativo' ? 'ativado' : 'desativado'
+        
+        showCustomPopup(
+          'success',
+          'Sucesso!',
+          `Usuário <strong>${usuarioPendente.value.nome}</strong> ${acaoTexto} com sucesso!`,
+          'OK',
+          () => closePopup()
+        )
+      } catch (error: any) {
+        console.error('❌ Erro ao atualizar status:', error)
+        console.error('❌ Detalhes do erro:', error.response?.data || error)
+        
+        // 🔥 REVERTE em caso de erro
+        if (usuarioPendente.value && valorOriginal.value) {
+          usuarioPendente.value.status = valorOriginal.value
+        }
+
+        let errorMessage = 'Erro ao atualizar status do usuário. Verifique os dados e tente novamente.'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            // Tenta extrair mensagens de erro específicas
+            const errorData = error.response.data
+            if (errorData.detail) {
+              errorMessage = errorData.detail
+            } else if (errorData.is_active) {
+              errorMessage = `Status: ${Array.isArray(errorData.is_active) ? errorData.is_active.join(', ') : errorData.is_active}`
+            } else {
+              errorMessage = Object.values(errorData).flat().join('\n')
+            }
+          } else {
+            errorMessage = error.response.data
+          }
+        }
+
+        showCustomPopup('error', 'Erro', errorMessage, 'OK', () => closePopup())
+      } finally {
+        isLoading.value = false
+      }
     }
-
-    // ⚠️ Use o endpoint correto e formatação certa
-    await api.patch(`/usuarios/${usuario.id}/`, payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    alert(`✅ Status de ${usuario.nome} alterado para ${usuario.status}`)
-  } catch (error: any) {
-    console.error('❌ Erro ao atualizar status:', error.response?.data || error)
-    alert('Erro ao atualizar status do usuário.')
-  }
-}
-
 
     // ✅ Filtros e ordenação
     const filtrados = computed(() => {
@@ -279,14 +534,24 @@ const atualizarStatusUsuario = async (usuario: Usuario) => {
       ordemExibicao,
       pesquisa,
       statusClass,
-      atualizarNivelUsuario,
-      atualizarStatusUsuario,
+      showPopup,
+      popupType,
+      popupTitle,
+      popupMessage,
+      popupConfirmText,
+      popupIcon,
+      isLoading,
+      loadingText,
+      prepararAtualizacaoNivel,
+      prepararAtualizacaoStatus,
+      cancelAction,
+      closePopup,
+      handlePopupConfirm,
       closeProfileMenu,
     }
   },
 })
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
@@ -544,6 +809,197 @@ html, body, #app {
   border-color: #999;
 }
 
+/* POPUP STYLES - MESMO ESTILO DAS OUTRAS PÁGINAS */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.popup-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 450px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-icon {
+  font-size: 28px;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.popup-icon.success {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.popup-icon.error {
+  color: #842029;
+  background-color: #f8d7da;
+}
+
+.popup-icon.confirm {
+  color: #084298;
+  background-color: #cfe2ff;
+}
+
+.popup-title {
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.popup-content {
+  padding: 20px 24px;
+}
+
+.popup-message {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 15px 0;
+  text-align: left;
+}
+
+.popup-message strong {
+  font-weight: 600;
+  color: #000;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.popup-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.popup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.popup-btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.popup-btn-cancel:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.popup-btn-confirm {
+  background-color: #000;
+  color: #fff;
+}
+
+.popup-btn-confirm:hover:not(:disabled) {
+  background-color: #333;
+}
+
+.popup-btn-confirm.success {
+  background-color: #065f46;
+}
+
+.popup-btn-confirm.success:hover:not(:disabled) {
+  background-color: #054c38;
+}
+
+.popup-btn-confirm.error {
+  background-color: #842029;
+}
+
+.popup-btn-confirm.error:hover:not(:disabled) {
+  background-color: #6a1a21;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* SCROLLBAR PERSONALIZADA */
 .table-container::-webkit-scrollbar {
   width: 6px;
@@ -631,6 +1087,19 @@ html, body, #app {
   .table-container {
     max-height: none;
     min-height: 300px;
+  }
+
+  .popup-container {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
+
+  .popup-btn {
+    width: 100%;
   }
 }
 
