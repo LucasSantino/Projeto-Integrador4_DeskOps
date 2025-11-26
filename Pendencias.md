@@ -9,6 +9,7 @@
 - detalhes do ativo não esta puxando o ambiente ✅
 - dashboard precisa ajustar o filtro
 - alterar senha não esta funcionado(provavelmente nas outras paginas tbm não)
+- fotos não estão sendo carregadas
 
 **Criar pagina notificação**
 **Criar a logica no backend para notificação**
