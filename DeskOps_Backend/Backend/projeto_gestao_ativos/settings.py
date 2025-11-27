@@ -24,9 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-gq$4ipub7p6@xych5py!e^fpngnbfm!h8=bam_+$s3e&1@k6v!"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "integrador-deskops-backend-gwgdgvgjfjdvd0ad.westus3-01.azurewebsites.net",
+    "victor-ribeiro-test-app.azurewebsites.net",  # FRONT
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
@@ -50,7 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  
     "django.middleware.common.CommonMiddleware",
     #"django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -163,9 +168,13 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # 👈 URL do seu front Vue
     "http://127.0.0.1:5173",
+    "https://victor-ribeiro-test-app.azurewebsites.net",
 ]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 CORS_ALLOW_CREDENTIALS = True
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

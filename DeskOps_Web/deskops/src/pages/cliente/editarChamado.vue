@@ -373,6 +373,10 @@ export default defineComponent({
       }
     }
 
+         const closeProfileMenu = () => {
+        // Fecha o menu de perfil
+}
+
     onMounted(() => {
       carregarAmbientes()
       carregarChamado()
@@ -404,7 +408,8 @@ export default defineComponent({
       prioridadeIcon,
       formatarPrioridade,
       obterNomeAmbiente,
-      maxDescricaoChars
+      maxDescricaoChars,
+      closeProfileMenu 
     }
   }
 })

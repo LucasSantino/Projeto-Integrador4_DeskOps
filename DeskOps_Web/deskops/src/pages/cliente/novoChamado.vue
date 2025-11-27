@@ -249,7 +249,8 @@ export default defineComponent({
       }
     }
 
-    const carregarAmbientes = async () => {
+   const carregarAmbientes = async () => {
+    const token = localStorage.getItem('access')
     const response = await api.get('/environment/', { headers: { Authorization: `Bearer ${token}` } })
     ambientes.value = response.data.results || response.data
   }
@@ -443,6 +444,10 @@ export default defineComponent({
       }
     }
 
+    const closeProfileMenu = () => {
+  // Fecha o menu de perfil
+}
+
     carregarAtivos()
     carregarAmbientes()
 
@@ -474,7 +479,8 @@ export default defineComponent({
       obterNomeAtivo,
       obterNomeAmbiente,
       closePopup,
-      handlePopupConfirm
+      handlePopupConfirm,
+      closeProfileMenu 
     }
   },
 })

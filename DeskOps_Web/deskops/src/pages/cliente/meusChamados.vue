@@ -132,7 +132,9 @@ interface Chamado {
   priority?: string
   prioridade?: string
   update_date: string
-  employee?: Tecnico[] | null
+  employee: {
+    name: string;
+    email: string;}
   creator?: Creator | null
   created_by?: number
 }

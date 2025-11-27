@@ -1,7 +1,8 @@
 <template>
-  <div class="chamado-detalhado-page" @click="closeProfileMenu">
+   <div class="chamado-detalhado-page" >
     <!-- Sidebar como componente -->
     <tecnico-sidebar />
+
 
     <!-- Conteúdo principal -->
     <main class="main-content">

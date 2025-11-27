@@ -384,6 +384,9 @@ export default defineComponent({
       }
     }
 
+      const closeProfileMenu = () => {
+        // Fecha o menu de perfil
+}
     onMounted(() => {
       carregarChamado()
     })
@@ -407,7 +410,8 @@ export default defineComponent({
       confirmarEncerramento,
       encerrarChamado,
       closePopup,
-      handlePopupConfirm
+      handlePopupConfirm,
+      closeProfileMenu
     }
   },
 })
