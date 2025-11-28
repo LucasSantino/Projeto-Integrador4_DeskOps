@@ -30,8 +30,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     )
 
     name = models.CharField(max_length=150, null=False)
-    email = models.EmailField(max_length=255, unique=True)
-    cargo = models.CharField(max_length=50, null=False)
+    email = models.EmailField(max_length=255, unique=True)    
     cpf = models.CharField(max_length=11, null=False, blank=False, unique=True)
     dt_nascimento = models.DateField(null=False, blank=False)
     endereco = models.CharField(max_length=255, null=False, blank=False)

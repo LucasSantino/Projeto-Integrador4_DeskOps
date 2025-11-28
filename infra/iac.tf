@@ -28,7 +28,7 @@ resource "azurerm_service_plan" "victor_ribeiro_test_sp"{
 }
 
 resource "azurerm_windows_web_app" "app" {
-  name                = "victor-ribeiro-test-app"
+  name                = " "
   resource_group_name = azurerm_resource_group.victor_ribeiro_test_rg.name
   location            = azurerm_resource_group.victor_ribeiro_test_rg.location
   service_plan_id     = azurerm_service_plan.victor_ribeiro_test_sp.id

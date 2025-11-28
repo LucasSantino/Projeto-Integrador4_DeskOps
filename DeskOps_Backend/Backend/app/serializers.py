@@ -23,8 +23,8 @@ class ReadWriteSerializer(object):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = ['id', 'name', 'email', 'cargo', 'cpf', 'dt_nascimento', 'endereco', 'foto_user', 'is_active', 'is_staff',  'created_at','role']
-        read_only_fields = ['role']
+        fields = ['id', 'name', 'email', 'role', 'cpf', 'dt_nascimento', 'endereco', 'foto_user', 'is_active', 'is_staff',  'created_at']
+        read_only_fields = ['created_at']
 
 
 class EnvironmentSerializer(serializers.ModelSerializer):

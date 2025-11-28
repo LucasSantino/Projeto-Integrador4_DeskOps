@@ -159,7 +159,7 @@ const __VLS_export = defineComponent({
                 loadingText.value = 'Atualizando nível de acesso...';
                 // 🔥 AGORA SIM: Atualiza o v-model
                 usuarioPendente.value.nivel = novoValor.value;
-                const payload = { cargo: novoValor.value };
+                const payload = { role: novoValor.value };
                 const response = await api.patch(`/usuarios/${usuarioPendente.value.id}/`, payload, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -474,7 +474,7 @@ const __VLS_self = (await import('vue')).defineComponent({
                 loadingText.value = 'Atualizando nível de acesso...';
                 // 🔥 AGORA SIM: Atualiza o v-model
                 usuarioPendente.value.nivel = novoValor.value;
-                const payload = { cargo: novoValor.value };
+                const payload = { role: novoValor.value };
                 const response = await api.patch(`/usuarios/${usuarioPendente.value.id}/`, payload, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
