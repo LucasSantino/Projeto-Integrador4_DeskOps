@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/notificate_model.dart';
+import '../../core/config.dart'; // Adicione esta importação
 
 class NotificateService {
-  final String baseUrl = 'http://SEU_BACKEND/api/notificates/';
+  final String baseUrl = '${ApiConfig.baseUrl}${ApiConfig.notificates}';
 
   Future<List<Notificate>> getNotificates() async {
     final response = await http.get(Uri.parse(baseUrl));
