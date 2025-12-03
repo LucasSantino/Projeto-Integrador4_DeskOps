@@ -104,6 +104,27 @@ class _MeusChamadosState extends State<MeusChamados> {
 
   @override
   Widget build(BuildContext context) {
+    // Usando MediaQuery para detectar tamanho da tela
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Definindo breakpoints para diferentes tamanhos de tela
+    final bool isTablet = screenWidth >= 600; // Tablet a partir de 600px
+    final bool isLargeTablet = screenWidth >= 900; // Tablets grandes
+    final bool isDesktop = screenWidth >= 1200; // Desktop
+    
+    // Ajustes baseados no tamanho da tela
+    final double titleFontSize = isLargeTablet ? 28 : (isTablet ? 26 : 24);
+    final double columnSpacing = isLargeTablet ? 40 : (isTablet ? 30 : 20);
+    final double headingRowHeight = isTablet ? 50 : 40;
+    final double dataRowHeight = isTablet ? 90 : 80;
+    final double statusIconSize = isTablet ? 24 : 20;
+    final double statusFontSize = isTablet ? 14 : 12;
+    final double filterFontSize = isTablet ? 16 : 14;
+    final double searchPadding = isTablet ? 16 : 12;
+    
+    // Configuração de truncamento baseada no tamanho da tela
+    final int titleMaxLength = isDesktop ? 50 : (isLargeTablet ? 40 : (isTablet ? 35 : 25));
+
     final filteredChamados =
         chamados.where((chamado) {
           final titulo = chamado['titulo'] ?? '';
@@ -129,17 +150,17 @@ class _MeusChamadosState extends State<MeusChamados> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Meus Chamados',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: titleFontSize,
               fontWeight: FontWeight.bold,
-              color: Color.fromARGB(255, 46, 61, 163),
+              color: const Color.fromARGB(255, 46, 61, 163),
             ),
           ),
           const SizedBox(height: 20),
 
-          // Filtros - ATUALIZADO: 3 filtros lado a lado
+          // Filtros - ATUALIZADO: 3 filtros lado a lado com responsividade
           Row(
             children: [
               // Filtro de Status
@@ -169,7 +190,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                             value: status,
                             child: Text(
                               status,
-                              style: const TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: filterFontSize),
                             ),
                           );
                         }).toList(),
@@ -205,7 +226,7 @@ class _MeusChamadosState extends State<MeusChamados> {
                             value: prioridade,
                             child: Text(
                               prioridade,
-                              style: const TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: filterFontSize),
                             ),
                           );
                         }).toList(),
@@ -226,9 +247,9 @@ class _MeusChamadosState extends State<MeusChamados> {
                   controller: searchController,
                   decoration: InputDecoration(
                     hintText: 'Pesquisar...',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: searchPadding,
+                      vertical: searchPadding,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -244,7 +265,7 @@ class _MeusChamadosState extends State<MeusChamados> {
           ),
           const SizedBox(height: 20),
 
-          // Tabela
+          // Tabela responsiva
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.vertical,
@@ -253,94 +274,196 @@ class _MeusChamadosState extends State<MeusChamados> {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: DataTable(
-                  showCheckboxColumn: false,
-                  columnSpacing: 20,
-                  headingRowHeight: 40,
-                  dataRowMinHeight: 80, // CORREÇÃO: substitui dataRowHeight
-                  dataRowMaxHeight: 80, // CORREÇÃO: substitui dataRowHeight
-                  columns: const [
-                    DataColumn(
-                      label: SizedBox(width: 70, child: Text('Atualizado')),
+                child: SingleChildScrollView(
+                  scrollDirection: isTablet ? Axis.vertical : Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: isTablet ? screenWidth * 0.9 : screenWidth,
                     ),
-                    DataColumn(label: Text('Título')),
-                    DataColumn(label: Text('Status')),
-                  ],
-                  rows: List.generate(filteredChamados.length, (index) {
-                    final chamado = filteredChamados[index];
-                    final status = chamado['status'] ?? '';
-
-                    final statusColor = _getStatusColor(status);
-                    final statusIcon = _getStatusIcon(status);
-
-                    return DataRow(
-                      color: WidgetStateProperty.resolveWith<Color?>((states) {
-                        if (hoveredRowIndex == index)
-                          return Colors.grey.shade200;
-                        return null;
-                      }),
-                      onSelectChanged: (selected) {
-                        if (selected != null && selected) {
-                          Navigator.pushNamed(context, '/chamado_detalhado');
-                        }
-                      },
-                      cells: [
-                        // Coluna Atualizado
-                        DataCell(
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                chamado['atualizadoData'] ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                    child: DataTable(
+                      showCheckboxColumn: false,
+                      columnSpacing: columnSpacing,
+                      headingRowHeight: headingRowHeight,
+                      dataRowMinHeight: dataRowHeight,
+                      dataRowMaxHeight: dataRowHeight,
+                      columns: [
+                        DataColumn(
+                          label: SizedBox(
+                            width: isTablet ? 100 : 70,
+                            child: Text(
+                              'Atualizado',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: isTablet ? 16 : 14,
                               ),
-                              Text(
-                                chamado['atualizadoHora'] ?? '',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                        // Coluna Título
-                        DataCell(
-                          Text(
-                            truncate(chamado['titulo'] ?? ''),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                        DataColumn(
+                          label: Text(
+                            'Título',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 16 : 14,
+                            ),
                           ),
                         ),
-                        // Coluna Status - ATUALIZADO: com cores e ícones corrigidos
-                        DataCell(
-                          Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(statusIcon, color: statusColor, size: 20),
-                                const SizedBox(height: 4),
-                                Flexible(
-                                  child: Text(
-                                    status,
-                                    style: TextStyle(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                        if (isTablet) // Adiciona coluna de prioridade apenas em tablets
+                          DataColumn(
+                            label: Text(
+                              'Prioridade',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: isTablet ? 16 : 14,
+                              ),
+                            ),
+                          ),
+                        DataColumn(
+                          label: Text(
+                            'Status',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 16 : 14,
                             ),
                           ),
                         ),
                       ],
-                    );
-                  }),
+                      rows: List.generate(filteredChamados.length, (index) {
+                        final chamado = filteredChamados[index];
+                        final status = chamado['status'] ?? '';
+                        final prioridade = chamado['prioridade'] ?? '';
+
+                        final statusColor = _getStatusColor(status);
+                        final statusIcon = _getStatusIcon(status);
+
+                        // Função para obter cor da prioridade
+                        Color _getPrioridadeColor(String prioridade) {
+                          switch (prioridade.toLowerCase()) {
+                            case 'alta':
+                              return Colors.red;
+                            case 'média':
+                              return Colors.orange;
+                            case 'baixa':
+                              return Colors.green;
+                            default:
+                              return Colors.grey;
+                          }
+                        }
+
+                        return DataRow(
+                          color: WidgetStateProperty.resolveWith<Color?>((states) {
+                            if (hoveredRowIndex == index)
+                              return Colors.grey.shade200;
+                            return null;
+                          }),
+                          onSelectChanged: (selected) {
+                            if (selected != null && selected) {
+                              Navigator.pushNamed(context, '/chamado_detalhado');
+                            }
+                          },
+                          cells: [
+                            // Coluna Atualizado
+                            DataCell(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    chamado['atualizadoData'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isTablet ? 15 : 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    chamado['atualizadoHora'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 14 : 13,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Coluna Título
+                            DataCell(
+                              Container(
+                                constraints: BoxConstraints(
+                                  maxWidth: isDesktop ? 400 : (isLargeTablet ? 300 : (isTablet ? 250 : 200)),
+                                ),
+                                child: Text(
+                                  truncate(chamado['titulo'] ?? '', titleMaxLength),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isTablet ? 15 : 14,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            // Coluna Prioridade (apenas em tablets)
+                            if (isTablet)
+                              DataCell(
+                                Center(
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isLargeTablet ? 12 : 8,
+                                      vertical: isLargeTablet ? 6 : 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getPrioridadeColor(prioridade).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: _getPrioridadeColor(prioridade),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      prioridade,
+                                      style: TextStyle(
+                                        color: _getPrioridadeColor(prioridade),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: statusFontSize,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Coluna Status
+                            DataCell(
+                              Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      statusIcon,
+                                      color: statusColor,
+                                      size: statusIconSize,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Flexible(
+                                      child: Text(
+                                        status,
+                                        style: TextStyle(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: statusFontSize,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ),
                 ),
               ),
             ),
