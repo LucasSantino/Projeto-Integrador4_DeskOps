@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../api/services/auth_service.dart'; // Import do service
+import '../../../core/config.dart'; // Import para verificar URL
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -13,6 +15,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   bool _obscurePassword = true;
   bool _isLoading = false;
   late AnimationController _animationController;
+  final AuthService _authService = AuthService(); // Instância do service
 
   @override
   void initState() {
@@ -21,6 +24,12 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
+    
+    // Para testes rápidos, você pode preencher automaticamente
+    // _emailController.text = 'admin@teste.com';
+    // _passwordController.text = 'senha123';
+    
+    print('URL do backend: ${ApiConfig.baseUrl}'); // Debug
   }
 
   @override
@@ -30,6 +39,20 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   }
 
   Future<void> _login() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    // Validação básica
+    if (email.isEmpty || password.isEmpty) {
+      _showErrorDialog('Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (!email.contains('@')) {
+      _showErrorDialog('Por favor, insira um email válido');
+      return;
+    }
+
     // Iniciar loading
     setState(() {
       _isLoading = true;
@@ -38,128 +61,176 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     // Mostrar popup de loading
     _showLoadingDialog();
 
-    // Simular processo de login (remova isso em produção)
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      print('Tentando login com: $email'); // Debug
+      
+      // Chamada real para a API
+      final response = await _authService.login(email, password);
+      
+      print('Login bem-sucedido!'); // Debug
+      print('Resposta: $response'); // Debug
+      
+      // Obter dados do usuário
+      final userData = await _authService.getCurrentUser();
+      final role = userData?['role'] ?? 'usuario';
+      
+      // Fechar popup de loading
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _animationController.stop();
+      }
 
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
+      // Navegar conforme o role do usuário
+      _navigateByRole(role, userData);
 
-    // Fechar popup de loading
-    if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-      _animationController.stop();
+    } catch (e) {
+      print('Erro no login: $e'); // Debug
+      
+      // Fechar popup de loading
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _animationController.stop();
+      }
+
+      // Tratamento de erros específicos
+      String errorMessage = 'Erro ao fazer login';
+      
+      if (e.toString().contains('Timeout')) {
+        errorMessage = 'Tempo de conexão excedido. Verifique sua internet.';
+      } else if (e.toString().contains('401')) {
+        errorMessage = 'Email ou senha incorretos';
+      } else if (e.toString().contains('403')) {
+        errorMessage = 'Usuário não aprovado. Aguarde aprovação do administrador.';
+      } else if (e.toString().contains('Network is unreachable')) {
+        errorMessage = 'Sem conexão com a internet';
+      } else if (e.toString().contains('Connection refused')) {
+        errorMessage = 'Não foi possível conectar ao servidor';
+      } else {
+        errorMessage = 'Erro: $e';
+      }
+
+      _showErrorDialog(errorMessage);
+    } finally {
+      // Parar loading
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
 
-    if (email == 'cliente@teste.com' && password == 'cliente1234') {
-      Navigator.pushReplacementNamed(context, '/meus_chamados');
-    } else if (email == 'tecnico@teste.com' && password == 'tecnico1234') {
-      Navigator.pushReplacementNamed(context, '/lista_chamados');
-    } else {
-      // Caso credenciais inválidas
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              title: const Text(
-                'Erro',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
-              ),
-              content: const Text('Email ou senha incorretos.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK', style: TextStyle(color: Colors.grey)),
-                ),
-              ],
-            ),
-      );
+  void _navigateByRole(String role, Map<String, dynamic>? userData) {
+    print('Navegando para role: $role'); // Debug
+    
+    switch (role) {
+      case 'usuario':
+        Navigator.pushReplacementNamed(context, '/meus_chamados');
+        break;
+      case 'tecnico':
+        Navigator.pushReplacementNamed(context, '/lista_chamados');
+        break;
+      case 'admin':
+        Navigator.pushReplacementNamed(context, '/dashboard');
+        break;
+      default:
+        // Role desconhecido ou pendente
+        if (userData?['is_active'] == false) {
+          _showErrorDialog('Sua conta está aguardando aprovação do administrador.');
+        } else {
+          Navigator.pushReplacementNamed(context, '/meus_chamados');
+        }
+        break;
     }
+  }
 
-    // Parar loading
-    setState(() {
-      _isLoading = false;
-    });
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Erro',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showLoadingDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: const Color.fromRGBO(
-        0,
-        0,
-        0,
-        0.54,
-      ), // Corrigido: substituído Colors.black54
-      builder:
-          (context) => PopScope(
-            canPop: false,
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              child: Container(
-                padding: const EdgeInsets.all(30),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color.fromRGBO(
-                        0,
-                        0,
-                        0,
-                        0.2,
-                      ), // Corrigido: substituído Colors.black.withOpacity(0.2)
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+      barrierColor: const Color.fromRGBO(0, 0, 0, 0.54),
+      builder: (context) => PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromRGBO(0, 0, 0, 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Imagem girando - TAMANHO AUMENTADO
-                    RotationTransition(
-                      turns: Tween(begin: 0.0, end: 1.0).animate(
-                        CurvedAnimation(
-                          parent: _animationController,
-                          curve: Curves.linear,
-                        ),
-                      ),
-                      child: Image.asset(
-                        'assets/images/iconedeskops.png',
-                        width: 120, // AUMENTADO: de 80 para 120
-                        height: 120, // AUMENTADO: de 80 para 120
-                        fit: BoxFit.contain,
-                      ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Imagem girando
+                RotationTransition(
+                  turns: Tween(begin: 0.0, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.linear,
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Entrando...',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Aguarde um momento',
-                      style: TextStyle(fontSize: 14, color: Colors.black54),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/iconedeskops.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Conectando...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Autenticando com o servidor',
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
+        ),
+      ),
     );
 
     // Iniciar animação de rotação
@@ -170,6 +241,43 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     setState(() {
       _obscurePassword = !_obscurePassword;
     });
+  }
+
+  Future<void> _testConnection() async {
+    try {
+      print('Testando conexão com: ${ApiConfig.baseUrl}');
+      // Aqui você pode adicionar um teste de conexão simples
+      // Por exemplo, tentar fazer uma requisição GET para um endpoint público
+      _showSuccessDialog('Backend configurado!\n${ApiConfig.baseUrl}');
+    } catch (e) {
+      _showErrorDialog('Erro na conexão: $e');
+    }
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Informação',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -191,15 +299,29 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                     width: size.width,
                     height: constraints.maxHeight * 0.25,
                     color: Colors.black,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 30),
-                        child: Image.asset(
-                          'assets/images/logodeskops.png',
-                          width: size.width * 0.99,
-                          fit: BoxFit.contain,
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 30),
+                            child: Image.asset(
+                              'assets/images/logodeskops.png',
+                              width: size.width * 0.99,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
-                      ),
+                        // Botão de teste de conexão (apenas para debug)
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: IconButton(
+                            icon: const Icon(Icons.wifi_find, color: Colors.white),
+                            onPressed: _testConnection,
+                            tooltip: 'Testar conexão',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -230,12 +352,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color.fromRGBO(
-                                    0,
-                                    0,
-                                    0,
-                                    0.1,
-                                  ), // Corrigido
+                                  color: const Color.fromRGBO(0, 0, 0, 0.1),
                                   blurRadius: 5,
                                   offset: const Offset(0, 3),
                                 ),
@@ -262,7 +379,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Campo Email - Normalizado
+                                // Campo Email
                                 const Text(
                                   'Email',
                                   style: TextStyle(
@@ -280,19 +397,14 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                     border: UnderlineInputBorder(),
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
-                                        color: Color.fromARGB(
-                                          255,
-                                          224,
-                                          223,
-                                          223,
-                                        ),
+                                        color: Color.fromARGB(255, 224, 223, 223),
                                       ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 15),
 
-                                // Campo Password - Normalizado com ícone de olho
+                                // Campo Password
                                 const Text(
                                   'Senha',
                                   style: TextStyle(
@@ -309,9 +421,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                     hintText: 'Digite sua senha',
                                     border: const UnderlineInputBorder(),
                                     focusedBorder: const UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.black,
-                                      ),
+                                      borderSide: BorderSide(color: Colors.black),
                                     ),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -326,25 +436,50 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Botão Login - ATUALIZADO
+                                // Botão Login
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     onPressed: _isLoading ? null : _login,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.black,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 15,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 15),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Entrar',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                
+                                // Link para esqueci a senha (opcional)
+                                const SizedBox(height: 10),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      _showErrorDialog('Entre em contato com o administrador para redefinir sua senha.');
+                                    },
                                     child: const Text(
-                                      'Entrar',
+                                      'Esqueci minha senha',
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
+                                        color: Colors.grey,
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
@@ -364,12 +499,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color.fromRGBO(
-                                    0,
-                                    0,
-                                    0,
-                                    0.1,
-                                  ), // Corrigido
+                                  color: const Color.fromRGBO(0, 0, 0, 0.1),
                                   blurRadius: 5,
                                   offset: const Offset(0, 3),
                                 ),
@@ -398,20 +528,14 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
-                                    onPressed:
-                                        _isLoading
-                                            ? null
-                                            : () {
-                                              Navigator.pushNamed(
-                                                context,
-                                                '/cadastro',
-                                              );
-                                            },
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () {
+                                            Navigator.pushNamed(context, '/cadastro');
+                                          },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.grey.shade300,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 15,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 15),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
