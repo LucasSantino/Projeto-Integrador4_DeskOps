@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
 
 class ApiClient {
-  // Singleton
   static final ApiClient _instance = ApiClient._internal();
   factory ApiClient() => _instance;
   ApiClient._internal();
@@ -31,110 +30,101 @@ class ApiClient {
   }
   
   Future<http.Response> get(String endpoint, {Map<String, String>? customHeaders}) async {
+    final url = '${ApiConfig.baseUrl}$endpoint';
+    print('🔵 GET: $url');
+    
     final headers = await _getHeaders();
     if (customHeaders != null) headers.addAll(customHeaders);
     
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: headers,
-    ).timeout(const Duration(seconds: 30));
-    
-    return _handleResponse(response);
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      ).timeout(const Duration(seconds: 60));
+      
+      print('🟢 GET Response ${response.statusCode}: ${response.body.substring(0, min(200, response.body.length))}');
+      return _handleResponse(response);
+    } catch (e) {
+      print('🔴 GET Error: $e');
+      rethrow;
+    }
   }
   
   Future<http.Response> post(String endpoint, dynamic body, {Map<String, String>? customHeaders}) async {
+    final url = '${ApiConfig.baseUrl}$endpoint';
+    print('🔵 POST: $url');
+    print('📦 Body: $body');
+    
     final headers = await _getHeaders();
     if (customHeaders != null) headers.addAll(customHeaders);
     
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: headers,
-      body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 30));
-    
-    return _handleResponse(response);
-  }
-  
-  Future<http.Response> put(String endpoint, dynamic body, {Map<String, String>? customHeaders}) async {
-    final headers = await _getHeaders();
-    if (customHeaders != null) headers.addAll(customHeaders);
-    
-    final response = await http.put(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: headers,
-      body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 30));
-    
-    return _handleResponse(response);
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 60));
+      
+      print('🟢 POST Response ${response.statusCode}: ${response.body.substring(0, min(200, response.body.length))}');
+      return _handleResponse(response);
+    } catch (e) {
+      print('🔴 POST Error: $e');
+      rethrow;
+    }
   }
   
   Future<http.Response> patch(String endpoint, dynamic body, {Map<String, String>? customHeaders}) async {
+    final url = '${ApiConfig.baseUrl}$endpoint';
+    print('🔵 PATCH: $url');
+    print('📦 Body: $body');
+    
     final headers = await _getHeaders();
     if (customHeaders != null) headers.addAll(customHeaders);
     
-    final response = await http.patch(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: headers,
-      body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 30));
-    
-    return _handleResponse(response);
+    try {
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 60));
+      
+      print('🟢 PATCH Response ${response.statusCode}: ${response.body.substring(0, min(200, response.body.length))}');
+      return _handleResponse(response);
+    } catch (e) {
+      print('🔴 PATCH Error: $e');
+      rethrow;
+    }
   }
   
   Future<http.Response> delete(String endpoint, {Map<String, String>? customHeaders}) async {
+    final url = '${ApiConfig.baseUrl}$endpoint';
+    print('🔵 DELETE: $url');
+    
     final headers = await _getHeaders();
     if (customHeaders != null) headers.addAll(customHeaders);
     
-    final response = await http.delete(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: headers,
-    ).timeout(const Duration(seconds: 30));
-    
-    return _handleResponse(response);
-  }
-  
-  Future<http.Response> uploadMultipart(
-    String endpoint, 
-    String fieldName, 
-    List<int> fileBytes,
-    String fileName,
-    Map<String, dynamic>? otherFields,
-  ) async {
-    final headers = await _getHeaders();
-    headers.remove('Content-Type'); // Multipart define seu próprio
-    
-    var request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}$endpoint'));
-    request.headers.addAll(headers);
-    
-    request.files.add(http.MultipartFile.fromBytes(
-      fieldName,
-      fileBytes,
-      filename: fileName,
-    ));
-    
-    if (otherFields != null) {
-      request.fields.addAll(
-        otherFields.map((key, value) => MapEntry(key, value.toString()))
-      );
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: headers,
+      ).timeout(const Duration(seconds: 60));
+      
+      print('🟢 DELETE Response ${response.statusCode}: ${response.body}');
+      return _handleResponse(response);
+    } catch (e) {
+      print('🔴 DELETE Error: $e');
+      rethrow;
     }
-    
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    
-    return _handleResponse(response);
   }
   
   http.Response _handleResponse(http.Response response) {
-    print('Response Status: ${response.statusCode}');
-    print('Response Body: ${response.body}');
-    
     if (response.statusCode == 401) {
-      // Token expirado
       _handleTokenExpired();
       throw Exception('Sessão expirada. Faça login novamente.');
     }
     
     if (response.statusCode >= 400) {
+      print('❌ HTTP Error ${response.statusCode}: ${response.body}');
       try {
         final errorData = jsonDecode(response.body);
         final errorMessage = errorData['detail'] ?? 
@@ -151,9 +141,9 @@ class ApiClient {
   }
   
   Future<void> _handleTokenExpired() async {
-    // Tentar refresh token ou limpar dados
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
-    // Aqui você poderia implementar refresh token
   }
+  
+  int min(int a, int b) => a < b ? a : b;
 }

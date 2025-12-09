@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/mainlayout.dart';
-import 'chamado_detalhado.dart';
 
 class EditarChamado extends StatefulWidget {
   final String tituloInicial;
@@ -11,6 +10,7 @@ class EditarChamado extends StatefulWidget {
   final String? prioridadeInicial;
   final String? ativoInicial;
   final File? imagemInicial;
+  final String? imagemUrl;
 
   const EditarChamado({
     super.key,
@@ -20,6 +20,7 @@ class EditarChamado extends StatefulWidget {
     this.prioridadeInicial,
     this.ativoInicial,
     this.imagemInicial,
+    this.imagemUrl,
   });
 
   @override
@@ -61,7 +62,7 @@ class _EditarChamadoState extends State<EditarChamado> {
     "Biblioteca",
   ];
 
-  final List<String> prioridades = ["Alta", "Médio", "Baixo"];
+  final List<String> prioridades = ["Alta", "Média", "Baixa"];
 
   @override
   void initState() {
@@ -69,10 +70,17 @@ class _EditarChamadoState extends State<EditarChamado> {
     tituloController = TextEditingController(text: widget.tituloInicial);
     descricaoController = TextEditingController(text: widget.descricaoInicial);
     categoriaSelecionada = widget.categoriaInicial;
-    prioridadeSelecionada = widget.prioridadeInicial;
-    ativoSelecionado =
-        widget.ativoInicial ??
-        "Impressora HP Deskjet 1585"; // CORREÇÃO: valor padrão
+    
+    // CORREÇÃO: Garantir que a prioridade inicial esteja na lista
+    if (widget.prioridadeInicial != null && 
+        prioridades.contains(widget.prioridadeInicial!)) {
+      prioridadeSelecionada = widget.prioridadeInicial;
+    } else {
+      // Se não estiver na lista, usar um valor padrão
+      prioridadeSelecionada = "Média";
+    }
+    
+    ativoSelecionado = widget.ativoInicial ?? "Impressora HP Deskjet 1585";
     imagemSelecionada = widget.imagemInicial;
   }
 
@@ -81,9 +89,9 @@ class _EditarChamadoState extends State<EditarChamado> {
     switch (prioridade?.toLowerCase()) {
       case 'alta':
         return Colors.red;
-      case 'médio':
+      case 'média':
         return Colors.orange;
-      case 'baixo':
+      case 'baixa':
         return Colors.green;
       default:
         return Colors.black54;
@@ -181,99 +189,94 @@ class _EditarChamadoState extends State<EditarChamado> {
           topRight: Radius.circular(16),
         ),
       ),
-      builder:
-          (context) => StatefulBuilder(
-            builder: (context, setModalState) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Campo de pesquisa
-                    TextField(
-                      controller: pesquisaController,
-                      decoration: InputDecoration(
-                        hintText: 'Pesquisar ativo...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setModalState(() {
-                          if (value.isEmpty) {
-                            ativosFiltrados = List.from(ativos);
-                          } else {
-                            ativosFiltrados =
-                                ativos
-                                    .where(
-                                      (ativo) => ativo.toLowerCase().contains(
-                                        value.toLowerCase(),
-                                      ),
-                                    )
-                                    .toList();
-                          }
-                        });
-                      },
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Campo de pesquisa
+                TextField(
+                  controller: pesquisaController,
+                  decoration: InputDecoration(
+                    hintText: 'Pesquisar ativo...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Lista de ativos
-                    Expanded(
-                      child:
-                          ativosFiltrados.isEmpty
-                              ? const Center(
-                                child: Text(
-                                  'Nenhum ativo encontrado',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              )
-                              : ListView.builder(
-                                itemCount: ativosFiltrados.length,
-                                itemBuilder: (context, index) {
-                                  final ativo = ativosFiltrados[index];
-                                  return ListTile(
-                                    leading: const Icon(
-                                      Icons.devices,
-                                      color: Colors.black54,
-                                    ),
-                                    title: Text(ativo),
-                                    onTap: () {
-                                      setState(() {
-                                        ativoSelecionado = ativo;
-                                      });
-                                      Navigator.pop(context);
-                                    },
-                                  );
-                                },
-                              ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    const SizedBox(height: 16),
-
-                    // Botão cancelar
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text('Cancelar'),
-                      ),
-                    ),
-                  ],
+                  ),
+                  onChanged: (value) {
+                    setModalState(() {
+                      if (value.isEmpty) {
+                        ativosFiltrados = List.from(ativos);
+                      } else {
+                        ativosFiltrados = ativos
+                            .where((ativo) => ativo
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      }
+                    });
+                  },
                 ),
-              );
-            },
-          ),
+                const SizedBox(height: 16),
+
+                // Lista de ativos
+                Expanded(
+                  child: ativosFiltrados.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Nenhum ativo encontrado',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: ativosFiltrados.length,
+                          itemBuilder: (context, index) {
+                            final ativo = ativosFiltrados[index];
+                            return ListTile(
+                              leading: const Icon(
+                                Icons.devices,
+                                color: Colors.black54,
+                              ),
+                              title: Text(ativo),
+                              onTap: () {
+                                setState(() {
+                                  ativoSelecionado = ativo;
+                                });
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 16),
+
+                // Botão cancelar
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -291,103 +294,98 @@ class _EditarChamadoState extends State<EditarChamado> {
           topRight: Radius.circular(16),
         ),
       ),
-      builder:
-          (context) => StatefulBuilder(
-            builder: (context, setModalState) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Campo de pesquisa
-                    TextField(
-                      controller: pesquisaController,
-                      decoration: InputDecoration(
-                        hintText: 'Pesquisar ambiente...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setModalState(() {
-                          if (value.isEmpty) {
-                            ambientesFiltrados = List.from(ambientes);
-                          } else {
-                            ambientesFiltrados =
-                                ambientes
-                                    .where(
-                                      (ambiente) => ambiente
-                                          .toLowerCase()
-                                          .contains(value.toLowerCase()),
-                                    )
-                                    .toList();
-                          }
-                        });
-                      },
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Campo de pesquisa
+                TextField(
+                  controller: pesquisaController,
+                  decoration: InputDecoration(
+                    hintText: 'Pesquisar ambiente...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Lista de ambientes
-                    Expanded(
-                      child:
-                          ambientesFiltrados.isEmpty
-                              ? const Center(
-                                child: Text(
-                                  'Nenhum ambiente encontrado',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              )
-                              : ListView.builder(
-                                itemCount: ambientesFiltrados.length,
-                                itemBuilder: (context, index) {
-                                  final ambiente = ambientesFiltrados[index];
-                                  return ListTile(
-                                    leading: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.black54,
-                                    ),
-                                    title: Text(ambiente),
-                                    onTap: () {
-                                      setState(() {
-                                        categoriaSelecionada = ambiente;
-                                      });
-                                      Navigator.pop(context);
-                                    },
-                                  );
-                                },
-                              ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    const SizedBox(height: 16),
-
-                    // Botão cancelar
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text('Cancelar'),
-                      ),
-                    ),
-                  ],
+                  ),
+                  onChanged: (value) {
+                    setModalState(() {
+                      if (value.isEmpty) {
+                        ambientesFiltrados = List.from(ambientes);
+                      } else {
+                        ambientesFiltrados = ambientes
+                            .where((ambiente) => ambiente
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      }
+                    });
+                  },
                 ),
-              );
-            },
-          ),
+                const SizedBox(height: 16),
+
+                // Lista de ambientes
+                Expanded(
+                  child: ambientesFiltrados.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Nenhum ambiente encontrado',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: ambientesFiltrados.length,
+                          itemBuilder: (context, index) {
+                            final ambiente = ambientesFiltrados[index];
+                            return ListTile(
+                              leading: const Icon(
+                                Icons.location_on,
+                                color: Colors.black54,
+                              ),
+                              title: Text(ambiente),
+                              onTap: () {
+                                setState(() {
+                                  categoriaSelecionada = ambiente;
+                                });
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 16),
+
+                // Botão cancelar
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  // Função para confirmar o salvamento das alterações - CORRIGIDA para o estilo anterior
+  // Função para confirmar o salvamento das alterações
   Future<void> _confirmarSalvarAlteracoes() async {
     if (!_validarCampos()) {
       _mostrarErroValidacao();
@@ -396,46 +394,45 @@ class _EditarChamadoState extends State<EditarChamado> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            title: const Text(
-              "Salvar Alterações",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo,
-              ),
-            ),
-            content: const Text(
-              "Deseja realmente salvar as alterações feitas neste chamado?",
-              style: TextStyle(color: Colors.black87),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text(
-                  "Cancelar",
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "Salvar",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          "Salvar Alterações",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.indigo,
           ),
+        ),
+        content: const Text(
+          "Deseja realmente salvar as alterações feitas neste chamado?",
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              "Cancelar",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              "Salvar",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true) {
@@ -450,10 +447,7 @@ class _EditarChamadoState extends State<EditarChamado> {
       );
 
       // Voltar para a tela de detalhes
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const ChamadoDetalhado()),
-      );
+      Navigator.pop(context, true);
     }
   }
 
@@ -472,46 +466,45 @@ class _EditarChamadoState extends State<EditarChamado> {
     if (_houveAlteracoes()) {
       final confirm = await showDialog<bool>(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              title: const Text(
-                "Descartar Alterações",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
-              ),
-              content: const Text(
-                "Existem alterações não salvas. Deseja realmente descartá-las?",
-                style: TextStyle(color: Colors.black87),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text(
-                    "Cancelar",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    "Descartar",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            "Descartar Alterações",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.indigo,
             ),
+          ),
+          content: const Text(
+            "Existem alterações não salvas. Deseja realmente descartá-las?",
+            style: TextStyle(color: Colors.black87),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                "Descartar",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       );
 
       return confirm ?? false;
@@ -527,10 +520,7 @@ class _EditarChamadoState extends State<EditarChamado> {
         if (!didPop) {
           final podeSair = await _onWillPop();
           if (podeSair && mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ChamadoDetalhado()),
-            );
+            Navigator.pop(context, false);
           }
         }
       },
@@ -544,12 +534,7 @@ class _EditarChamadoState extends State<EditarChamado> {
                 onTap: () async {
                   final podeSair = await _onWillPop();
                   if (podeSair && mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ChamadoDetalhado(),
-                      ),
-                    );
+                    Navigator.pop(context, false);
                   }
                 },
                 child: Row(
@@ -633,7 +618,7 @@ class _EditarChamadoState extends State<EditarChamado> {
                     Divider(color: Colors.grey.shade300),
                     const SizedBox(height: 12),
 
-                    // Seletor de Ativos - CORRIGIDO
+                    // Seletor de Ativos
                     const Text("Ativo"),
                     InkWell(
                       onTap: _mostrarSelecaoAtivos,
@@ -646,13 +631,11 @@ class _EditarChamadoState extends State<EditarChamado> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                ativoSelecionado ??
-                                    "Selecionar ativo", // CORREÇÃO: usando a variável correta
+                                ativoSelecionado ?? "Selecionar ativo",
                                 style: TextStyle(
-                                  color:
-                                      ativoSelecionado != null
-                                          ? Colors.black
-                                          : Colors.grey.shade400,
+                                  color: ativoSelecionado != null
+                                      ? Colors.black
+                                      : Colors.grey.shade400,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -683,10 +666,9 @@ class _EditarChamadoState extends State<EditarChamado> {
                               child: Text(
                                 categoriaSelecionada ?? "Selecionar ambiente",
                                 style: TextStyle(
-                                  color:
-                                      categoriaSelecionada != null
-                                          ? Colors.black
-                                          : Colors.grey.shade400,
+                                  color: categoriaSelecionada != null
+                                      ? Colors.black
+                                      : Colors.grey.shade400,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -711,13 +693,12 @@ class _EditarChamadoState extends State<EditarChamado> {
                       ),
                       child: DropdownButtonFormField<String>(
                         value: prioridadeSelecionada,
-                        items:
-                            prioridades.map((prioridade) {
-                              return DropdownMenuItem<String>(
-                                value: prioridade,
-                                child: Text(prioridade),
-                              );
-                            }).toList(),
+                        items: prioridades.map((prioridade) {
+                          return DropdownMenuItem<String>(
+                            value: prioridade,
+                            child: Text(prioridade),
+                          );
+                        }).toList(),
                         onChanged: (value) {
                           setState(() {
                             prioridadeSelecionada = value;
@@ -751,10 +732,9 @@ class _EditarChamadoState extends State<EditarChamado> {
                                     ? imagemSelecionada!.path.split('/').last
                                     : "Selecionar imagem",
                                 style: TextStyle(
-                                  color:
-                                      imagemSelecionada != null
-                                          ? Colors.black
-                                          : Colors.grey.shade400,
+                                  color: imagemSelecionada != null
+                                      ? Colors.black
+                                      : Colors.grey.shade400,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -839,9 +819,7 @@ class _EditarChamadoState extends State<EditarChamado> {
                               prioridadeSelecionada ?? "Nenhuma selecionada",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: _getPrioridadeColor(
-                                  prioridadeSelecionada,
-                                ),
+                                color: _getPrioridadeColor(prioridadeSelecionada),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -860,6 +838,34 @@ class _EditarChamadoState extends State<EditarChamado> {
                                   imagemSelecionada!,
                                   height: 100,
                                   fit: BoxFit.cover,
+                                ),
+                              ),
+                            ] else if (widget.imagemUrl != null &&
+                                widget.imagemUrl!.isNotEmpty) ...[
+                              const Text(
+                                "Imagem atual do chamado",
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  widget.imagemUrl!,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      height: 100,
+                                      color: Colors.grey.shade200,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey,
+                                          size: 40,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ] else
