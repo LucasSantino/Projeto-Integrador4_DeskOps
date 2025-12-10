@@ -15,7 +15,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "victor_ribeiro_test_rg" {
   name     = "victor_ribeiro_test_rg"
-  location = "West Europe"
+  location = "West US"
 }
 
 

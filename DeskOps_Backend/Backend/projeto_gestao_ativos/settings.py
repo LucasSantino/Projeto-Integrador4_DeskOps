@@ -17,6 +17,8 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -26,13 +28,9 @@ SECRET_KEY = "django-insecure-gq$4ipub7p6@xych5py!e^fpngnbfm!h8=bam_+$s3e&1@k6v!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [
-    "integrador-deskops-backend-gwgdgvgjfjdvd0ad.westus3-01.azurewebsites.net",
-    "victor-ribeiro-test-app.azurewebsites.net",  # FRONT
-    "localhost",
-    "127.0.0.1",
-]
-
+ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = ['https://projeto-integrador4-desk-ops.vercel.app', 'https://deskops-v1-cyfhfecpc0decmd8.westus3-01.azurewebsites.net']
 
 # Application definition
 
@@ -55,9 +53,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',  
     "django.middleware.common.CommonMiddleware",
-    #"django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -131,7 +130,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -165,15 +167,9 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),  # formato do header → "Authorization: Bearer <token>"
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # 👈 URL do seu front Vue
-    "http://127.0.0.1:5173",
-    "https://victor-ribeiro-test-app.azurewebsites.net",
-]
+
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-CORS_ALLOW_CREDENTIALS = True
 
 
 MEDIA_URL = '/media/'
