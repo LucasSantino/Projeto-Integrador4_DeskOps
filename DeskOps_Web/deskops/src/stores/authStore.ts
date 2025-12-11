@@ -19,7 +19,12 @@ export const useAuthStore = defineStore('auth', {
     async login(email: string, password: string) {
       try {
         // LOGIN usando SIMPLEJWT
-        const response = await api.post("login/", { email, password });
+        const response = await api.post("login/", {
+  email,
+  password,
+  username: email,  
+});
+
 
         const { access, refresh, user } = response.data;
 
