@@ -5,63 +5,61 @@ import api from '@/services/api';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: JSON.parse(localStorage.getItem('user') || 'null'),
-    access: localStorage.getItem('access') || null,
+    user: JSON.parse(localStorage.getItem("user") || "null"),
+    access: localStorage.getItem("access") || null,
+    refresh: localStorage.getItem("refresh") || null,
   }),
 
   getters: {
     isAuthenticated: (state) => !!state.access,
-    userRole: (state) => state.user?.cargo || null,
+    userRole: (state) => state.user?.role || null, // <-- no backend o campo é "role"
   },
 
   actions: {
     async login(email: string, password: string) {
       try {
-        // 🔹 Djoser Token Login espera "username" (mesmo que seja email)
-        const response = await api.post('/auth/token/login/', {
-          username: email, // use o campo de login correto (username ou email)
-          password: password,
-        });
+        // LOGIN usando SIMPLEJWT
+        const response = await api.post("login/", { email, password });
 
-        const { auth_token } = response.data;
+        const { access, refresh, user } = response.data;
 
-        // 🔹 Salva token localmente
-        this.access = auth_token;
-        localStorage.setItem('access', auth_token);
+        // Salva tokens
+        this.access = access;
+        this.refresh = refresh;
+        localStorage.setItem("access", access);
+        localStorage.setItem("refresh", refresh);
 
-        // 🔹 Buscar dados do usuário logado
-        const meResponse = await api.get('/auth/users/me/', {
-          headers: { Authorization: `Token ${auth_token}` },
-        });
+        // Configurar token no axios
+        api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
-        this.user = meResponse.data;
-        localStorage.setItem('user', JSON.stringify(this.user));
+        // Salvar usuário
+        this.user = user;
+        localStorage.setItem("user", JSON.stringify(user));
 
-        // 🔹 Redirecionamento automático
-        if (this.user.cargo === 'ADM') router.push('/adm/dashboard');
-        else if (this.user.cargo === 'tecnico') router.push('/tecnico/chamados-lista');
-        else router.push('/cliente/meus-chamados');
+        // REDIRECIONAR com base no role do usuário
+        if (user.role === "admin") router.push("/adm/dashboard");
+        else if (user.role === "tecnico") router.push("/tecnico/chamados-lista");
+        else router.push("/cliente/meus-chamados");
 
       } catch (error: any) {
-        // 🔹 Tratar erro do backend para exibir na interface
-        let message = "E-mail ou senha incorretos.";
-        if (error?.non_field_errors) {
-          message = error.non_field_errors.join(" ");
-        } else if (error?.username) {
-          message = error.username.join(" ");
-        } else if (error?.password) {
-          message = error.password.join(" ");
-        }
-        throw message;
+        console.error("Erro no login →", error);
+
+        throw "E-mail ou senha inválidos ou usuário não aprovado.";
       }
     },
 
     logout() {
       this.user = null;
       this.access = null;
-      localStorage.removeItem('user');
-      localStorage.removeItem('access');
-      router.push('/');
-    },
-  },
+      this.refresh = null;
+
+      localStorage.removeItem("user");
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+
+      delete api.defaults.headers.common["Authorization"];
+
+      router.push("/");
+    }
+  }
 });
