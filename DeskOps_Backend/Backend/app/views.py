@@ -48,7 +48,7 @@ class RegisterView(APIView):
         data = request.data.copy()
         data["is_active"] = False
         data["is_staff"] = False
-        data["cargo"] = "aguardando"
+        data["role"] = "aguardando"
 
         if "password" in data:
             data["password"] = make_password(data["password"])
@@ -111,14 +111,14 @@ def get_me(request):
         "id": user.id,
         "name": user.name,
         "email": user.email,
-        "cargo": user.cargo,
+        "role": user.role,
         "cpf": user.cpf,
         "dt_nascimento": user.dt_nascimento,
         "endereco": user.endereco,
         "foto_user": user.foto_user.url if user.foto_user else None,
         "is_active": user.is_active,
         "is_staff": user.is_staff,
-        "role": user.role,
+        
     }
     return Response(data)
 

@@ -43,7 +43,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='pendente')
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name', 'cargo', 'cpf', 'dt_nascimento', 'endereco']
+    REQUIRED_FIELDS = ['name', 'role', 'cpf', 'dt_nascimento', 'endereco']
 
     objects = CustomUserManager()
 

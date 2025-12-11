@@ -4,7 +4,7 @@ from django.db import models
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, password=None, name=None, cpf=None, cargo=None,
+    def create_user(self, email, password=None, name=None, cpf=None, role=None,
                     dt_nascimento=None, endereco=None, **extra_fields):
         if not email:
             raise ValueError('O campo de e-mail é obrigatório.')
@@ -14,7 +14,7 @@ class CustomUserManager(BaseUserManager):
             email=email,
             name=name,
             cpf=cpf,
-            cargo=cargo,
+            role=role,
             dt_nascimento=dt_nascimento,
             endereco=endereco,
             **extra_fields
