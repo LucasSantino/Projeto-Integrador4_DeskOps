@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import router from '../router'
-import api from '@/services/api';
+import api from '@/services/api'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -17,33 +17,36 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email: string, password: string) {
       try {
-        const response = await api.post('/login/', { email, password });
-        const { access, refresh, user } = response.data;
+        // LOGIN usando Djoser Authtoken
+        const response = await api.post('/auth/token/login/', {
+          username: email,
+          password: password,
+        });
 
-        this.access = access;
-        this.refresh = refresh;
-        this.user = user;
+        const { auth_token } = response.data;
 
-        localStorage.setItem('access', access);
-        localStorage.setItem('refresh', refresh);
-        localStorage.setItem('user', JSON.stringify(user));
+        // Salva token
+        this.access = auth_token;
+        this.refresh = null; // não usado pelo authtoken
+        localStorage.setItem('access', auth_token);
 
-        // redirecionamento dinâmico
-        console.log(JSON.parse(JSON.stringify(user.cargo)))
-        if (user.cargo === 'ADM') router.push('/adm/dashboard');
-        else if (user.cargo === 'tecnico') router.push('/tecnico/chamados-lista');
+        // Buscar dados do usuário logado
+        const meResponse = await api.get('/auth/users/me/', {
+          headers: { Authorization: `Token ${auth_token}` },
+        });
+
+        this.user = meResponse.data;
+        localStorage.setItem('user', JSON.stringify(this.user));
+
+        // Redirecionamento
+        if (this.user.cargo === 'ADM') router.push('/adm/dashboard');
+        else if (this.user.cargo === 'tecnico') router.push('/tecnico/chamados-lista');
         else router.push('/cliente/meus-chamados');
+
       } catch (error: any) {
-        throw error.response?.data?.detail || 'Erro ao realizar login';
+        throw error.response?.data || 'Erro ao realizar login';
       }
-        const meResponse = await api.get('/me/', {
-        headers: { Authorization: `Bearer ${this.access}` }
-      })
-      this.user = meResponse.data
-
     },
-
-    
 
     logout() {
       this.user = null;
