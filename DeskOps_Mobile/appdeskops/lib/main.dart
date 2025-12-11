@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
         '/chamado_detalhado_Tecnico':
             (context) => const ChamadoDetalhadoTecnico(),
         '/leitor_qrcode': (context) => const LeitorQrcode(),
-        '/lista_chamados': (context) => const ListaChamados(), 
+        '/lista_chamados': (context) => const ListaChamados(),
 
         // Rotas genéricas (comuns a todos os usuários)
         '/editar_perfil':

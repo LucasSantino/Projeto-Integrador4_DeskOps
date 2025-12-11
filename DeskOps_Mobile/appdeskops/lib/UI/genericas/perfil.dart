@@ -268,10 +268,11 @@ class _PerfilState extends State<Perfil> {
                         ),
                       if (!_isLoading && _userData != null)
                         TextButton.icon(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            '/editar_perfil',
-                          ),
+                          onPressed:
+                              () => Navigator.pushNamed(
+                                context,
+                                '/editar_perfil',
+                              ),
                           icon: const Icon(
                             Icons.edit,
                             color: Colors.indigo,
@@ -461,7 +462,6 @@ class _PerfilState extends State<Perfil> {
           ],
 
           // No original tinha telefone, mas não temos na API, então removemos
-
           if (_userData?['role'] != null) ...[
             _info("Cargo", _getRoleDisplayName(_userData!['role'].toString())),
           ],

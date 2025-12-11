@@ -70,8 +70,10 @@ class AuthService {
 
     // Se a resposta contiver dados do usuário, salvar
     if (data.containsKey('user') && data['user'] != null) {
-      await prefs.setString('user_data', jsonEncode(data['user']));
+      final userData = data['user'];
+      await prefs.setString('user_data', jsonEncode(userData));
       print('✅ Dados do usuário salvos da resposta do login');
+      print('📊 Role do usuário: ${userData['role']}');
     } else {
       // Se não tiver, tentar buscar via endpoint /me
       try {
@@ -274,123 +276,49 @@ class AuthService {
     return prefs.getString('access_token');
   }
 
-  // LIMPAR DADOS DO USUÁRIO (PARA TESTES)
-  Future<void> clearUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user_data');
-  }
-
-  // ============ NOVOS MÉTODOS ADICIONADOS ============
-
-  // ATUALIZAR DADOS DO USUÁRIO NO BACKEND E LOCALMENTE
-  Future<Map<String, dynamic>> updateProfile({
-    String? name,
-    String? email,
-    String? endereco,
-    String? dtNascimento, // Formato: YYYY-MM-DD
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) throw Exception('Não autenticado');
-
-    final body = <String, dynamic>{};
-    if (name != null && name.isNotEmpty) body['name'] = name;
-    if (email != null && email.isNotEmpty) body['email'] = email;
-    if (endereco != null && endereco.isNotEmpty) body['endereco'] = endereco;
-    if (dtNascimento != null && dtNascimento.isNotEmpty) body['dt_nascimento'] = dtNascimento;
-
-    print('📦 Dados para atualização: $body');
-
-    final response = await http.patch(
-      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.me}'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
-
-    print('📊 Status da atualização: ${response.statusCode}');
-    print('📦 Resposta: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final updatedData = jsonDecode(response.body);
-      await updateLocalUserData(updatedData);
-      print('✅ Perfil atualizado e dados locais sincronizados');
-      return updatedData;
-    } else {
-      final errorData = jsonDecode(response.body);
-      String errorMessage = 'Erro ao atualizar perfil';
-      
-      if (errorData.containsKey('detail')) {
-        errorMessage = errorData['detail'];
-      } else if (errorData.containsKey('email') && errorData['email'].isNotEmpty) {
-        errorMessage = 'Email: ${errorData['email'][0]}';
-      }
-      
-      throw Exception(errorMessage);
+  // OBTER ROLE DO USUÁRIO ATUAL
+  Future<String> getCurrentUserRole() async {
+    final user = await getCurrentUser();
+    if (user == null) {
+      throw Exception('Usuário não encontrado');
     }
-  }
-
-  // ATUALIZAR SENHA
-  Future<void> updatePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null) throw Exception('Não autenticado');
-
-    final body = {
-      'current_password': currentPassword,
-      'new_password': newPassword,
-    };
-
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/api/change-password/'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
-
-    print('📊 Status da alteração de senha: ${response.statusCode}');
-    print('📦 Resposta: ${response.body}');
-
-    if (response.statusCode == 200) {
-      print('✅ Senha alterada com sucesso');
-    } else {
-      final errorData = jsonDecode(response.body);
-      String errorMessage = 'Erro ao alterar senha';
-      
-      if (errorData.containsKey('detail')) {
-        errorMessage = errorData['detail'];
-      } else if (errorData.containsKey('current_password')) {
-        errorMessage = 'Senha atual: ${errorData['current_password'][0]}';
-      } else if (errorData.containsKey('new_password')) {
-        errorMessage = 'Nova senha: ${errorData['new_password'][0]}';
-      }
-      
-      throw Exception(errorMessage);
+    
+    // Primeiro tenta obter do campo 'role'
+    final role = user['role'];
+    if (role != null && role is String && role.isNotEmpty) {
+      return role.toLowerCase();
     }
+    
+    // Se não tiver role, verifica is_staff
+    final isStaff = user['is_staff'] ?? false;
+    return isStaff ? 'tecnico' : 'usuario';
   }
 
-  // ATUALIZAR DADOS DO USUÁRIO (SINCRONIZAR COM BACKEND)
-  Future<void> refreshUserData() async {
-    try {
-      final userProfile = await getProfile();
-      await updateLocalUserData(userProfile);
-      print('✅ Dados do usuário atualizados localmente');
-    } catch (e) {
-      print('⚠️ Erro ao atualizar dados do usuário: $e');
-      rethrow;
-    }
+  // VERIFICAR SE USUÁRIO É TÉCNICO
+  Future<bool> isTechnician() async {
+    final role = await getCurrentUserRole();
+    return role == 'tecnico';
   }
 
-  // VERIFICAR SE O TOKEN É VÁLIDO
+  // VERIFICAR SE USUÁRIO É ADMIN
+  Future<bool> isAdmin() async {
+    final role = await getCurrentUserRole();
+    return role == 'admin';
+  }
+
+  // VERIFICAR SE USUÁRIO É USUÁRIO COMUM
+  Future<bool> isRegularUser() async {
+    final role = await getCurrentUserRole();
+    return role == 'usuario';
+  }
+
+  // VERIFICAR SE USUÁRIO ESTÁ ATIVO
+  Future<bool> isUserActive() async {
+    final user = await getCurrentUser();
+    return user?['is_active'] ?? false;
+  }
+
+  // VALIDAR TOKEN
   Future<bool> validateToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
@@ -410,6 +338,34 @@ class AuthService {
     } catch (e) {
       print('❌ Erro ao validar token: $e');
       return false;
+    }
+  }
+
+  // SINCRONIZAR DADOS DO USUÁRIO (Este é o método que estava como forceSyncUserData)
+  Future<void> refreshUserData() async {
+    try {
+      print('🔄 Forçando sincronização dos dados do usuário...');
+      
+      // Verifica se está logado
+      if (!await isLoggedIn()) {
+        throw Exception('Usuário não está logado');
+      }
+      
+      // Tenta renovar token se necessário
+      if (!await validateToken()) {
+        await refreshAccessToken();
+      }
+      
+      // Busca dados atualizados
+      final userProfile = await getProfile();
+      
+      // Atualiza dados locais
+      await updateLocalUserData(userProfile);
+      
+      print('✅ Sincronização completa');
+    } catch (e) {
+      print('❌ Erro na sincronização: $e');
+      rethrow;
     }
   }
 
@@ -466,116 +422,9 @@ class AuthService {
     await prefs.remove('user_data');
     print('✅ Todos os dados de autenticação removidos');
   }
-
-  // VERIFICAR PERMISSÕES DO USUÁRIO
-  Future<bool> hasPermission(String permission) async {
-    final user = await getSafeCurrentUser();
-    if (user == null) return false;
-    
-    final role = user['role'];
-    final isStaff = user['is_staff'] ?? false;
-    final isActive = user['is_active'] ?? false;
-    
-    // Se não está ativo, não tem permissão
-    if (!isActive) return false;
-    
-    // Lógica de permissões baseada em role
-    switch (permission) {
-      case 'create_chamado':
-        return role == 'usuario' || role == 'tecnico' || role == 'admin';
-      case 'manage_chamados':
-        return role == 'tecnico' || role == 'admin';
-      case 'manage_users':
-        return role == 'admin';
-      case 'access_admin':
-        return isStaff || role == 'admin';
-      default:
-        return false;
-    }
-  }
-
-  // OBTER ROLE DO USUÁRIO ATUAL
-  Future<String> getCurrentUserRole() async {
-    final user = await getSafeCurrentUser();
-    return user?['role'] ?? 'usuario';
-  }
-
-  // VERIFICAR SE USUÁRIO É ADMIN
-  Future<bool> isAdmin() async {
-    final role = await getCurrentUserRole();
-    return role == 'admin';
-  }
-
-  // VERIFICAR SE USUÁRIO É TÉCNICO
-  Future<bool> isTechnician() async {
-    final role = await getCurrentUserRole();
-    return role == 'tecnico';
-  }
-
-  // VERIFICAR SE USUÁRIO É USUÁRIO COMUM
-  Future<bool> isRegularUser() async {
-    final role = await getCurrentUserRole();
-    return role == 'usuario';
-  }
-
-  // VERIFICAR SE USUÁRIO ESTÁ ATIVO
-  Future<bool> isUserActive() async {
-    final user = await getSafeCurrentUser();
-    return user?['is_active'] ?? false;
-  }
-
-  // OBTER NOME DO USUÁRIO ATUAL
-  Future<String?> getCurrentUserName() async {
-    final user = await getSafeCurrentUser();
-    return user?['name'];
-  }
-
-  // OBTER EMAIL DO USUÁRIO ATUAL
-  Future<String?> getCurrentUserEmail() async {
-    final user = await getSafeCurrentUser();
-    return user?['email'];
-  }
-
-  // VERIFICAR CONEXÃO COM O BACKEND
-  Future<bool> checkServerConnection() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/api/health/'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
-      
-      return response.statusCode == 200;
-    } catch (e) {
-      print('❌ Erro na conexão com o servidor: $e');
-      return false;
-    }
-  }
-
-  // FORÇAR SINCRONIZAÇÃO DOS DADOS DO USUÁRIO
+  
+  // NOME ALTERNATIVO PARA O MÉTODO refreshUserData (para compatibilidade)
   Future<void> forceSyncUserData() async {
-    try {
-      print('🔄 Forçando sincronização dos dados do usuário...');
-      
-      // Verifica se está logado
-      if (!await isLoggedIn()) {
-        throw Exception('Usuário não está logado');
-      }
-      
-      // Tenta renovar token se necessário
-      if (!await validateToken()) {
-        await refreshAccessToken();
-      }
-      
-      // Busca dados atualizados
-      final userProfile = await getProfile();
-      
-      // Atualiza dados locais
-      await updateLocalUserData(userProfile);
-      
-      print('✅ Sincronização completa');
-    } catch (e) {
-      print('❌ Erro na sincronização: $e');
-      rethrow;
-    }
+    return refreshUserData();
   }
 }

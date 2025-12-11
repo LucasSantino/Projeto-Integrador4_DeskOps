@@ -31,14 +31,14 @@ class Users {
         id: json['id'],
         name: json['name'],
         email: json['email'],
-        cargo: json['cargo'] ?? json['role'],
+        cargo: json['cargo'] ?? json['role'], // Compatibilidade com antigo 'cargo'
         cpf: json['cpf'],
         dtNascimento: DateTime.parse(json['dt_nascimento']),
         endereco: json['endereco'],
         fotoUser: json['foto_user'],
         isStaff: json['is_staff'] ?? false,
         isActive: json['is_active'] ?? false,
-        role: json['role'],
+        role: json['role'] ?? json['cargo'], // Lê de ambos para compatibilidade
         createdAt: json['created_at'] != null 
             ? DateTime.parse(json['created_at'])
             : null,

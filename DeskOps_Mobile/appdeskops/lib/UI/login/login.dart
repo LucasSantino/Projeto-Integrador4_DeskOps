@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../api/services/auth_service.dart'; // Import do service
-import '../../../core/config.dart'; // Import para verificar URL
+import '../../../api/services/auth_service.dart';
+import '../../../core/config.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -15,7 +15,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   bool _obscurePassword = true;
   bool _isLoading = false;
   late AnimationController _animationController;
-  final AuthService _authService = AuthService(); // Instância do service
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -25,11 +25,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
       duration: const Duration(milliseconds: 1500),
     );
     
-    // Para testes rápidos, você pode preencher automaticamente
-    // _emailController.text = 'admin@teste.com';
-    // _passwordController.text = 'senha123';
-    
-    print('URL do backend: ${ApiConfig.baseUrl}'); // Debug
+    print('URL do backend: ${ApiConfig.baseUrl}');
   }
 
   @override
@@ -62,18 +58,29 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     _showLoadingDialog();
 
     try {
-      print('Tentando login com: $email'); // Debug
+      print('Tentando login com: $email');
       
-      // Chamada real para a API
-      final response = await _authService.login(email, password);
+      // Chamada real para a API - REMOVIDA A VARIÁVEL response DESNECESSÁRIA
+      await _authService.login(email, password);
       
-      print('Login bem-sucedido!'); // Debug
-      print('Resposta: $response'); // Debug
+      print('Login bem-sucedido!');
       
       // Obter dados do usuário
       final userData = await _authService.getCurrentUser();
-      final role = userData?['role'] ?? 'usuario';
       
+      // Obter role usando o novo método
+      final role = await _authService.getCurrentUserRole();
+      
+      print('DEBUG - Dados do usuário:');
+      print('  Role: $role');
+      print('  Dados completos: $userData');
+      
+      // Verificar se o usuário está ativo
+      final isActive = userData?['is_active'] ?? false;
+      if (!isActive) {
+        throw Exception('Usuário não ativo. Aguarde aprovação do administrador.');
+      }
+
       // Fechar popup de loading
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
@@ -84,7 +91,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
       _navigateByRole(role, userData);
 
     } catch (e) {
-      print('Erro no login: $e'); // Debug
+      print('Erro no login: $e');
       
       // Fechar popup de loading
       if (mounted) {
@@ -99,7 +106,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
         errorMessage = 'Tempo de conexão excedido. Verifique sua internet.';
       } else if (e.toString().contains('401')) {
         errorMessage = 'Email ou senha incorretos';
-      } else if (e.toString().contains('403')) {
+      } else if (e.toString().contains('403') || e.toString().contains('não ativo')) {
         errorMessage = 'Usuário não aprovado. Aguarde aprovação do administrador.';
       } else if (e.toString().contains('Network is unreachable')) {
         errorMessage = 'Sem conexão com a internet';
@@ -121,22 +128,41 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   }
 
   void _navigateByRole(String role, Map<String, dynamic>? userData) {
-    print('Navegando para role: $role'); // Debug
+    print('Navegando para role: $role');
     
-    switch (role) {
+    // Verificação de segurança
+    if (userData == null) {
+      _showErrorDialog('Erro ao obter dados do usuário');
+      return;
+    }
+    
+    // Verificar se o usuário está ativo
+    if (userData['is_active'] == false) {
+      _showErrorDialog('Sua conta está aguardando aprovação do administrador.');
+      return;
+    }
+    
+    // Mapeamento de roles para rotas
+    switch (role.toLowerCase()) {
       case 'usuario':
+        print('Redirecionando para meus_chamados');
         Navigator.pushReplacementNamed(context, '/meus_chamados');
         break;
       case 'tecnico':
+        print('Redirecionando para lista_chamados');
         Navigator.pushReplacementNamed(context, '/lista_chamados');
         break;
       case 'admin':
+        print('Redirecionando para dashboard');
         Navigator.pushReplacementNamed(context, '/dashboard');
         break;
+      case 'pendente':
+        _showErrorDialog('Sua conta está aguardando aprovação do administrador.');
+        break;
       default:
-        // Role desconhecido ou pendente
-        if (userData?['is_active'] == false) {
-          _showErrorDialog('Sua conta está aguardando aprovação do administrador.');
+        // Se não tiver role definido, verificar is_staff
+        if (userData['is_staff'] == true) {
+          Navigator.pushReplacementNamed(context, '/lista_chamados');
         } else {
           Navigator.pushReplacementNamed(context, '/meus_chamados');
         }
@@ -246,8 +272,6 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   Future<void> _testConnection() async {
     try {
       print('Testando conexão com: ${ApiConfig.baseUrl}');
-      // Aqui você pode adicionar um teste de conexão simples
-      // Por exemplo, tentar fazer uma requisição GET para um endpoint público
       _showSuccessDialog('Backend configurado!\n${ApiConfig.baseUrl}');
     } catch (e) {
       _showErrorDialog('Erro na conexão: $e');
@@ -467,7 +491,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                                 
-                                // Link para esqueci a senha (opcional)
+                                // Link para esqueci a senha
                                 const SizedBox(height: 10),
                                 Align(
                                   alignment: Alignment.centerRight,

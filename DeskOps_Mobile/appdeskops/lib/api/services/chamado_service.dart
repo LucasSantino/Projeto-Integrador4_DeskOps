@@ -50,7 +50,6 @@ class ChamadoService {
         final decodedBody = jsonDecode(response.body);
 
         if (decodedBody is List) {
-          // Se for uma lista, processar normalmente
           print('✅ Resposta é uma lista com ${decodedBody.length} itens');
           final List<Chamado> chamados = [];
           for (var item in decodedBody) {
@@ -62,12 +61,11 @@ class ChamadoService {
           }
           return chamados;
         } else if (decodedBody is Map) {
-          // Se for um objeto, tentar extrair lista
-          if (decodedBody.containsKey('results') && decodedBody['results'] is List) {
+          if (decodedBody.containsKey('results') &&
+              decodedBody['results'] is List) {
             final results = decodedBody['results'] as List;
             return results.map((item) => Chamado.fromJson(item)).toList();
           } else if (decodedBody.containsKey('id')) {
-            // Se for um único chamado
             return [Chamado.fromJson(Map<String, dynamic>.from(decodedBody))];
           } else {
             throw Exception('Formato de resposta não reconhecido');
@@ -98,6 +96,8 @@ class ChamadoService {
       },
     );
 
+    print('GET Chamado por ID Status: ${response.statusCode}');
+
     if (response.statusCode == 200) {
       final decodedBody = jsonDecode(response.body);
       return Chamado.fromJson(decodedBody);
@@ -120,7 +120,6 @@ class ChamadoService {
       throw Exception('Usuário não autenticado');
     }
 
-    // Se tiver imagem, usa multipart, senão JSON normal
     if (imagem != null) {
       return _createChamadoComImagem(
         title: title,
@@ -198,7 +197,6 @@ class ChamadoService {
       Uri.parse('${ApiConfig.baseUrl}${ApiConfig.chamados}'),
     );
 
-    // Adicionar campos
     request.fields['title'] = title;
     request.fields['description'] = description;
     request.fields['prioridade'] = prioridade;
@@ -210,7 +208,6 @@ class ChamadoService {
       request.fields['categoria'] = categoria;
     }
 
-    // Adicionar imagem
     request.files.add(
       await http.MultipartFile.fromPath(
         'photo',
@@ -219,7 +216,6 @@ class ChamadoService {
       ),
     );
 
-    // Adicionar token
     request.headers['Authorization'] = 'Bearer $token';
 
     final streamedResponse = await request.send();
@@ -242,6 +238,9 @@ class ChamadoService {
       throw Exception('Usuário não autenticado');
     }
 
+    print('🔄 Atualizando chamado ID: $id');
+    print('📦 Dados enviados: $data');
+
     final response = await http.patch(
       Uri.parse('${ApiConfig.baseUrl}${ApiConfig.chamados}$id/'),
       headers: {
@@ -250,6 +249,9 @@ class ChamadoService {
       },
       body: jsonEncode(data),
     );
+
+    print('✅ Resposta atualização: ${response.statusCode}');
+    print('📦 Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final decodedBody = jsonDecode(response.body);
@@ -288,24 +290,33 @@ class ChamadoService {
       throw Exception('Usuário não autenticado');
     }
 
-    final response = await http.patch(
-      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.chamados}$id/atribuir/'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({}),
-    );
+    print('🔄 Atribuindo chamado ID: $id');
 
-    if (response.statusCode == 200) {
-      final decodedBody = jsonDecode(response.body);
-      return Chamado.fromJson(decodedBody);
-    } else {
-      throw Exception('Erro ${response.statusCode}: ${response.body}');
+    try {
+      final response = await http.patch(
+        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.chamados}$id/atribuir/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({}),
+      );
+
+      print('✅ Resposta atribuição: ${response.statusCode}');
+      print('📦 Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedBody = jsonDecode(response.body);
+        return Chamado.fromJson(decodedBody);
+      } else {
+        throw Exception('Erro ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('❌ Erro ao atribuir chamado: $e');
+      throw Exception('Erro ao atribuir chamado: $e');
     }
   }
 
-  // CORREÇÃO: Método encerrarChamado atualizado
   Future<Chamado> encerrarChamado(int id) async {
     final token = await _getToken();
     if (token == null) {
@@ -313,8 +324,7 @@ class ChamadoService {
     }
 
     print('🔄 Tentando encerrar chamado ID: $id');
-    
-    // Primeiro, tentar o endpoint específico de encerramento
+
     try {
       final response = await http.patch(
         Uri.parse('${ApiConfig.baseUrl}${ApiConfig.chamados}$id/encerrar/'),
@@ -326,18 +336,17 @@ class ChamadoService {
       );
 
       print('Endpoint de encerrar chamado status: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         final decodedBody = jsonDecode(response.body);
         return Chamado.fromJson(decodedBody);
+      } else {
+        throw Exception('Erro ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       print('❌ Endpoint específico de encerrar falhou: $e');
+      throw Exception('Erro ao encerrar chamado: $e');
     }
-
-    // Se o endpoint específico não existir, usar o endpoint de update com status cancelado
-    print('🔄 Tentando método alternativo: atualizar status para CANCELADO');
-    return await updateChamado(id, {'status': 'CANCELADO'});
   }
 
   Future<void> deleteChamado(int id) async {
