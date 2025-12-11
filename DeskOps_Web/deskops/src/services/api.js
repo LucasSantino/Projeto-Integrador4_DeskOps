@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://deskops-v1-cyfhfecpc0decmd8.westus3-01.azurewebsites.net",  // URL do backend Azure
+  baseURL: "https://deskops-v1-cyfhfecpc0decmd8.westus3-01.azurewebsites.net/admin",  // URL do backend Azure
   headers: {
     "Content-Type": "application/json",
   },
