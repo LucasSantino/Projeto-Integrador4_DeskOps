@@ -120,19 +120,32 @@ const handleLogin = async () => {
   loading.value = true;
   showLoadingModal.value = true;
 
-  try {
-    await auth.login(email.value, password.value);
-    // O authStore já faz o redirecionamento automático
-  } catch (err: any) {
-    error.value =
-      err?.response?.data?.detail ||
-      err?.detail ||
-      "E-mail ou senha incorretos.";
-    showErrorModal.value = true;
-  } finally {
-    loading.value = false;
-    showLoadingModal.value = false;
+ try {
+  await auth.login(email.value, password.value);
+  // O authStore já faz o redirecionamento automático
+} catch (err: any) {
+  // Se houver resposta do backend
+  if (err.response?.data) {
+    // Se for um objeto, transforma em string legível
+    if (typeof err.response.data === "object") {
+      error.value = Object.values(err.response.data)
+        .flat()
+        .join(" ");
+    } else {
+      error.value = err.response.data;
+    }
+  } else if (err.detail) {
+    error.value = err.detail;
+  } else {
+    error.value = "E-mail ou senha incorretos.";
   }
+
+  showErrorModal.value = true;
+} finally {
+  loading.value = false;
+  showLoadingModal.value = false;
+}
+
 };
 
 const closeModal = () => {
