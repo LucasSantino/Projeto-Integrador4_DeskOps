@@ -1,3 +1,4 @@
+// src/stores/authStore.ts
 import { defineStore } from 'pinia';
 import router from '../router';
 import api from '@/services/api';
@@ -6,7 +7,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: JSON.parse(localStorage.getItem('user') || 'null'),
     access: localStorage.getItem('access') || null,
-    refresh: null, // Não usado pelo Djoser Token
+    refresh: localStorage.getItem('refresh') || null,
   }),
 
   getters: {
@@ -17,9 +18,9 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email: string, password: string) {
       try {
-        // LOGIN usando Djoser Token
+        // Djoser Token Login espera "username", mesmo que seja email
         const response = await api.post('/auth/token/login/', {
-          username: email, // se seu modelo usa email como USERNAME_FIELD, continua assim
+          username: email,
           password: password,
         });
 
@@ -27,19 +28,24 @@ export const useAuthStore = defineStore('auth', {
 
         // Salva token
         this.access = auth_token;
+        this.refresh = null; // Djoser authtoken não usa refresh
         localStorage.setItem('access', auth_token);
 
         // Buscar dados do usuário logado
-        const meResponse = await api.get('/auth/users/me/');
+        const meResponse = await api.get('/auth/users/me/', {
+          headers: { Authorization: `Token ${auth_token}` },
+        });
+
         this.user = meResponse.data;
         localStorage.setItem('user', JSON.stringify(this.user));
 
-        // Redirecionamento
+        // Redirecionamento automático
         if (this.user.cargo === 'ADM') router.push('/adm/dashboard');
         else if (this.user.cargo === 'tecnico') router.push('/tecnico/chamados-lista');
         else router.push('/cliente/meus-chamados');
 
       } catch (error: any) {
+        // Retorna erro para exibir na interface
         throw error.response?.data || 'Erro ao realizar login';
       }
     },
@@ -47,6 +53,7 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.user = null;
       this.access = null;
+      this.refresh = null;
       localStorage.clear();
       router.push('/');
     },
