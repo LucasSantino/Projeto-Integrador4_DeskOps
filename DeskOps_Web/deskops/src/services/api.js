@@ -7,12 +7,12 @@ const api = axios.create({
   },
 });
 
-// Interceptor de requisição
+// Interceptor de requisição para adicionar token automaticamente
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access");
     if (token) {
-      config.headers.Authorization = `Token ${token}`;  // <-- CORRETO PARA DJOSER AUTHTOKEN
+      config.headers.Authorization = `Token ${token}`; // Djoser Token
     }
     return config;
   },

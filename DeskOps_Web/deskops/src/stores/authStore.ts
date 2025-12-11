@@ -1,13 +1,12 @@
-// src/stores/authStore.ts
-import { defineStore } from 'pinia'
-import router from '../router'
-import api from '@/services/api'
+import { defineStore } from 'pinia';
+import router from '../router';
+import api from '@/services/api';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: JSON.parse(localStorage.getItem('user') || 'null'),
     access: localStorage.getItem('access') || null,
-    refresh: null, // Djoser authtoken não usa refresh
+    refresh: null, // Não usado pelo Djoser Token
   }),
 
   getters: {
@@ -18,24 +17,24 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email: string, password: string) {
       try {
-        // LOGIN usando Djoser Authtoken
+        // LOGIN usando Djoser Token
         const response = await api.post('/auth/token/login/', {
-          email,
-          password,
+          username: email, // se seu modelo usa email como USERNAME_FIELD, continua assim
+          password: password,
         });
 
         const { auth_token } = response.data;
 
-        // Salva token no estado e localStorage
+        // Salva token
         this.access = auth_token;
         localStorage.setItem('access', auth_token);
 
-        // Buscar dados do usuário logado (interceptor já envia token)
+        // Buscar dados do usuário logado
         const meResponse = await api.get('/auth/users/me/');
         this.user = meResponse.data;
         localStorage.setItem('user', JSON.stringify(this.user));
 
-        // Redirecionamento de acordo com cargo
+        // Redirecionamento
         if (this.user.cargo === 'ADM') router.push('/adm/dashboard');
         else if (this.user.cargo === 'tecnico') router.push('/tecnico/chamados-lista');
         else router.push('/cliente/meus-chamados');
@@ -48,7 +47,6 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.user = null;
       this.access = null;
-      this.refresh = null;
       localStorage.clear();
       router.push('/');
     },
