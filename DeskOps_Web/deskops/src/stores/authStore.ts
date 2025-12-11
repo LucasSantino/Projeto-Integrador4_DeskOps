@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         // LOGIN usando Djoser Authtoken
         const response = await api.post('/auth/token/login/', {
-          username: email,
+          email: email,
           password: password,
         });
 
