@@ -1,0 +1,379 @@
+<template>
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <img src="../../assets/images/logodeskops.png" alt="Logo DeskOps" class="logo-image" />
+    </div>
+
+    <!-- Links de navegação -->
+    <nav class="sidebar-nav">
+      <router-link to="/cliente/meus-chamados" class="nav-link" active-class="active">
+        <span class="material-icons">list</span>
+        Meus Chamados
+      </router-link>
+      <router-link to="/cliente/novo-chamado" class="nav-link" active-class="active">
+        <span class="material-icons">add</span>
+        Novo Chamado
+      </router-link>
+    </nav>
+
+     <!-- Perfil -->
+        <div class="profile-container" ref="profileContainer" @click.stop>
+          <div class="sidebar-profile" @click="toggleProfileMenu">
+            <div class="profile-image">
+      <img
+        v-if="usuario.foto"
+        :src="usuario.foto"
+        alt="Foto de perfil"
+        class="user-photo"
+      />
+   
+    </div>
+
+        <div class="profile-info">
+          <p class="profile-name">{{ usuario.nome }}</p>
+          <p class="profile-email">{{ usuario.email }}</p>
+        </div>
+      </div>
+
+
+      <!-- Dropdown à direita com transição -->
+      <transition name="slide-right">
+        <div v-if="profileMenuOpen" class="profile-dropdown-right">
+          <div class="dropdown-item" @click="goToPerfil">
+            <span class="material-icons">person</span>
+            Perfil
+          </div>
+          <div class="dropdown-item" @click="goToLogin">
+            <span class="material-icons">logout</span>
+            Sair
+          </div>
+        </div>
+      </transition>
+    </div>
+  </aside>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import api from '@/services/api'
+
+export default defineComponent({
+  name: 'ClienteSidebar',
+  setup() {
+    const router = useRouter()
+    const auth = useAuthStore()
+    const profileMenuOpen = ref(false)
+    const defaultFoto = new URL('@/assets/images/default-avatar.png', import.meta.url).href
+
+    // ✅ Computed seguro, sincronizado com o Pinia
+    const usuario = computed(() => {
+      const user = auth.user
+      if (!user) {
+        return { nome: 'Usuário', email: 'sem@email.com', foto: '' }
+      }
+      return {
+        nome: user.name || 'Usuário',
+        email: user.email || 'sem@email.com',
+        foto: user.foto_user || ''
+      }
+    })
+
+    const toggleProfileMenu = () => {
+      profileMenuOpen.value = !profileMenuOpen.value
+    }
+
+    const closeProfileMenu = () => {
+      profileMenuOpen.value = false
+    }
+
+    const goToPerfil = () => {
+      router.push('/cliente/perfil')
+      closeProfileMenu()
+    }
+
+    const goToLogin = () => {
+      auth.logout?.() // se tiver logout no store
+      router.push('/')
+      closeProfileMenu()
+    }
+
+    // Fechar menu ao clicar fora
+    const handleClickOutside = (event: Event) => {
+      const profileContainer = document.querySelector('.profile-container')
+      if (profileContainer && !profileContainer.contains(event.target as Node)) {
+        closeProfileMenu()
+      }
+    }
+
+    // Lifecycle
+    const initialize = () => document.addEventListener('click', handleClickOutside)
+    const cleanup = () => document.removeEventListener('click', handleClickOutside)
+
+    return {
+      usuario,
+      profileMenuOpen,
+      toggleProfileMenu,
+      closeProfileMenu,
+      goToPerfil,
+      goToLogin,
+      initialize,
+      cleanup,
+      defaultFoto
+    }
+  },
+  mounted() {
+    this.initialize()
+  },
+  beforeUnmount() {
+    this.cleanup()
+  }
+})
+</script>
+
+
+<style scoped>
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* SIDEBAR - FIXA E FULL HEIGHT */
+.sidebar {
+  width: 250px;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 10px;
+  flex-shrink: 0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+/* Logo - DIMENSÕES AUMENTADAS */
+.sidebar-logo {
+  text-align: left;
+  margin-bottom: 30px;
+  padding: 0 10px;
+}
+
+.logo-image {
+  width: 100%;
+  max-width: 280px;
+  height: 150px;
+  object-fit: contain;
+}
+
+/* Navegação */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background-color: #1a1a1a;
+}
+
+/* CORREÇÃO: Material-icons apenas na sidebar devem ser brancos */
+.sidebar .material-icons {
+  font-size: 20px;
+  color: #fff;
+}
+
+/* Perfil */
+.profile-container {
+  position: relative;
+  margin-top: auto;
+  padding: 15px 10px 0 10px;
+  overflow: visible;
+}
+.user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #93bfa7;
+}
+
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-profile:hover {
+  background-color: #1a1a1a;
+}
+
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  min-width: 0;
+  gap: 2px;
+}
+
+.profile-name {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.profile-email {
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  margin: 0;
+  font-size: 12px;
+}
+/* DROPDOWN CORRIGIDO - COMPORTAMENTO CORRETO */
+.profile-dropdown-right {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 1001;
+  margin-bottom: 8px;
+  border: 1px solid #333;
+  min-width: 200px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  border-bottom: 1px solid #333;
+  font-size: 13px;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #333;
+}
+
+.dropdown-item .material-icons {
+  font-size: 16px;
+  color: #fff;
+}
+
+/* Transição do dropdown - CORRIGIDA */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Transição do dropdown - CORRIGIDA */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .logo-image {
+    max-width: 240px;
+    height: 130px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .logo-image {
+    max-width: 220px;
+    height: 110px;
+  }
+  
+  /* Ajuste do dropdown para mobile */
+  .profile-dropdown-right {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0;
+    min-width: 200px;
+  }
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1600px) {
+  .logo-image {
+    max-width: 300px;
+    height: 160px;
+  }
+}
+</style>
