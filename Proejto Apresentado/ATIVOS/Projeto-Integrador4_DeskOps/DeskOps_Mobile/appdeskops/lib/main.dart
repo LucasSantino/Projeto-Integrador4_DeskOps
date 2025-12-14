@@ -11,12 +11,13 @@ import 'ui/cliente/novo_chamado.dart';
 import 'ui/cliente/chamado_detalhado.dart';
 import 'ui/cliente/editar_chamado.dart';
 
-// Importando telas do técnico;
+// Importando telas do técnico
 import 'ui/tecnico/dashboard.dart';
 import 'ui/tecnico/detalhes_ativos.dart';
 import 'ui/tecnico/chamadosTecnico.dart';
-import 'UI/tecnico/chamaDetalhaTecnico.dart';
+import 'ui/tecnico/chamaDetalhaTecnico.dart';
 import 'ui/tecnico/leitor_qrcode.dart';
+import 'ui/tecnico/listaChamados.dart';
 
 // Importando telas genéricas (comuns a todos os usuários)
 import 'ui/genericas/perfil.dart' as perfilGenerico;
@@ -34,7 +35,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DeskOps',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
@@ -60,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/chamado_detalhado_Tecnico':
             (context) => const ChamadoDetalhadoTecnico(),
         '/leitor_qrcode': (context) => const LeitorQrcode(),
+        '/lista_chamados': (context) => const ListaChamados(),
 
         // Rotas genéricas (comuns a todos os usuários)
         '/editar_perfil':
